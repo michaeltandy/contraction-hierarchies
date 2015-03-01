@@ -10,7 +10,8 @@ public class Main {
     public static void main(String[] args) {
         
         try {
-            BufferedReader br = (new BufferedReader( new FileReader("/home/mtandy/Documents/contraction hierarchies/nonprofile ch/resources/hatfield-b.csv")));
+            //BufferedReader br = (new BufferedReader( new FileReader("/home/mtandy/Documents/contraction hierarchies/nonprofile ch/resources/hatfield-b.csv")));
+            BufferedReader br = (new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream("/hatfield-b.csv"))));
             HashMap<String,Node> allNodes=NodeLoadNavCsv.readData(br);
 
             DijkstraSolution forwards = Dijkstra.dijkstrasAlgorithm(allNodes, allNodes.get("102945686"), allNodes.get("849770864"), Direction.FORWARDS);
