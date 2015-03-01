@@ -1,0 +1,13 @@
+A B:5 C:4
+B A:5 D:9 E:2
+C D:3 B:7
+D 
+E F:1 G:4
+F D:7 H:1
+G I:3
+H G:1
+I J:4
+J H:4 L:5
+L K:1
+K I:7 PEAK:0
+END
