@@ -4,15 +4,14 @@ import java.util.ArrayList;
 
 public class Node {
 
-    public final String name;
+    public final long nodeId;
     public final ArrayList<DirectedEdge> edgesFrom = new ArrayList<DirectedEdge>();
     public final ArrayList<DirectedEdge> edgesTo = new ArrayList<DirectedEdge>();
 
     public int contractionOrder = Integer.MAX_VALUE;
     
-    public Node(String nodeName) {
-        if (nodeName == null) throw new IllegalArgumentException("Can't have nodes with null names, sorry!");
-        this.name = nodeName;
+    public Node(long nodeId) {
+        this.nodeId = nodeId;
     }
 
     int getCountOutgoingUncontractedEdges() {
@@ -39,11 +38,11 @@ public class Node {
             return false;
         }
         final Node other = (Node) obj;
-        return this.name.equals(other.name);
+        return this.nodeId==other.nodeId;
     }
 
     @Override
     public int hashCode() {
-        return this.name.hashCode();
+        return (int) (this.nodeId ^ (this.nodeId >>> 32));
     }
 }

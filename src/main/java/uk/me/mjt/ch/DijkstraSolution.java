@@ -15,7 +15,7 @@ public class DijkstraSolution  {
         } else {
             StringBuilder sb = new StringBuilder();
             for (Node n : nodes) {
-                sb.append(n.name).append(",");
+                sb.append(n.nodeId).append(",");
             }
             sb.append(String.format(" length %.3f", totalDistance));
             return sb.toString();

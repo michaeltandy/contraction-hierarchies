@@ -9,7 +9,7 @@ import java.util.TreeSet;
 
 public class Dijkstra {
 
-    public static DijkstraSolution dijkstrasAlgorithm(HashMap<String,Node> allNodes, Node startNode, Node endNode, Direction direction) {
+    public static DijkstraSolution dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, Node endNode, Direction direction) {
         HashSet<Node> hs = new HashSet<Node>(1);
         hs.add(endNode);
         List<DijkstraSolution> solutions = dijkstrasAlgorithm(allNodes, startNode, hs, Float.POSITIVE_INFINITY, direction);
@@ -21,7 +21,7 @@ public class Dijkstra {
 
     public enum Direction{FORWARDS,BACKWARDS};
 
-    public static DijkstraSolution contractedGraphDijkstra(HashMap<String,Node> allNodes, Node startNode, Node endNode ) {
+    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long,Node> allNodes, Node startNode, Node endNode ) {
         HashSet<Node> everyNode = new HashSet<Node>(allNodes.values());
         List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, startNode, everyNode, Float.POSITIVE_INFINITY, Direction.FORWARDS);
 
@@ -82,7 +82,7 @@ public class Dijkstra {
      * solution has a distance greater than maxSearchDist, whichever happens
      * first.
      */
-    public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<String,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchDist, Direction direction ) {
+    public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchDist, Direction direction ) {
         //ArrayList<Node> visitedNodes = new ArrayList<Node>();
         HashSet<Node> visitedNodes = new HashSet<Node>();
         HashMap<Node,Float> minDistance = new HashMap<Node,Float>();
@@ -157,7 +157,7 @@ public class Dijkstra {
             } else if (distA > distB) {
                 return 1;
             } else {
-                return o1.name.compareTo(o2.name);
+                return Long.compare(o1.nodeId,o2.nodeId);
             }
         }
     }

@@ -13,9 +13,9 @@ import java.util.TreeMap;
  * @author michael
  */
 public class GraphContractor {
-    private final HashMap<String,Node> allNodes;
+    private final HashMap<Long,Node> allNodes;
 
-    public GraphContractor(HashMap<String,Node> allNodes) {
+    public GraphContractor(HashMap<Long,Node> allNodes) {
         this.allNodes = allNodes;
     }
 
@@ -133,18 +133,18 @@ public class GraphContractor {
     private class ContractionOrdering implements Comparable<ContractionOrdering> {
         final int edgeCountReduction;
         final int contractionDepth;
-        final int namehash;
+        final int namehash; // If everything else is equal we don't care about the order - but it's useful for it to be stable between runs.
 
         public ContractionOrdering(Node n, int edgeCountReduction) {
             this.edgeCountReduction = edgeCountReduction;
             contractionDepth = Math.max(getMaxContractionDepth(n.edgesFrom), getMaxContractionDepth(n.edgesTo));
-            namehash = n.name.hashCode();
+            namehash = n.hashCode();
         }
 
         public int compareTo(ContractionOrdering o) {
             if (o == null) {
                 return -1;
-            }else if (this.contractionDepth != o.contractionDepth) {
+            } else if (this.contractionDepth != o.contractionDepth) {
                 return o.contractionDepth-this.contractionDepth;
             } else if (this.edgeCountReduction != o.edgeCountReduction) {
                 return this.edgeCountReduction-o.edgeCountReduction;
