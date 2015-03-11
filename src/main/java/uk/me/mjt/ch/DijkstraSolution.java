@@ -21,4 +21,20 @@ public class DijkstraSolution  {
             return sb.toString();
         }
     }
+    
+    public String toGeoJson() {
+        if (nodes.isEmpty()) {
+            return "{\"type\": \"FeatureCollection\",\"features\": []}";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"type\": \"LineString\",\"coordinates\": [");
+            for (Node n : nodes) {
+                sb.append(String.format("[%.6f,%.6f],", n.lon,n.lat));
+            }
+            sb.deleteCharAt(sb.length()-1);
+            sb.append("]}");
+            return sb.toString();
+        }
+    }
+    
 }

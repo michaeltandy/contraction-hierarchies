@@ -8,11 +8,15 @@ public class Node {
     public final long nodeId;
     public final ArrayList<DirectedEdge> edgesFrom = new ArrayList<DirectedEdge>();
     public final ArrayList<DirectedEdge> edgesTo = new ArrayList<DirectedEdge>();
+    public final float lat;
+    public final float lon;
 
     public long contractionOrder = UNCONTRACTED;
     
-    public Node(long nodeId) {
+    public Node(long nodeId, float lat, float lon) {
         this.nodeId = nodeId;
+        this.lat = lat;
+        this.lon = lon;
     }
 
     int getCountOutgoingUncontractedEdges() {

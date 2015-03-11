@@ -39,6 +39,8 @@ public class Main {
             } else {
                 System.out.println("Contracted and forwards don't match?!?! <======");
             }
+            
+            System.out.println(contracted.toGeoJson());
 
         } catch (Exception e) {
             e.printStackTrace();

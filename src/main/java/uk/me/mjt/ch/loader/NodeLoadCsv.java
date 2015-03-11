@@ -30,12 +30,16 @@ public class NodeLoadCsv {
 
                 if (parts.length ==9) {
                     long fromName = Long.parseLong(parts[0]);
-                    Node fromNode = getOrCreate(allNodes, fromName);
                     boolean fromContractable = "Y".equalsIgnoreCase(parts[1]);
+                    float fromLat = Float.parseFloat(parts[2]);
+                    float fromLon = Float.parseFloat(parts[3]);
+                    Node fromNode = getOrCreate(allNodes, fromName, fromLat, fromLon);
 
                     long toName = Long.parseLong(parts[4]);
-                    Node toNode = getOrCreate(allNodes, toName);
                     boolean toContractable = "Y".equalsIgnoreCase(parts[5]);
+                    float toLat = Float.parseFloat(parts[6]);
+                    float toLon = Float.parseFloat(parts[7]);
+                    Node toNode = getOrCreate(allNodes, toName, toLat, toLon);
 
                     float distance = Float.parseFloat(parts[8]);
                     DirectedEdge de = new DirectedEdge(edgeId++, fromNode, toNode, distance);
@@ -49,11 +53,11 @@ public class NodeLoadCsv {
         
     }
 
-    public static Node getOrCreate(HashMap<Long,Node> allNodes, long nodeId) {
+    public static Node getOrCreate(HashMap<Long,Node> allNodes, long nodeId, float lat, float lon) {
         if (allNodes.containsKey(nodeId)) {
             return allNodes.get(nodeId);
         } else {
-            Node n = new Node(nodeId);
+            Node n = new Node(nodeId,lat,lon);
             allNodes.put(nodeId, n);
             return n;
         }
