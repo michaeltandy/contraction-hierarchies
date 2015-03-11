@@ -3,12 +3,13 @@ package uk.me.mjt.ch;
 import java.util.ArrayList;
 
 public class Node {
+    public static final long UNCONTRACTED = Long.MAX_VALUE;
 
     public final long nodeId;
     public final ArrayList<DirectedEdge> edgesFrom = new ArrayList<DirectedEdge>();
     public final ArrayList<DirectedEdge> edgesTo = new ArrayList<DirectedEdge>();
 
-    public int contractionOrder = Integer.MAX_VALUE;
+    public long contractionOrder = UNCONTRACTED;
     
     public Node(long nodeId) {
         this.nodeId = nodeId;
@@ -17,7 +18,7 @@ public class Node {
     int getCountOutgoingUncontractedEdges() {
         int count = 0;
         for (DirectedEdge de : edgesFrom) {
-            if (de.to.contractionOrder == Integer.MAX_VALUE)
+            if (de.to.contractionOrder == UNCONTRACTED)
                 count++;
         }
         return count;
@@ -26,10 +27,14 @@ public class Node {
     int getCountIncomingUncontractedEdges() {
         int count = 0;
         for (DirectedEdge de : edgesTo) {
-            if (de.from.contractionOrder  == Integer.MAX_VALUE)
+            if (de.from.contractionOrder  == UNCONTRACTED)
                 count++;
         }
         return count;
+    }
+    
+    public boolean isContracted() {
+        return contractionOrder!=UNCONTRACTED;
     }
 
     @Override

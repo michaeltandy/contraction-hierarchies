@@ -6,21 +6,22 @@ import java.util.List;
 
 public class DirectedEdge {
 
+    public final long edgeId;
     public final Node from;
     public final Node to;
-    public final float distance;
+    public final float distance; // TODO replace with a long in mm, to avoid rounding errors?
 
     // Parameters for graph contraction:
     public final DirectedEdge first;
     public final DirectedEdge second;
     public final int contractionDepth;
-    boolean isShortcut;
-
-    public DirectedEdge(Node from, Node to, float distance) {
-        this(from,to,distance,null,null);
+    
+    public DirectedEdge(long edgeId, Node from, Node to, float distance) {
+        this(edgeId,from,to,distance,null,null);
     }
 
-    public DirectedEdge(Node from, Node to, float distance, DirectedEdge first, DirectedEdge second) {
+    public DirectedEdge(long edgeId, Node from, Node to, float distance, DirectedEdge first, DirectedEdge second) {
+        this.edgeId = edgeId;
         this.from = from;
         this.to = to;
         this.distance = distance;
@@ -28,17 +29,19 @@ public class DirectedEdge {
         this.second = second;
         if (first == null && second == null) {
             contractionDepth = 0;
-            isShortcut = false;
         } else if (first != null && second != null){
-            contractionDepth = Math.max(first.contractionDepth, second.contractionDepth);
-            isShortcut = true;
+            contractionDepth = Math.max(first.contractionDepth, second.contractionDepth)+1;
         } else {
             throw new IllegalArgumentException("Must have either both or neither child edges set. Instead had " + first + " and " + second);
         }
     }
+    
+    public boolean isShortcut() {
+        return (contractionDepth != 0);
+    }
 
     public List<DirectedEdge> getUncontractedEdges() {
-        if (!isShortcut) {
+        if (!isShortcut()) {
             return Collections.singletonList(this);
         } else {
             List<DirectedEdge> a = first.getUncontractedEdges();
@@ -49,4 +52,6 @@ public class DirectedEdge {
             return l;
         }
     }
+    
+    
 }

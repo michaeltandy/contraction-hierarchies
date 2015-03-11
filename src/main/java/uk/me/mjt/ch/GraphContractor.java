@@ -14,9 +14,11 @@ import java.util.TreeMap;
  */
 public class GraphContractor {
     private final HashMap<Long,Node> allNodes;
+    private long maxEdgeId;
 
     public GraphContractor(HashMap<Long,Node> allNodes) {
         this.allNodes = allNodes;
+        this.maxEdgeId = 4294967296L;
     }
 
     private int getEdgeRemovedCount(Node n) {
@@ -43,7 +45,7 @@ public class GraphContractor {
         HashSet<Node> destinationNodes = new HashSet<Node>();
         float maxOutDist = 0;
         for (DirectedEdge outgoing : n.edgesFrom) {
-            if (outgoing.to.contractionOrder == Integer.MAX_VALUE) {
+            if (!outgoing.to.isContracted()) {
                 destinationNodes.add(outgoing.to);
                 if (outgoing.distance > maxOutDist)
                     maxOutDist = outgoing.distance;
@@ -52,7 +54,7 @@ public class GraphContractor {
 
         for (DirectedEdge incoming : n.edgesTo) {
             Node startNode = incoming.from;
-            if (startNode.contractionOrder < Integer.MAX_VALUE)
+            if (startNode.isContracted())
                 continue;
 
             List<DijkstraSolution> routed = Dijkstra.dijkstrasAlgorithm(allNodes,
@@ -65,7 +67,8 @@ public class GraphContractor {
                 //System.out.print(ds + ", " + ds.totalDistance);
                 if (ds.nodes.size() == 3 && ds.nodes.get(1)==n) {
                     //System.out.println("  Shortcut " + ds + ", " + ds.totalDistance);
-                    shortcuts.add(new DirectedEdge(ds.nodes.getFirst(),
+                    shortcuts.add(new DirectedEdge(maxEdgeId++,
+                                                    ds.nodes.getFirst(),
                                                     ds.nodes.getLast(),
                                                     ds.totalDistance,
                                                     ds.edges.get(0),
@@ -108,7 +111,9 @@ public class GraphContractor {
             int balanceOfEdgesRemoved = getEdgeRemovedCount(n)-shortcuts.size();
 
             ContractionOrdering newOrder = new ContractionOrdering(n,balanceOfEdgesRemoved);
-            if (newOrder.compareTo(oldOrder) >= 0 || newOrder.compareTo(contractionOrder.lastKey()) >= 0) {
+            if (contractionOrder.isEmpty() 
+                    || newOrder.compareTo(oldOrder) >= 0 
+                    || newOrder.compareTo(contractionOrder.lastKey()) >= 0) {
                 // If the ContractionOrdering is unchanged, or has changed but 
                 // not enough to move this node off the top spot, contract.
                 contractNode(n,contractionProgress,shortcuts);

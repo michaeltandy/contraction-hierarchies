@@ -22,6 +22,7 @@ public class Dijkstra {
     public enum Direction{FORWARDS,BACKWARDS};
 
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long,Node> allNodes, Node startNode, Node endNode ) {
+        Preconditions.checkNoneNull(allNodes,startNode,endNode);
         HashSet<Node> everyNode = new HashSet<Node>(allNodes.values());
         List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, startNode, everyNode, Float.POSITIVE_INFINITY, Direction.FORWARDS);
 
@@ -83,6 +84,7 @@ public class Dijkstra {
      * first.
      */
     public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchDist, Direction direction ) {
+        Preconditions.checkNoneNull(allNodes,startNode,endNodes,direction);
         //ArrayList<Node> visitedNodes = new ArrayList<Node>();
         HashSet<Node> visitedNodes = new HashSet<Node>();
         HashMap<Node,Float> minDistance = new HashMap<Node,Float>();
