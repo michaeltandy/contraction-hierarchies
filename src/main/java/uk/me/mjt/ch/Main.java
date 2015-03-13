@@ -10,12 +10,15 @@ public class Main {
     public static void main(String[] args) {
         
         try {
-            //BufferedReader br = (new BufferedReader( new FileReader("/home/mtandy/Documents/contraction hierarchies/nonprofile ch/resources/hatfield-b.csv")));
-            BufferedReader br = (new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream("/hatfield-osm.csv"))));
-            HashMap<Long,Node> allNodes=NodeLoadCsv.readData(br);
             
+            /*BufferedReader br = (new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream("/hatfield-osm.csv"))));
+            HashMap<Long,Node> allNodes=NodeLoadCsv.readData(br);
             Node startNode = allNodes.get(253199383L); // https://www.openstreetmap.org/node/253199383
-            Node endNode = allNodes.get(651825497L); // https://www.openstreetmap.org/node/651825497
+            Node endNode = allNodes.get(651825497L); // https://www.openstreetmap.org/node/651825497*/
+            BufferedReader br = (new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream("/semicircle.csv"))));
+            HashMap<Long,Node> allNodes=NodeLoadCsv.readData(br);
+            Node startNode = allNodes.get(1L);
+            Node endNode = allNodes.get(9L);
 
             DijkstraSolution forwards = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, endNode, Direction.FORWARDS);
             System.out.println("Forwards: " + forwards);
@@ -41,6 +44,7 @@ public class Main {
             }
             
             System.out.println(contracted.toGeoJson());
+            System.out.println(GeoJson.allLinks(allNodes.values()));
 
         } catch (Exception e) {
             e.printStackTrace();

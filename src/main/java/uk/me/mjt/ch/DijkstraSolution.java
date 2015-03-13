@@ -24,6 +24,7 @@ public class DijkstraSolution  {
     
     public String toGeoJson() {
         if (nodes.isEmpty()) {
+            // TODO decide what's a sensible thing to do here.
             return "{\"type\": \"FeatureCollection\",\"features\": []}";
         } else {
             StringBuilder sb = new StringBuilder();

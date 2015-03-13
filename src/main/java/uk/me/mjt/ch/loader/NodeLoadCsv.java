@@ -33,13 +33,13 @@ public class NodeLoadCsv {
                     boolean fromContractable = "Y".equalsIgnoreCase(parts[1]);
                     float fromLat = Float.parseFloat(parts[2]);
                     float fromLon = Float.parseFloat(parts[3]);
-                    Node fromNode = getOrCreate(allNodes, fromName, fromLat, fromLon);
+                    Node fromNode = getOrCreate(allNodes, fromName, fromLat, fromLon, fromContractable);
 
                     long toName = Long.parseLong(parts[4]);
                     boolean toContractable = "Y".equalsIgnoreCase(parts[5]);
                     float toLat = Float.parseFloat(parts[6]);
                     float toLon = Float.parseFloat(parts[7]);
-                    Node toNode = getOrCreate(allNodes, toName, toLat, toLon);
+                    Node toNode = getOrCreate(allNodes, toName, toLat, toLon, toContractable);
 
                     float distance = Float.parseFloat(parts[8]);
                     DirectedEdge de = new DirectedEdge(edgeId++, fromNode, toNode, distance);
@@ -53,11 +53,14 @@ public class NodeLoadCsv {
         
     }
 
-    public static Node getOrCreate(HashMap<Long,Node> allNodes, long nodeId, float lat, float lon) {
+    public static Node getOrCreate(HashMap<Long,Node> allNodes, long nodeId, float lat, float lon, boolean contractAllowed) {
         if (allNodes.containsKey(nodeId)) {
-            return allNodes.get(nodeId);
+            Node n = allNodes.get(nodeId);
+            n.contractionAllowed = n.contractionAllowed&&contractAllowed;
+            return n;
         } else {
             Node n = new Node(nodeId,lat,lon);
+            n.contractionAllowed = contractAllowed;
             allNodes.put(nodeId, n);
             return n;
         }

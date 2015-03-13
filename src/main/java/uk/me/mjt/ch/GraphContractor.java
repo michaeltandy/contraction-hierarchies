@@ -87,7 +87,9 @@ public class GraphContractor {
 
     public void initialiseContractionOrder() {
         for (Node n : allNodes.values()) {
-            contractionOrder.put(new ContractionOrdering(n,getBalanceOfEdgesRemoved(n)), n);
+            if (n.contractionAllowed && !n.isContracted()) {
+                contractionOrder.put(new ContractionOrdering(n,getBalanceOfEdgesRemoved(n)), n);
+            }
         }
     }
 
@@ -96,7 +98,7 @@ public class GraphContractor {
 
         Node n;
         while ((n = lazyContractNextNode(contractionProgress++)) != null) {
-            //System.out.println("Contracted " + n);
+            System.out.println("Contracted " + n);
         }
         return;
     }
@@ -143,7 +145,13 @@ public class GraphContractor {
         public ContractionOrdering(Node n, int edgeCountReduction) {
             this.edgeCountReduction = edgeCountReduction;
             contractionDepth = Math.max(getMaxContractionDepth(n.edgesFrom), getMaxContractionDepth(n.edgesTo));
-            namehash = n.hashCode();
+            namehash = improveHash(n.hashCode());
+        }
+        
+        private int improveHash(int initialHash) {
+            // If nodes happen to go 1,2,3,4,5,6... we'd rather not contract
+            // them in that order.
+            return 1103515245 * initialHash + 12345;
         }
 
         public int compareTo(ContractionOrdering o) {

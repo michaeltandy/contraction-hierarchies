@@ -10,6 +10,7 @@ public class Node {
     public final ArrayList<DirectedEdge> edgesTo = new ArrayList<DirectedEdge>();
     public final float lat;
     public final float lon;
+    public boolean contractionAllowed = true;
 
     public long contractionOrder = UNCONTRACTED;
     
@@ -53,5 +54,9 @@ public class Node {
     @Override
     public int hashCode() {
         return (int) (this.nodeId ^ (this.nodeId >>> 32));
+    }
+    
+    public String toString() {
+        return nodeId + "@" + lat + "," + lon;
     }
 }
