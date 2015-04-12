@@ -92,37 +92,62 @@ public class GraphContractor {
             }
         }
     }
+    
+    public void reinitialiseContractionOrder() {
+        System.out.println("Reinitialising contraction order...");
+        ArrayList<Node> priorSet = new ArrayList<>(contractionOrder.values());
+        contractionOrder.clear();
+        for (Node n : priorSet) {
+            if (n.contractionAllowed && !n.isContracted()) {
+                contractionOrder.put(new ContractionOrdering(n,getBalanceOfEdgesRemoved(n)), n);
+            }
+        }
+    }
 
     public void contractAll() {
         int contractionProgress = 1;
 
         Node n;
-        while ((n = lazyContractNextNode(contractionProgress++)) != null) {
-            System.out.println("Contracted " + n);
+        while ((n = lazyContractNextNode(contractionProgress++, true)) != null) {
+            //System.out.println("Contracted " + n);
         }
-        return;
     }
 
-    private Node lazyContractNextNode(int contractionProgress) {
+    private Node lazyContractNextNode(int contractionProgress, boolean includeUnprofitable) {
         Map.Entry<ContractionOrdering,Node> next = contractionOrder.pollLastEntry();
+        boolean recentlySorted = false;
         while (next != null) {
             ContractionOrdering oldOrder = next.getKey();
             Node n = next.getValue();
 
             ArrayList<DirectedEdge> shortcuts = findShortcuts(n);
+            
             int balanceOfEdgesRemoved = getEdgeRemovedCount(n)-shortcuts.size();
-
-            ContractionOrdering newOrder = new ContractionOrdering(n,balanceOfEdgesRemoved);
-            if (contractionOrder.isEmpty() 
-                    || newOrder.compareTo(oldOrder) >= 0 
-                    || newOrder.compareTo(contractionOrder.lastKey()) >= 0) {
-                // If the ContractionOrdering is unchanged, or has changed but 
-                // not enough to move this node off the top spot, contract.
-                contractNode(n,contractionProgress,shortcuts);
-                return n;
-            } else {
-                // Otherwise
-                contractionOrder.put(newOrder, n);
+            boolean profitable = balanceOfEdgesRemoved > -30; // OK, so our threshold for 'profitable' has a bit of margin on it.
+            
+            if (profitable || (recentlySorted && includeUnprofitable)) {
+                recentlySorted = false;
+                
+                ContractionOrdering newOrder = new ContractionOrdering(n,balanceOfEdgesRemoved);
+                if (contractionOrder.isEmpty() 
+                        || newOrder.compareTo(oldOrder) >= 0 
+                        || newOrder.compareTo(contractionOrder.lastKey()) >= 0) {
+                    // If the ContractionOrdering is unchanged, or has changed but 
+                    // not enough to move this node off the top spot, contract.
+                    contractNode(n,contractionProgress,shortcuts);
+                    return n;
+                } else {
+                    // Otherwise
+                    contractionOrder.put(newOrder, n);
+                }
+                
+            } else if (!recentlySorted) {
+                contractionOrder.put(oldOrder, n);
+                reinitialiseContractionOrder();
+                recentlySorted = true;
+            } else if (!includeUnprofitable) {
+                System.out.println("Contraction became unprofitable with " + contractionOrder.size() + " nodes remaining.");
+                return null;
             }
             next = contractionOrder.pollLastEntry();
         }

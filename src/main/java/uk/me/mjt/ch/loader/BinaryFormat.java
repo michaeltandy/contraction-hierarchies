@@ -8,6 +8,15 @@ import uk.me.mjt.ch.Preconditions;
 
 public class BinaryFormat {
     
+    public HashMap<Long,Node> read(String nodeFile, String wayFile) throws IOException {
+        FileInputStream nodesIn = new FileInputStream(nodeFile);
+        FileInputStream waysIn = new FileInputStream(wayFile);
+        
+        HashMap<Long, Node> result = readNodes(new DataInputStream(nodesIn));
+        loadEdgesGivenNodes(result,new DataInputStream(waysIn));
+        
+        return result;
+    }
     
     /*public void writeData(HashMap<Long,Node> toWrite, OutputStream destination) throws IOException {
         writeData(toWrite.values(),destination);
@@ -53,13 +62,20 @@ public class BinaryFormat {
                 long edgeId = source.readLong();
                 long fromNodeId = source.readLong();
                 long toNodeId = source.readLong();
-                float distance = source.readFloat();
+                float distance = source.readLong() / 1000.0f;
+                //float distance = source.readFloat();
                 boolean isShortcut = source.readBoolean();
                 long firstEdgeId = source.readLong();
                 long secondEdgeId = source.readLong();
                 
                 Node fromNode = nodesById.get(fromNodeId);
                 Node toNode = nodesById.get(toNodeId);
+                if (fromNode==null || toNode==null) {
+                    String problem = "Tried to load nodes " + fromNodeId + 
+                            " and " + toNodeId + " for edge " + edgeId + 
+                            " but got " + fromNode + " and " + toNode;
+                    throw new RuntimeException(problem);
+                }
                 Preconditions.checkNoneNull(fromNode,toNode);
                 
                 DirectedEdge de;
