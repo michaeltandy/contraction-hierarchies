@@ -27,6 +27,8 @@ public class GraphContractor {
     private long nodePreContractChecksPassed = 0;
     private long millisSpentOnContractionOrdering = 0;
     
+    private ExecutorService es = Executors.newFixedThreadPool(8);
+    
     public GraphContractor(HashMap<Long,Node> allNodes) {
         this.allNodes = allNodes;
         this.maxEdgeId = 4294967296L;
@@ -99,16 +101,40 @@ public class GraphContractor {
 
     public void initialiseContractionOrder() {
         long orderingStart = System.currentTimeMillis();
-        contractionOrder.clear();
-        for (Node n : allNodes.values()) {
-            if (n.contractionAllowed && !n.isContracted()) {
-                contractionOrder.put(new ContractionOrdering(n,getBalanceOfEdgesRemoved(n)), n);
-            }
-        }
+        parallelInitContractionOrder();
         long orderingDuration = System.currentTimeMillis()-orderingStart;
         millisSpentOnContractionOrdering += orderingDuration;
         System.out.println("Generated contraction order for " + contractionOrder.size() + 
                 " nodes in " + orderingDuration + " ms.");
+    }
+    
+    private void parallelInitContractionOrder() {
+        ArrayList<Callable<KeyValue>> callables = new ArrayList(allNodes.size());
+        for (final Node n : allNodes.values()) {
+            if (n.contractionAllowed && !n.isContracted()) {
+                callables.add(new Callable<KeyValue>() {
+                    public KeyValue call() throws Exception {
+                        ContractionOrdering key = new ContractionOrdering(n,getBalanceOfEdgesRemoved(n));
+                        return new KeyValue(key, n);
+                    }
+                });
+            }
+        }
+            
+        try {
+            List<Future<KeyValue>> kvs = es.invokeAll(callables);
+
+            contractionOrder.clear();
+            for (Future<KeyValue> f : kvs) {
+                KeyValue kv = f.get();
+                contractionOrder.put(kv.key, kv.value);
+            }
+            
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     public void contractAll() {
@@ -143,6 +169,7 @@ public class GraphContractor {
         System.out.println("nodePreContractChecksPassed: "+nodePreContractChecksPassed);
         System.out.println("millisSpentOnContractionOrdering: " + millisSpentOnContractionOrdering);
         
+        es.shutdown();
     }
 
     private Node lazyContractNextNode(int contractionProgress, boolean includeUnprofitable) {
@@ -228,6 +255,16 @@ public class GraphContractor {
             }
         }
 
+    }
+    
+    private class KeyValue {
+        final ContractionOrdering key;
+        final Node value;
+
+        public KeyValue(ContractionOrdering key, Node value) {
+            this.key = key;
+            this.value = value;
+        }
     }
 
 }
