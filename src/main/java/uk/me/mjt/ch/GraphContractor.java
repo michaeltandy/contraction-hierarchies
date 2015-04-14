@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 public class GraphContractor {
     private final HashMap<Long,Node> allNodes;
     private long maxEdgeId;
+    int contractionProgress = 1;
     
     private long findShortcutsCalls = 0;
     private long nodePreContractChecks = 0;
@@ -138,8 +139,8 @@ public class GraphContractor {
     }
     
     public void contractAll() {
-        int contractionProgress = 1;
         
+        int lastLog = Integer.MAX_VALUE;
         long startTime = System.currentTimeMillis();
         long recentTime = System.currentTimeMillis();
         long recentPreContractChecks = 0;
@@ -147,20 +148,21 @@ public class GraphContractor {
         long recentOrderingMillis = 0;
 
         Node n;
-        while ((n = lazyContractNextNode(contractionProgress++, false)) != null) {
+        while (contractSomeNodes(false,false)>=0) {
             //System.out.println("Contracted " + n);
-            if (contractionOrder.size() % 10000 == 0) {
+            if (lastLog-contractionOrder.size() > 10000) {
                 long now = System.currentTimeMillis();
                 long runTimeSoFar = now-startTime;
                 long orderingTimeThisRun = millisSpentOnContractionOrdering-recentOrderingMillis;
                 float checksPerPass = (float)(nodePreContractChecks-recentPreContractChecks) / (float)(nodePreContractChecksPassed-recentPreContractChecksPassed);
                 System.out.println(runTimeSoFar+"," + contractionOrder.size() + 
                         "," + (now-recentTime) + "," + orderingTimeThisRun + 
-                        "," + checksPerPass);
+                        "," + checksPerPass + "," + recentBlockSize);
                 recentTime=now;
                 recentPreContractChecks=nodePreContractChecks;
                 recentPreContractChecksPassed=nodePreContractChecksPassed;
                 recentOrderingMillis=millisSpentOnContractionOrdering;
+                lastLog = contractionOrder.size();
             }
         }
        
@@ -171,8 +173,128 @@ public class GraphContractor {
         
         es.shutdown();
     }
+    
+    
+    boolean recentlySorted = false;
+    float recentBlockSize = 0;
+    
+    private int contractSomeNodes(boolean recentlySorted, boolean contractUnprofitable) {
+        int nodesContracted = 0;
+        boolean anyNodeProfitable = false;
+        HashSet<Node> nodesToShortcut = new HashSet();
+        
+        while (nodesToShortcut.size() < 20000) {
+            Map.Entry<ContractionOrdering,Node> next = contractionOrder.pollLastEntry();
+            
+            if (touchesAnyNode(nodesToShortcut,next.getValue())) {
+                contractionOrder.put(next.getKey(), next.getValue());
+                break;
+            } else {
+                Node n = next.getValue();
+                nodesToShortcut.add(n);
+                nodePreContractChecks++;
+            }
+        }
+        
+        recentBlockSize = 0.99f*recentBlockSize + 0.01f*nodesToShortcut.size();
+        
+        Map<Node,ArrayList<DirectedEdge>> shortcutSet = findShortcutsForAll(nodesToShortcut);
+        ContractionOrdering requeueThreshold = (contractionOrder.isEmpty()?null:contractionOrder.lastKey());
+        
+        for (Map.Entry<Node,ArrayList<DirectedEdge>> e : shortcutSet.entrySet()) {
+            Node n = e.getKey();
+            ArrayList<DirectedEdge> shortcuts = e.getValue();
+            
+            int balanceOfEdgesRemoved = getEdgeRemovedCount(n)-shortcuts.size();
+            boolean veryUnprofitable = balanceOfEdgesRemoved < -30;
+            ContractionOrdering newOrder = new ContractionOrdering(n,balanceOfEdgesRemoved);
+            
+            if (veryUnprofitable) {
+                if (contractUnprofitable && 
+                        (requeueThreshold==null || newOrder.compareTo(requeueThreshold) >= 0)) {
+                    contractNode(n,contractionProgress++,shortcuts);
+                    nodesContracted++;
+                    nodePreContractChecksPassed++;
+                } else {
+                    contractionOrder.put(newOrder, n);
+                }
+            } else {
+                anyNodeProfitable = true;
+                if (requeueThreshold==null || newOrder.compareTo(requeueThreshold) >= 0) {
+                    contractNode(n,contractionProgress++,shortcuts);
+                    nodesContracted++;
+                    nodePreContractChecksPassed++;
+                } else {
+                    contractionOrder.put(newOrder, n);
+                }
+            }
+        }
+        
+        if (!anyNodeProfitable) {
+            if (recentlySorted && !contractUnprofitable) {
+                System.out.println("Contraction became unprofitable with " + contractionOrder.size() + " nodes remaining.");
+                return -1;
+            } else { // FIXME work out logic when not leaving the last nodes uncontracted.
+                System.out.println("Reinitialising contraction order (A)...");
+                initialiseContractionOrder();
+                return contractSomeNodes(true, contractUnprofitable);
+            }
+        } /*else if (nodesContracted < nodesToShortcut.size()/10) {
+            System.out.println("Reinitialising contraction order (B)...");
+            initialiseContractionOrder();
+        }*/
+        
+        return nodesContracted;
+    }
+    
+    
+    
+    private boolean touchesAnyNode(HashSet<Node> a, Node b) {
+        if (a.contains(b))
+            return true;
+        for (DirectedEdge de : b.edgesFrom) {
+            if (a.contains(de.to))
+                return true;
+        }
+        for (DirectedEdge de : b.edgesTo) {
+            if (a.contains(de.from))
+                return true;
+        }
+        return false;
+    }
+    
+    private Map<Node,ArrayList<DirectedEdge>> findShortcutsForAll(Collection<Node> nodes) {
+        ArrayList<Node> nodeList = new ArrayList(nodes);
+        ArrayList<Callable<ArrayList<DirectedEdge>>> callables = new ArrayList();
+        for (final Node n : nodeList) {
+            callables.add(new Callable<ArrayList<DirectedEdge>>() {
+                public ArrayList<DirectedEdge> call() throws Exception {
+                    return findShortcuts(n);
+                }
+            });
+        }
+        
+        Map<Node,ArrayList<DirectedEdge>> shortcuts = new HashMap();
+        
+        try {
+            List<Future<ArrayList<DirectedEdge>>> results = es.invokeAll(callables);
+            
+            for (int i=0 ; i<nodeList.size() ; i++) {
+                Node n = nodeList.get(i);
+                ArrayList<DirectedEdge> nodeShortcuts = results.get(i).get();
+                shortcuts.put(n, nodeShortcuts);
+            }
+            
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        
+        return shortcuts;
+    }
 
-    private Node lazyContractNextNode(int contractionProgress, boolean includeUnprofitable) {
+    /*private Node lazyContractNextNode(int contractionProgress, boolean includeUnprofitable) {
         Map.Entry<ContractionOrdering,Node> next = contractionOrder.pollLastEntry();
         boolean recentlySorted = false;
         while (next != null) {
@@ -214,7 +336,7 @@ public class GraphContractor {
             next = contractionOrder.pollLastEntry();
         }
         return null;
-    }
+    }*/
 
     public static int getMaxContractionDepth(List<DirectedEdge> de) {
         int maxContractionDepth = 0;
