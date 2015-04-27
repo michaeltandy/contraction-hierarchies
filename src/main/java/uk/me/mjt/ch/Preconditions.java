@@ -10,5 +10,13 @@ public class Preconditions {
             }
         }
     }
+    
+    public static void checkTrue(boolean... args) {
+        for (int i=0 ; i<args.length ; i++) {
+            if (args[i] != true) {
+                throw new IllegalArgumentException("Argument index " + i + " was false?");
+            }
+        }
+    }
 
 }
