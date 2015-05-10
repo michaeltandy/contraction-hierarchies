@@ -1,6 +1,7 @@
 package uk.me.mjt.ch;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Node {
     public static final long UNCONTRACTED = Long.MAX_VALUE;
@@ -40,6 +41,26 @@ public class Node {
     
     public boolean isContracted() {
         return contractionOrder!=UNCONTRACTED;
+    }
+    
+    public List<DirectedEdge> getEdgesFromOtherNode(Node other) {
+        ArrayList<DirectedEdge> result = new ArrayList<DirectedEdge>();
+        for (DirectedEdge de : edgesTo) {
+            if (de.from.equals(other)) {
+                result.add(de);
+            }
+        }
+        return result;
+    }
+    
+    public List<DirectedEdge> getEdgesToOtherNode(Node other) {
+        ArrayList<DirectedEdge> result = new ArrayList<DirectedEdge>();
+        for (DirectedEdge de : edgesFrom) {
+            if (de.to.equals(other)) {
+                result.add(de);
+            }
+        }
+        return result;
     }
 
     @Override

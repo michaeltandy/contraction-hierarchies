@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.TreeSet;
 
 public class Dijkstra {
+    
+    private static final int EDGEID = -12345;
 
-    public static DijkstraSolution dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, Node endNode, Direction direction) {
+    public static DirectedEdge dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, Node endNode, Direction direction) {
         HashSet<Node> hs = new HashSet<Node>(1);
         hs.add(endNode);
-        List<DijkstraSolution> solutions = dijkstrasAlgorithm(allNodes, startNode, hs, Float.POSITIVE_INFINITY, direction);
+        List<DirectedEdge> solutions = dijkstrasAlgorithm(allNodes, startNode, hs, Integer.MAX_VALUE, direction);
         if (solutions.size() > 0)
             return solutions.get(0);
         else
@@ -24,7 +26,7 @@ public class Dijkstra {
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long,Node> allNodes, Node startNode, Node endNode ) {
         Preconditions.checkNoneNull(allNodes,startNode,endNode);
         HashSet<Node> everyNode = new HashSet<Node>(allNodes.values());
-        List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, startNode, everyNode, Float.POSITIVE_INFINITY, Direction.FORWARDS);
+        List<DijkstraSolution> upwardSolutions = null;//dijkstrasAlgorithm(allNodes, startNode, everyNode, Integer.MAX_VALUE, Direction.FORWARDS);
 
         HashMap<Node,DijkstraSolution> upwardPaths = new HashMap<Node,DijkstraSolution>();
 
@@ -32,7 +34,7 @@ public class Dijkstra {
             upwardPaths.put(ds.nodes.getLast(), ds);
         }
 
-        List<DijkstraSolution> downwardSolutions = dijkstrasAlgorithm(allNodes, endNode, everyNode, Float.POSITIVE_INFINITY, Direction.BACKWARDS);
+        List<DijkstraSolution> downwardSolutions = null;//dijkstrasAlgorithm(allNodes, endNode, everyNode, Integer.MAX_VALUE, Direction.BACKWARDS);
 
         DijkstraSolution shortestSolution = null;
 
@@ -64,7 +66,7 @@ public class Dijkstra {
      * @return
      */
     public static DijkstraSolution unContract(DijkstraSolution ds) {
-        if (ds == null) return null;
+        /*if (ds == null) return null;
         DijkstraSolution newSolution = new DijkstraSolution();
         newSolution.totalDistance = ds.totalDistance;
         for (DirectedEdge de : ds.edges) {
@@ -74,7 +76,8 @@ public class Dijkstra {
         for (DirectedEdge de : newSolution.edges) {
             newSolution.nodes.add(de.to);
         }
-        return newSolution;
+        return newSolution;*/
+        return null; // REVISIT
     }
 
     /**
@@ -83,76 +86,108 @@ public class Dijkstra {
      * solution has a distance greater than maxSearchDist, whichever happens
      * first.
      */
-    public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchDist, Direction direction ) {
+    public static List<DirectedEdge> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, int maxSearchDist, Direction direction ) {
         Preconditions.checkNoneNull(allNodes,startNode,endNodes,direction);
-        //ArrayList<Node> visitedNodes = new ArrayList<Node>();
-        HashSet<Node> visitedNodes = new HashSet<Node>();
-        HashMap<Node,Float> minDistance = new HashMap<Node,Float>();
-        HashMap<Node,Node> minDistFrom = new HashMap<Node,Node>();
-        HashMap<Node,DirectedEdge> minDistVia = new HashMap<Node,DirectedEdge>();
-        HashSet<Node> endNodesRemaining = (HashSet<Node>)endNodes.clone(); //
+        HashMap<Node,DirectedEdge> bestDistances = new HashMap<>();
+        TreeSet<Node> toProcess = new TreeSet<>(new CompareNodes(bestDistances));
 
-        ArrayList<DijkstraSolution> solutions = new ArrayList<DijkstraSolution>(endNodes.size());
-
-        //ArrayList<Node> unvisitedNodes = new ArrayList<Node>();
-        TreeSet<Node> unvisitedNodes = new TreeSet<Node>(new CompareNodes(minDistance));
-
-        minDistance.put(startNode, 0.0f);
-        unvisitedNodes.add(startNode);
+        bestDistances.put(startNode, new DirectedEdge(EDGEID, startNode, startNode, 0) );
+        markOutboundToProcess(toProcess,startNode);
         
-        while (unvisitedNodes.size() > 0 && minDistance.get(unvisitedNodes.first()) <= maxSearchDist) {
-
-            // Find the node with the shortest distance so far:
-            Node shortestDistNode = unvisitedNodes.first();
-            Float thisNodeDistance = minDistance.get(shortestDistNode);
-
-            if (endNodesRemaining.contains(shortestDistNode)) {
-                solutions.add(extractShortest(shortestDistNode, minDistance, minDistFrom, minDistVia));
-                endNodesRemaining.remove(shortestDistNode);
-                if (endNodesRemaining.isEmpty())
-                    return solutions;
-            }
+        while (toProcess.size() > 0) {
+            Node nodeBeingProcessed = toProcess.first();
+            toProcess.remove(nodeBeingProcessed);
             
-            unvisitedNodes.remove(shortestDistNode);
-            visitedNodes.add(shortestDistNode);
-
-            for (DirectedEdge edge : (direction == Direction.FORWARDS ? shortestDistNode.edgesFrom : shortestDistNode.edgesTo)) {
-                Node n = (direction == Direction.FORWARDS ? edge.to : edge.from);
-                if (n.contractionOrder < shortestDistNode.contractionOrder)
-                    continue;
-                if (visitedNodes.contains(n))
-                    continue;
-                float newDist = thisNodeDistance + edge.distance;
-
-                Float previousDist = minDistance.get(n);
-                if (previousDist==null) previousDist = Float.POSITIVE_INFINITY;
-
-                if (newDist < previousDist) {
-                    unvisitedNodes.remove(n);
-                    minDistance.put(n, newDist);
-                    minDistFrom.put(n, shortestDistNode);
-                    minDistVia.put(n, edge);
-                    unvisitedNodes.add(n);
+            DirectedEdge previousBest = bestDistances.get(nodeBeingProcessed);
+            DirectedEdge newBest = findNewBest(nodeBeingProcessed, previousBest, bestDistances);
+            
+            if (previousBest == null || newBest.isEverLessThan(previousBest)) {
+                bestDistances.put(nodeBeingProcessed, newBest);
+                
+                if (newBest.getMinTransitDuration() < maxSearchDist) {
+                    markOutboundToProcess(toProcess,nodeBeingProcessed);
                 }
+                
+                if (endNodes.contains(nodeBeingProcessed)) {
+                    maxSearchDist = updateMaxSearchDist(maxSearchDist, endNodes, bestDistances);
+                }
+            }
+        }
+        
+        ArrayList<DirectedEdge> solutions = new ArrayList<>(endNodes.size());
+        for (Node n : endNodes) {
+            if (bestDistances.containsKey(n)) {
+                solutions.add(bestDistances.get(n));
             }
         }
         
         return solutions;
     }
+    
+    private static void markOutboundToProcess(TreeSet<Node> toProcess, Node n) {
+        for (DirectedEdge de : n.edgesFrom) {
+            toProcess.add(de.to);
+        }
+    }
+    
+    private static DirectedEdge findNewBest(Node target, DirectedEdge bestSoFar, HashMap<Node,DirectedEdge> allBests) {
+        for (DirectedEdge thisOrigin : target.edgesTo) {
+            // TODO deal with contracted nodes "right"
+            if (allBests.containsKey(thisOrigin.from)) {
+                DirectedEdge thisRoute = allBests.get(thisOrigin.from).plus(thisOrigin, EDGEID);
+                bestSoFar = bestOf(bestSoFar,thisRoute);
+            }
+        }
+        return bestSoFar;
+    }
+    
+    private static int updateMaxSearchDist(int maxSearchDist, HashSet<Node> endNodes, HashMap<Node,DirectedEdge> bestDistances) {
+        int largestRequiredSearchRadius = 0;
+        for (Node n : endNodes) {
+            if (bestDistances.containsKey(n)) {
+                DirectedEdge thisDistance = bestDistances.get(n);
+                largestRequiredSearchRadius = Math.max(largestRequiredSearchRadius, thisDistance.getMaxTransitDuration());
+            } else {
+                // At least one node hasn't been reached at all, so don't
+                // tighten search radius.
+                return maxSearchDist;
+            }
+        }
+        return Math.min(maxSearchDist,largestRequiredSearchRadius);
+    }
+    
+    private static DirectedEdge bestOf(DirectedEdge a, DirectedEdge b) {
+        if (a==null) {
+            return b;
+        } else if (b==null) {
+            return a;
+        }
+        boolean aSometimesBetter = a.isEverLessThan(b);
+        boolean bSometimesBetter = b.isEverLessThan(a);
+        if (aSometimesBetter && !bSometimesBetter) {
+            return a;
+        } else if (bSometimesBetter && !aSometimesBetter) {
+            return b;
+        } else if (aSometimesBetter && bSometimesBetter) {
+            return a.minWith(b, EDGEID);
+        } else { // They're equal.
+            return a;
+        }
+    }
 
     private static class CompareNodes implements Comparator<Node> {
-        final HashMap<Node,Float> minDistance;
+        final HashMap<Node,DirectedEdge> minDistance;
 
-        CompareNodes(HashMap<Node,Float> minDistance) {
+        CompareNodes(HashMap<Node,DirectedEdge> minDistance) {
             this.minDistance = minDistance;
         }
 
         public int compare(Node o1, Node o2) {
-            Float distA = minDistance.get(o1);
-            distA = (distA==null?Float.POSITIVE_INFINITY:distA);
+            DirectedEdge edgeA = minDistance.get(o1);
+            int distA = (edgeA==null?0:edgeA.getMinTransitDuration());
 
-            Float distB = minDistance.get(o2);
-            distB = (distB==null?Float.POSITIVE_INFINITY:distB);
+            DirectedEdge edgeB = minDistance.get(o2);
+            int distB = (edgeB==null?0:edgeB.getMinTransitDuration());
 
             if (distA < distB) {
                 return -1;

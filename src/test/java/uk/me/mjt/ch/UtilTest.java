@@ -26,8 +26,8 @@ public class UtilTest {
     @Test
     public void testDeepEquals_HashMap_HashMap() {
         System.out.println("deepEquals");
-        HashMap<Long, Node> a = MakeTestData.makeSimpleThreeEntry();
-        HashMap<Long, Node> b = MakeTestData.makeSimpleThreeEntry();
+        HashMap<Long, Node> a = MakeTestData.threeNodeFlatProfileWithShortcut();
+        HashMap<Long, Node> b = MakeTestData.threeNodeFlatProfileWithShortcut();
         assertTrue(Util.deepEquals(a, b));
         
         Node n = a.get(2L);

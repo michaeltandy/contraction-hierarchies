@@ -30,7 +30,7 @@ public class BinaryFormatTest {
         ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
         ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
         
-        HashMap<Long, Node> testData = MakeTestData.makeSimpleThreeEntry();
+        HashMap<Long, Node> testData = MakeTestData.threeNodeFlatProfileWithShortcut();
         BinaryFormat instance = new BinaryFormat();
         
         instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));

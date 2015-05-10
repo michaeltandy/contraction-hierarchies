@@ -52,19 +52,11 @@ public class Util {
         for (int i=0 ; i<a.size() ; i++) {
             DirectedEdge deA = a.get(i);
             DirectedEdge deB = b.get(i);
-            if (!edgesEqual(deA,deB)) {
+            if (!deA.equals(deB)) {
                 return false;
             }
         }
         return true;
-    }
-    
-    private static boolean edgesEqual(DirectedEdge a, DirectedEdge b) {
-        return (a.edgeId == b.edgeId
-                && a.contractionDepth == b.contractionDepth
-                && a.distance == b.distance
-                && shallowEquals(a.from,b.from)
-                && shallowEquals(a.to,b.to));
     }
     
     public static void sortEdgeArrays(ArrayList<DirectedEdge> toSort) {
