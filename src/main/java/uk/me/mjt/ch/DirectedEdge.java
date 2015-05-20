@@ -22,21 +22,21 @@ public class DirectedEdge {
     private static final int SEGMENT_MIDPOINT_MS = SEGMENT_WIDTH_MS/2;
     public static final int ARRAY_LENGTH_SEGMENTS = 24*4;
     private int[] transitDurationMs;
-    private Node[] viaPoints;
+    //private Node[] viaPoints;
     
     public DirectedEdge(long edgeId, Node from, Node to, int distance) {
-        this(edgeId, from, to, repeatInts(distance), new Node[ARRAY_LENGTH_SEGMENTS], 0);
+        this(edgeId, from, to, repeatInts(distance), 0);
     }
 
-    DirectedEdge(long edgeId, Node from, Node to, int[] newDurationsMs, Node[] newVia, int contractionDepth) {
-        Preconditions.checkNoneNull(from,to,newDurationsMs,newVia);
+    DirectedEdge(long edgeId, Node from, Node to, int[] newDurationsMs, int contractionDepth) {
+        Preconditions.checkNoneNull(from,to,newDurationsMs);
         validateArray(newDurationsMs);
         this.edgeId = edgeId;
         this.from = from;
         this.to = to;
         this.contractionDepth = contractionDepth;
         this.transitDurationMs = newDurationsMs;
-        this.viaPoints = newVia;
+        //this.viaPoints = newVia;
     }
 
     public boolean isShortcut() {
@@ -103,7 +103,7 @@ public class DirectedEdge {
         return (int)(numerator/SEGMENT_WIDTH_MS);
     }
     
-    public Node viaPointAt(int milliseconds) {
+    /*public Node viaPointAt(int milliseconds) {
         
         if (milliseconds < SEGMENT_MIDPOINT_MS) {
             return viaPoints[0]; 
@@ -113,10 +113,17 @@ public class DirectedEdge {
         
         int blockIdx = (milliseconds)/SEGMENT_WIDTH_MS;
         return viaPoints[blockIdx];
-    }
+    }*/
     
     public DirectedEdge plus(DirectedEdge after, long newEdgeId) {
         Preconditions.checkNoneNull(after);
+        Preconditions.checkTrue(this.to.equals(after.from));
+        
+        if (this.isIdentity()) {
+            return after;
+        } else if (after.isIdentity()) {
+            return this;
+        }
         
         int[] newDurationsMs = new int[ARRAY_LENGTH_SEGMENTS];
         
@@ -126,17 +133,9 @@ public class DirectedEdge {
             newDurationsMs[i] = transitDurationMs[i] + secondSegmentTransitTime;
         }
         
-        Node[] newVia;
-        if (this.isIdentity())
-            newVia = after.viaPoints;
-        else if (after.isIdentity())
-            newVia = this.viaPoints;
-        else
-            newVia = repeatNodes(this.to);
-        
         int newContractionDepth = Math.max(this.contractionDepth,after.contractionDepth)+1;
         
-        return new DirectedEdge(newEdgeId, this.from, after.to, newDurationsMs, newVia, newContractionDepth);
+        return new DirectedEdge(newEdgeId, this.from, after.to, newDurationsMs, newContractionDepth);
     }
     
     public DirectedEdge minWith(DirectedEdge other, long newEdgeId) {
@@ -144,87 +143,35 @@ public class DirectedEdge {
         Preconditions.checkTrue(this.from.equals(other.from), this.to.equals(other.to));
         
         int[] newDurationsMs = new int[ARRAY_LENGTH_SEGMENTS];
-        Node[] newVia = new Node[ARRAY_LENGTH_SEGMENTS];
+        //Node[] newVia = new Node[ARRAY_LENGTH_SEGMENTS];
         
         for (int i=0 ; i<newDurationsMs.length ; i++) {
             int thisTime = this.transitDurationMs[i];
             int otherTime = other.transitDurationMs[i];
             if (thisTime <= otherTime) {
                 newDurationsMs[i]=thisTime;
-                newVia[i] = this.viaPoints[i];
+                //newVia[i] = this.viaPoints[i];
             } else {
                 newDurationsMs[i]=otherTime;
-                newVia[i] = other.viaPoints[i];
+                //newVia[i] = other.viaPoints[i];
             }
         }
         
         int newContractionDepth = Math.max(this.contractionDepth,other.contractionDepth)+1;
         
-        return new DirectedEdge(newEdgeId, this.from, this.to, newDurationsMs, newVia, newContractionDepth);
+        return new DirectedEdge(newEdgeId, this.from, this.to, newDurationsMs, newContractionDepth);
     }
     
     public List<Node> getUncontractedNodesAt(int edgeEntryTime) {
-        List<Node> result = getUncontractedFromNodesAt(edgeEntryTime);
+        List<Node> result = getNodesRecursivelyAt(edgeEntryTime);
         result.add(to);
         return Collections.unmodifiableList(result);
     }
     
-    private ArrayList<Node> getUncontractedFromNodesAt(int edgeEntryTime) {
-        Node via = viaPointAt(edgeEntryTime);
-        if (via == null) {
-            ArrayList<Node> result = new ArrayList(1);
-            result.add(from);
-            return result;
-        } else {
-            DirectedEdge first = getBestFirstEdgeAt(edgeEntryTime, via);
-            int firstTransitTime = first.transitTimeAt(edgeEntryTime);
-            int secondEntryTime = edgeEntryTime + firstTransitTime;
-            DirectedEdge second = getBestSecondEdgeAt(edgeEntryTime, via);
-            
-            ArrayList<Node> result = first.getUncontractedFromNodesAt(edgeEntryTime);
-            result.addAll(second.getUncontractedFromNodesAt(secondEntryTime));
-            
-            int contractedTime = this.transitTimeAt(edgeEntryTime);
-            int secondTransitTime = second.transitTimeAt(secondEntryTime);
-            int uncontractedTime = firstTransitTime+secondTransitTime;
-            if (contractedTime != uncontractedTime) {
-                throw new AssertionError("Contracted time was " + contractedTime + 
-                        " but uncontracted time was " + uncontractedTime + "? " + 
-                        "Maybe you're trying to uncontract a non-optimal route? " + 
-                        "From " + from.nodeId + " via " + via.nodeId + " to " + to.nodeId);
-            }
-            
-            return result;
-        }
+    private ArrayList<Node> getNodesRecursivelyAt(int edgeEntryTime) {
+        return null;
     }
     
-    private DirectedEdge getBestFirstEdgeAt(int milliseconds, Node via) {
-        List<DirectedEdge> firstEdges = from.getEdgesToOtherNode(via);
-        DirectedEdge bestFirst = null;
-        int bestFirstTransitTime = Integer.MAX_VALUE;
-        for (DirectedEdge de : firstEdges) {
-            int thisTransitTime = de.transitTimeAt(milliseconds);
-            if (thisTransitTime < bestFirstTransitTime) {
-                bestFirstTransitTime = thisTransitTime;
-                bestFirst = de;
-            }
-        }
-        return bestFirst;
-    }
-    
-    private DirectedEdge getBestSecondEdgeAt(int milliseconds, Node via) {
-        List<DirectedEdge> secondEdges = to.getEdgesFromOtherNode(via);
-        DirectedEdge bestSecond = null;
-        int bestSecondTransitTime = Integer.MAX_VALUE;
-        for (DirectedEdge de : secondEdges) {
-            int thisTransitTime = de.transitTimeAt(milliseconds);
-            if (thisTransitTime < bestSecondTransitTime) {
-                bestSecondTransitTime = thisTransitTime;
-                bestSecond = de;
-            }
-        }
-        return bestSecond;
-    }
     
     private static void validateArray(int[] toCheck) {
         if (toCheck == null || toCheck.length != ARRAY_LENGTH_SEGMENTS)
@@ -269,7 +216,6 @@ public class DirectedEdge {
         hash = 89 * hash + Objects.hashCode(this.to);
         hash = 89 * hash + this.contractionDepth;
         hash = 89 * hash + Arrays.hashCode(this.transitDurationMs);
-        hash = 89 * hash + Arrays.deepHashCode(this.viaPoints);
         return hash;
     }
 
@@ -283,8 +229,7 @@ public class DirectedEdge {
                 && Objects.equals(this.from,other.from)
                 && Objects.equals(this.to,other.to)
                 && this.contractionDepth == other.contractionDepth
-                && Arrays.equals(this.transitDurationMs, other.transitDurationMs)
-                && Arrays.deepEquals(this.viaPoints, other.viaPoints);
+                && Arrays.equals(this.transitDurationMs, other.transitDurationMs);
     }
 
     @Override
