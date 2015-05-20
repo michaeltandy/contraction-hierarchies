@@ -62,7 +62,7 @@ public class Util {
     private static boolean edgesEqual(DirectedEdge a, DirectedEdge b) {
         return (a.edgeId == b.edgeId
                 && a.contractionDepth == b.contractionDepth
-                && a.distance == b.distance
+                && a.driveTimeMs == b.driveTimeMs
                 && shallowEquals(a.from,b.from)
                 && shallowEquals(a.to,b.to));
     }

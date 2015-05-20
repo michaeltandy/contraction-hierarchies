@@ -40,8 +40,8 @@ public class Dijkstra {
             Node n = down.nodes.getLast();
             if (upwardPaths.containsKey(n)) {
                 DijkstraSolution up = upwardPaths.get(n);
-                up.totalDistance += down.totalDistance;
-                if (shortestSolution == null || up.totalDistance < shortestSolution.totalDistance) {
+                up.totalDriveTime += down.totalDriveTime;
+                if (shortestSolution == null || up.totalDriveTime < shortestSolution.totalDriveTime) {
                     down.nodes.removeLast();
                     while (!down.nodes.isEmpty()) {
                         up.nodes.addLast(down.nodes.getLast());
@@ -66,7 +66,7 @@ public class Dijkstra {
     public static DijkstraSolution unContract(DijkstraSolution ds) {
         if (ds == null) return null;
         DijkstraSolution newSolution = new DijkstraSolution();
-        newSolution.totalDistance = ds.totalDistance;
+        newSolution.totalDriveTime = ds.totalDriveTime;
         for (DirectedEdge de : ds.edges) {
             newSolution.edges.addAll(de.getUncontractedEdges());
         }
@@ -80,58 +80,58 @@ public class Dijkstra {
     /**
      * dijkstrasAlgorithm performs a best-first graph search starting at startNode
      * and continuing until all endNodes have been reached, or until the best
-     * solution has a distance greater than maxSearchDist, whichever happens
+     * solution has a drive time greater than maxSearchTime, whichever happens
      * first.
      */
-    public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchDist, Direction direction ) {
+    public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchTime, Direction direction ) {
         Preconditions.checkNoneNull(allNodes,startNode,endNodes,direction);
         //ArrayList<Node> visitedNodes = new ArrayList<Node>();
-        HashSet<Node> visitedNodes = new HashSet<Node>();
-        HashMap<Node,Float> minDistance = new HashMap<Node,Float>();
-        HashMap<Node,Node> minDistFrom = new HashMap<Node,Node>();
-        HashMap<Node,DirectedEdge> minDistVia = new HashMap<Node,DirectedEdge>();
+        HashSet<Node> visitedNodes = new HashSet<>();
+        HashMap<Node,Integer> minDriveTime = new HashMap<>();
+        HashMap<Node,Node> minTimeFrom = new HashMap<>();
+        HashMap<Node,DirectedEdge> minTimeVia = new HashMap<>();
         HashSet<Node> endNodesRemaining = (HashSet<Node>)endNodes.clone(); //
 
-        ArrayList<DijkstraSolution> solutions = new ArrayList<DijkstraSolution>(endNodes.size());
+        ArrayList<DijkstraSolution> solutions = new ArrayList<>(endNodes.size());
 
         //ArrayList<Node> unvisitedNodes = new ArrayList<Node>();
-        TreeSet<Node> unvisitedNodes = new TreeSet<Node>(new CompareNodes(minDistance));
+        TreeSet<Node> unvisitedNodes = new TreeSet<Node>(new CompareNodes(minDriveTime));
 
-        minDistance.put(startNode, 0.0f);
+        minDriveTime.put(startNode, 0);
         unvisitedNodes.add(startNode);
         
-        while (unvisitedNodes.size() > 0 && minDistance.get(unvisitedNodes.first()) <= maxSearchDist) {
+        while (unvisitedNodes.size() > 0 && minDriveTime.get(unvisitedNodes.first()) <= maxSearchTime) {
 
-            // Find the node with the shortest distance so far:
-            Node shortestDistNode = unvisitedNodes.first();
-            Float thisNodeDistance = minDistance.get(shortestDistNode);
+            // Find the node with the shortest drive time so far:
+            Node shortestTimeNode = unvisitedNodes.first();
+            int thisNodeDriveTime = minDriveTime.get(shortestTimeNode);
 
-            if (endNodesRemaining.contains(shortestDistNode)) {
-                solutions.add(extractShortest(shortestDistNode, minDistance, minDistFrom, minDistVia));
-                endNodesRemaining.remove(shortestDistNode);
+            if (endNodesRemaining.contains(shortestTimeNode)) {
+                solutions.add(extractShortest(shortestTimeNode, minDriveTime, minTimeFrom, minTimeVia));
+                endNodesRemaining.remove(shortestTimeNode);
                 if (endNodesRemaining.isEmpty())
                     return solutions;
             }
             
-            unvisitedNodes.remove(shortestDistNode);
-            visitedNodes.add(shortestDistNode);
+            unvisitedNodes.remove(shortestTimeNode);
+            visitedNodes.add(shortestTimeNode);
 
-            for (DirectedEdge edge : (direction == Direction.FORWARDS ? shortestDistNode.edgesFrom : shortestDistNode.edgesTo)) {
+            for (DirectedEdge edge : (direction == Direction.FORWARDS ? shortestTimeNode.edgesFrom : shortestTimeNode.edgesTo)) {
                 Node n = (direction == Direction.FORWARDS ? edge.to : edge.from);
-                if (n.contractionOrder < shortestDistNode.contractionOrder)
+                if (n.contractionOrder < shortestTimeNode.contractionOrder)
                     continue;
                 if (visitedNodes.contains(n))
                     continue;
-                float newDist = thisNodeDistance + edge.distance;
+                int newTime = thisNodeDriveTime + edge.driveTimeMs;
 
-                Float previousDist = minDistance.get(n);
-                if (previousDist==null) previousDist = Float.POSITIVE_INFINITY;
+                Integer previousTime = minDriveTime.get(n);
+                if (previousTime==null) previousTime = Integer.MAX_VALUE;
 
-                if (newDist < previousDist) {
+                if (newTime < previousTime) {
                     unvisitedNodes.remove(n);
-                    minDistance.put(n, newDist);
-                    minDistFrom.put(n, shortestDistNode);
-                    minDistVia.put(n, edge);
+                    minDriveTime.put(n, newTime);
+                    minTimeFrom.put(n, shortestTimeNode);
+                    minTimeVia.put(n, edge);
                     unvisitedNodes.add(n);
                 }
             }
@@ -141,22 +141,22 @@ public class Dijkstra {
     }
 
     private static class CompareNodes implements Comparator<Node> {
-        final HashMap<Node,Float> minDistance;
+        final HashMap<Node,Integer> minDriveTime;
 
-        CompareNodes(HashMap<Node,Float> minDistance) {
-            this.minDistance = minDistance;
+        CompareNodes(HashMap<Node,Integer> minDriveTime) {
+            this.minDriveTime = minDriveTime;
         }
 
         public int compare(Node o1, Node o2) {
-            Float distA = minDistance.get(o1);
-            distA = (distA==null?Float.POSITIVE_INFINITY:distA);
+            Integer timeA = minDriveTime.get(o1);
+            timeA = (timeA==null?Integer.MAX_VALUE:timeA);
 
-            Float distB = minDistance.get(o2);
-            distB = (distB==null?Float.POSITIVE_INFINITY:distB);
+            Integer timeB = minDriveTime.get(o2);
+            timeB = (timeB==null?Integer.MAX_VALUE:timeB);
 
-            if (distA < distB) {
+            if (timeA < timeB) {
                 return -1;
-            } else if (distA > distB) {
+            } else if (timeA > timeB) {
                 return 1;
             } else {
                 return Long.compare(o1.nodeId,o2.nodeId);
@@ -164,23 +164,17 @@ public class Dijkstra {
         }
     }
 
-    /**
-     * Prints a formatted string represening the results of dijkstrasAlgorithm
-     * by repeatedly following minDistFrom until the peak is reached.
-     * @param endNode, the furthest node from the peak on the route.
-     * @return String of the format <pre>FR,XH,PEAK</pre>
-     */
-    public static DijkstraSolution extractShortest(Node endNode, HashMap<Node,Float> minDistance, HashMap<Node,Node> minDistFrom, HashMap<Node,DirectedEdge> minDistVia) {
+    public static DijkstraSolution extractShortest(Node endNode, HashMap<Node,Integer> minDriveTime, HashMap<Node,Node> minTimeFrom, HashMap<Node,DirectedEdge> minTimeVia) {
         DijkstraSolution solution = new DijkstraSolution();
 
         Node thisNode = endNode;
-        solution.totalDistance = minDistance.get(endNode);
+        solution.totalDriveTime = minDriveTime.get(endNode);
 
         while (thisNode != null) {
             solution.nodes.addFirst(thisNode);
-            if (minDistVia.containsKey(thisNode))
-                solution.edges.addFirst(minDistVia.get(thisNode));
-            thisNode = minDistFrom.get(thisNode);
+            if (minTimeVia.containsKey(thisNode))
+                solution.edges.addFirst(minTimeVia.get(thisNode));
+            thisNode = minTimeFrom.get(thisNode);
         }
         return solution;
     }

@@ -62,8 +62,7 @@ public class BinaryFormat {
                 long edgeId = source.readLong();
                 long fromNodeId = source.readLong();
                 long toNodeId = source.readLong();
-                float distance = source.readLong() / 1000.0f;
-                //float distance = source.readFloat();
+                int driveTimeMs = source.readInt();
                 boolean isShortcut = source.readBoolean();
                 long firstEdgeId = source.readLong();
                 long secondEdgeId = source.readLong();
@@ -83,9 +82,9 @@ public class BinaryFormat {
                     DirectedEdge firstEdge = edgesById.get(firstEdgeId);
                     DirectedEdge secondEdge = edgesById.get(secondEdgeId);
                     Preconditions.checkNoneNull(firstEdge,secondEdge);
-                    de = new DirectedEdge(edgeId, fromNode, toNode, distance, firstEdge, secondEdge);
+                    de = new DirectedEdge(edgeId, fromNode, toNode, driveTimeMs, firstEdge, secondEdge);
                 } else {
-                    de = new DirectedEdge(edgeId, fromNode, toNode, distance);
+                    de = new DirectedEdge(edgeId, fromNode, toNode, driveTimeMs);
                 }
                 
                 fromNode.edgesFrom.add(de);
@@ -140,7 +139,7 @@ public class BinaryFormat {
         dos.writeLong(de.edgeId);
         dos.writeLong(de.from.nodeId);
         dos.writeLong(de.to.nodeId);
-        dos.writeFloat(de.distance);
+        dos.writeInt(de.driveTimeMs);
         dos.writeBoolean(de.isShortcut());
         if (de.isShortcut()) {
             dos.writeLong(de.first.edgeId);

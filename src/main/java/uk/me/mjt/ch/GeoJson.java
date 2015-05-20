@@ -81,7 +81,7 @@ public class GeoJson {
         }
     }
     
-    private abstract class EdgePrintCondition {
+    private static abstract class EdgePrintCondition {
         abstract boolean shouldPrintEdge(DirectedEdge de);
     }
 

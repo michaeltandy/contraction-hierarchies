@@ -57,12 +57,12 @@ public class GraphContractor {
         ArrayList<DirectedEdge> shortcuts = new ArrayList<DirectedEdge>();
 
         HashSet<Node> destinationNodes = new HashSet<Node>();
-        float maxOutDist = 0;
+        int maxOutTime = 0;
         for (DirectedEdge outgoing : n.edgesFrom) {
             if (!outgoing.to.isContracted()) {
                 destinationNodes.add(outgoing.to);
-                if (outgoing.distance > maxOutDist)
-                    maxOutDist = outgoing.distance;
+                if (outgoing.driveTimeMs > maxOutTime)
+                    maxOutTime = outgoing.driveTimeMs;
             }
         }
         
@@ -73,18 +73,16 @@ public class GraphContractor {
 
             List<DijkstraSolution> routed = Dijkstra.dijkstrasAlgorithm(allNodes,
                     startNode,
-                    new HashSet<Node>(destinationNodes),
-                    incoming.distance+maxOutDist,
+                    new HashSet<>(destinationNodes),
+                    incoming.driveTimeMs+maxOutTime,
                     Direction.FORWARDS);
 
             for (DijkstraSolution ds : routed) {
-                //System.out.print(ds + ", " + ds.totalDistance);
                 if (ds.nodes.size() == 3 && ds.nodes.get(1)==n) {
-                    //System.out.println("  Shortcut " + ds + ", " + ds.totalDistance);
                     shortcuts.add(new DirectedEdge(maxEdgeId++,
                             ds.nodes.getFirst(),
                             ds.nodes.getLast(),
-                            ds.totalDistance,
+                            ds.totalDriveTime,
                             ds.edges.get(0),
                             ds.edges.get(1)));
                 } else {
@@ -97,7 +95,7 @@ public class GraphContractor {
     }
 
 
-    TreeMap<ContractionOrdering,Node> contractionOrder = new TreeMap<ContractionOrdering,Node>();
+    TreeMap<ContractionOrdering,Node> contractionOrder = new TreeMap<>();
 
     public void initialiseContractionOrder() {
         long orderingStart = System.currentTimeMillis();

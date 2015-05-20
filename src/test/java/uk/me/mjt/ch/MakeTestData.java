@@ -13,9 +13,9 @@ public class MakeTestData {
         Node n2 = new Node(2, 52f, 0.2f);
         Node n3 = new Node(3, 52f, 0.3f);
         
-        DirectedEdge de1 = new DirectedEdge(1001, n1, n2, 1f);
-        DirectedEdge de2 = new DirectedEdge(1002, n2, n3, 2f);
-        DirectedEdge de3 = new DirectedEdge(1003, n1, n3, 3f, de1, de2);
+        DirectedEdge de1 = new DirectedEdge(1001, n1, n2, 1);
+        DirectedEdge de2 = new DirectedEdge(1002, n2, n3, 2);
+        DirectedEdge de3 = new DirectedEdge(1003, n1, n3, 3, de1, de2);
         
         n1.edgesFrom.add(de1);
         n2.edgesTo.add(de1);

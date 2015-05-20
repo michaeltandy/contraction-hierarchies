@@ -9,22 +9,22 @@ public class DirectedEdge {
     public final long edgeId;
     public final Node from;
     public final Node to;
-    public final float distance; // TODO replace with a long in mm, to avoid rounding errors?
+    public final int driveTimeMs;
 
     // Parameters for graph contraction:
     public final DirectedEdge first;
     public final DirectedEdge second;
     public final int contractionDepth;
     
-    public DirectedEdge(long edgeId, Node from, Node to, float distance) {
-        this(edgeId,from,to,distance,null,null);
+    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs) {
+        this(edgeId,from,to,driveTimeMs,null,null);
     }
 
-    public DirectedEdge(long edgeId, Node from, Node to, float distance, DirectedEdge first, DirectedEdge second) {
+    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
         this.edgeId = edgeId;
         this.from = from;
         this.to = to;
-        this.distance = distance;
+        this.driveTimeMs = driveTimeMs;
         this.first = first;
         this.second = second;
         if (first == null && second == null) {

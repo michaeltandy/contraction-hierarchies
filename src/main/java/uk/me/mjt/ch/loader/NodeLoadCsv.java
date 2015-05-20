@@ -42,7 +42,8 @@ public class NodeLoadCsv {
                     Node toNode = getOrCreate(allNodes, toName, toLat, toLon, toContractable);
 
                     float distance = Float.parseFloat(parts[8]);
-                    DirectedEdge de = new DirectedEdge(edgeId++, fromNode, toNode, distance);
+                    int driveTimeMs = (int) (distance * 1000.0); // Not the most elegant way of doing things, but...
+                    DirectedEdge de = new DirectedEdge(edgeId++, fromNode, toNode, driveTimeMs);
                     fromNode.edgesFrom.add(de);
                     toNode.edgesTo.add(de);
                 } else { // If none of our parsers match it...
