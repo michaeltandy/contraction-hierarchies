@@ -17,7 +17,7 @@ public class DijkstraSolution  {
             for (Node n : nodes) {
                 sb.append(n.nodeId).append(",");
             }
-            sb.append(String.format(" length %.2f", totalDriveTime));
+            sb.append(String.format(" Duration %.2f secs (%.2f mins)", totalDriveTime/1000.0, totalDriveTime/60000.0));
             return sb.toString();
         }
     }

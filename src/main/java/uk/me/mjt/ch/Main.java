@@ -63,6 +63,19 @@ public class Main {
             System.out.println(GeoJson.solution(contracted));
             //System.out.println(GeoJson.allLinks(allNodes.values()));
             //System.out.println(GeoJson.allLinks(allNodes.values()));
+            
+            bf.writeWays(allNodes.values(), 
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-nodes.dat",
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-ways.dat");
+            
+            HashMap<Long,Node> readback=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-nodes.dat",
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-ways.dat");
+            
+            boolean readbackMatch = Util.deepEquals(allNodes, readback);
+            System.out.println("Readback match: " + readback);
+            if (!readbackMatch) {
+                System.exit(1);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

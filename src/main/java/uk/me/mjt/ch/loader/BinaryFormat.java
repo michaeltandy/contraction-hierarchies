@@ -12,10 +12,24 @@ public class BinaryFormat {
         FileInputStream nodesIn = new FileInputStream(nodeFile);
         FileInputStream waysIn = new FileInputStream(wayFile);
         
-        HashMap<Long, Node> result = readNodes(new DataInputStream(nodesIn));
-        loadEdgesGivenNodes(result,new DataInputStream(waysIn));
+        HashMap<Long, Node> result = readNodes(new DataInputStream(new BufferedInputStream(nodesIn)));
+        loadEdgesGivenNodes(result,new DataInputStream(new BufferedInputStream(waysIn)));
         
         return result;
+    }
+    
+    public void writeWays(Collection<Node> toWrite, String nodeFile, String wayFile) throws IOException {
+        DataOutputStream waysOut = outStream(wayFile);
+        writeEdges(toWrite,waysOut);
+        waysOut.close();
+        
+        DataOutputStream nodesOut = outStream(nodeFile);
+        writeNodesWithoutEdges(toWrite,nodesOut);
+        nodesOut.close();
+    }
+    
+    private static DataOutputStream outStream(String filename) throws FileNotFoundException {
+        return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
     }
     
     /*public void writeData(HashMap<Long,Node> toWrite, OutputStream destination) throws IOException {
