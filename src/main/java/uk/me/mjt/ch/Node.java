@@ -41,6 +41,17 @@ public class Node {
     public boolean isContracted() {
         return contractionOrder!=UNCONTRACTED;
     }
+    
+    public ArrayList<Node> getNeighbors() {
+        ArrayList<Node> neighbors = new ArrayList<>();
+        for (DirectedEdge de : edgesFrom) {
+            neighbors.add(de.to);
+        }
+        for (DirectedEdge de : edgesTo) {
+            neighbors.add(de.from);
+        }
+        return neighbors;
+    }
 
     @Override
     public boolean equals(Object obj) {

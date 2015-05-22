@@ -14,10 +14,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-/**
- *
- * @author michael
- */
 public class GraphContractor {
     private final HashMap<Long,Node> allNodes;
     private long maxEdgeId;
@@ -95,7 +91,7 @@ public class GraphContractor {
     }
 
 
-    TreeMap<ContractionOrdering,Node> contractionOrder = new TreeMap<>();
+    BidirectionalTreeMap<ContractionOrdering,Node> contractionOrder = new BidirectionalTreeMap<>();
 
     public void initialiseContractionOrder() {
         long orderingStart = System.currentTimeMillis();
@@ -146,6 +142,7 @@ public class GraphContractor {
 
         Node n;
         while ((n = lazyContractNextNode(contractionProgress++, false)) != null) {
+            reorderImmediateNeighbors(n);
             //System.out.println("Contracted " + n);
             if (contractionOrder.size() % 10000 == 0) {
                 long now = System.currentTimeMillis();
@@ -171,12 +168,12 @@ public class GraphContractor {
     }
 
     private Node lazyContractNextNode(int contractionProgress, boolean includeUnprofitable) {
-        Map.Entry<ContractionOrdering,Node> next = contractionOrder.pollLastEntry();
+        Map.Entry<ContractionOrdering,Node> next = contractionOrder.pollFirstEntry();
         boolean recentlySorted = false;
         while (next != null) {
             ContractionOrdering oldOrder = next.getKey();
             Node n = next.getValue();
-
+            
             ArrayList<DirectedEdge> shortcuts = findShortcuts(n);
             nodePreContractChecks++;
             
@@ -209,9 +206,43 @@ public class GraphContractor {
                 System.out.println("Contraction became unprofitable with " + contractionOrder.size() + " nodes remaining.");
                 return null;
             }
-            next = contractionOrder.pollLastEntry();
+            next = contractionOrder.pollFirstEntry();
         }
         return null;
+    }
+    
+    private void reorderImmediateNeighbors(Node justContracted) {
+        for (Node neighbor : justContracted.getNeighbors()) {
+            reorderNodeIfNeeded(neighbor);
+        }
+    }
+    
+    private boolean reorderNodeIfNeeded(Node n) {
+        ContractionOrdering oldOrder = contractionOrder.keyForValue(n);
+        if (oldOrder == null) {
+            return false;
+        }
+        
+        ArrayList<DirectedEdge> shortcuts = findShortcuts(n);
+        int balanceOfEdgesRemoved = getEdgeRemovedCount(n)-shortcuts.size();
+        ContractionOrdering newOrder = new ContractionOrdering(n,balanceOfEdgesRemoved);
+        
+        if (oldOrder.compareTo(newOrder) != 0) {
+            try {
+                contractionOrder.remove(oldOrder);
+                contractionOrder.put(newOrder, n);
+                return true;
+            } catch (IllegalArgumentException e) {
+                System.out.println("Node " + n);
+                System.out.println("Removing " + oldOrder);
+                System.out.println("to add " + newOrder);
+                contractionOrder.keyForValue(n);
+                contractionOrder.remove(oldOrder);
+                throw e;
+            }
+        } else {
+            return false;
+        }
     }
 
     public static int getMaxContractionDepth(List<DirectedEdge> de) {
@@ -222,7 +253,7 @@ public class GraphContractor {
         return maxContractionDepth;
     }
     
-    private class ContractionOrdering implements Comparable<ContractionOrdering> {
+    class ContractionOrdering implements Comparable<ContractionOrdering> {
         final int edgeCountReduction;
         final int contractionDepth;
         final int namehash; // If everything else is equal we don't care about the order - but it's useful for it to be stable between runs.
@@ -242,17 +273,45 @@ public class GraphContractor {
         public int compareTo(ContractionOrdering o) {
             if (o == null) {
                 return -1;
+            } else if (this.edgeCountReduction>=0 && o.edgeCountReduction<0) {
+                return -1;
+            } else if (this.edgeCountReduction<0 && o.edgeCountReduction>=0) {
+                return 1;
             } else if (this.contractionDepth != o.contractionDepth) {
-                return o.contractionDepth-this.contractionDepth;
+                return Integer.compare(this.contractionDepth,o.contractionDepth);
             } else if (this.edgeCountReduction != o.edgeCountReduction) {
-                return this.edgeCountReduction-o.edgeCountReduction;
+                return Integer.compare(o.edgeCountReduction,this.edgeCountReduction);
             } else if (this.namehash != o.namehash) {
-                return this.namehash-o.namehash;
+                return Integer.compare(this.namehash,o.namehash);
             } else {
                 return 0;
             }
         }
 
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 17 * hash + this.edgeCountReduction;
+            hash = 17 * hash + this.contractionDepth;
+            hash = 17 * hash + this.namehash;
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            final ContractionOrdering other = (ContractionOrdering) obj;
+            return (this.edgeCountReduction == other.edgeCountReduction
+                    && this.contractionDepth == other.contractionDepth
+                    && this.namehash == other.namehash);
+        }
+
+        @Override
+        public String toString() {
+            return "(edge reduction=" + edgeCountReduction + ", depth=" + contractionDepth + ", hash=" + namehash + ')';
+        }
     }
     
     private class KeyValue {
