@@ -28,7 +28,7 @@ public class Main {
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat");
             Node startNode = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             //Node endNode = allNodes.get(26805194L); // https://www.openstreetmap.org/node/26805194 St Albans
-            Node endNode = allNodes.get(26805194L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
+            Node endNode = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
             
             
             //System.out.println(GeoJson.linksInBbox(allNodes.values(), 51.744675, -0.3088188, 51.7636966, -0.241098));

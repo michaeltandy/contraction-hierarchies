@@ -23,8 +23,7 @@ public class Dijkstra {
 
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long,Node> allNodes, Node startNode, Node endNode ) {
         Preconditions.checkNoneNull(allNodes,startNode,endNode);
-        HashSet<Node> everyNode = new HashSet<Node>(allNodes.values());
-        List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, startNode, everyNode, Float.POSITIVE_INFINITY, Direction.FORWARDS);
+        List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, startNode, null, Float.POSITIVE_INFINITY, Direction.FORWARDS);
 
         HashMap<Node,DijkstraSolution> upwardPaths = new HashMap<Node,DijkstraSolution>();
 
@@ -32,7 +31,7 @@ public class Dijkstra {
             upwardPaths.put(ds.nodes.getLast(), ds);
         }
 
-        List<DijkstraSolution> downwardSolutions = dijkstrasAlgorithm(allNodes, endNode, everyNode, Float.POSITIVE_INFINITY, Direction.BACKWARDS);
+        List<DijkstraSolution> downwardSolutions = dijkstrasAlgorithm(allNodes, endNode, null, Float.POSITIVE_INFINITY, Direction.BACKWARDS);
 
         DijkstraSolution shortestSolution = null;
 
@@ -84,17 +83,13 @@ public class Dijkstra {
      * first.
      */
     public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchTime, Direction direction ) {
-        Preconditions.checkNoneNull(allNodes,startNode,endNodes,direction);
-        //ArrayList<Node> visitedNodes = new ArrayList<Node>();
+        Preconditions.checkNoneNull(allNodes,startNode,direction);
         HashSet<Node> visitedNodes = new HashSet<>();
         HashMap<Node,Integer> minDriveTime = new HashMap<>();
         HashMap<Node,Node> minTimeFrom = new HashMap<>();
         HashMap<Node,DirectedEdge> minTimeVia = new HashMap<>();
-        HashSet<Node> endNodesRemaining = (HashSet<Node>)endNodes.clone(); //
+        ArrayList<DijkstraSolution> solutions = new ArrayList<>();
 
-        ArrayList<DijkstraSolution> solutions = new ArrayList<>(endNodes.size());
-
-        //ArrayList<Node> unvisitedNodes = new ArrayList<Node>();
         TreeSet<Node> unvisitedNodes = new TreeSet<Node>(new CompareNodes(minDriveTime));
 
         minDriveTime.put(startNode, 0);
@@ -106,10 +101,11 @@ public class Dijkstra {
             Node shortestTimeNode = unvisitedNodes.first();
             int thisNodeDriveTime = minDriveTime.get(shortestTimeNode);
 
-            if (endNodesRemaining.contains(shortestTimeNode)) {
+            if (endNodes == null) {
                 solutions.add(extractShortest(shortestTimeNode, minDriveTime, minTimeFrom, minTimeVia));
-                endNodesRemaining.remove(shortestTimeNode);
-                if (endNodesRemaining.isEmpty())
+            } else if (endNodes.contains(shortestTimeNode)) {
+                solutions.add(extractShortest(shortestTimeNode, minDriveTime, minTimeFrom, minTimeVia));
+                if (solutions.size() == endNodes.size())
                     return solutions;
             }
             
