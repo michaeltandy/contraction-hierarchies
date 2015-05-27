@@ -27,7 +27,7 @@ public class GraphContractor {
     
     public GraphContractor(HashMap<Long,Node> allNodes) {
         this.allNodes = allNodes;
-        this.maxEdgeId = 4294967296L;
+        this.maxEdgeId = 50000L;
     }
 
     private int getEdgeRemovedCount(Node n) {
@@ -41,11 +41,25 @@ public class GraphContractor {
     }
 
     public void contractNode(Node n, int order, ArrayList<DirectedEdge> shortcuts) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"contractNode\": ").append(n.nodeId)
+                .append(", \"addShortcuts\": [");
+        
         for (DirectedEdge se : shortcuts) {
             se.from.edgesFrom.add(se);
             se.to.edgesTo.add(se);
+            sb.append("{\"from\": ").append(se.from.nodeId)
+                    .append(", \"to\":").append(se.to.nodeId)
+                    .append(", \"contractionDepth\": ").append(se.contractionDepth)
+                    .append("},");
         }
+        if (sb.toString().endsWith(","))
+            sb.deleteCharAt(sb.length()-1);
+        sb.append("]},");
         n.contractionOrder = order;
+        
+        System.out.println(sb.toString());
+        
     }
 
     public ArrayList<DirectedEdge> findShortcuts(Node n) {
@@ -76,8 +90,8 @@ public class GraphContractor {
             for (DijkstraSolution ds : routed) {
                 if (ds.nodes.size() == 3 && ds.nodes.get(1)==n) {
                     shortcuts.add(new DirectedEdge(maxEdgeId++,
-                            ds.nodes.getFirst(),
-                            ds.nodes.getLast(),
+                            ds.getFirstNode(),
+                            ds.getLastNode(),
                             ds.totalDriveTime,
                             ds.edges.get(0),
                             ds.edges.get(1)));
@@ -143,15 +157,16 @@ public class GraphContractor {
         Node n;
         while ((n = lazyContractNextNode(contractionProgress++, false)) != null) {
             reorderImmediateNeighbors(n);
+            
             //System.out.println("Contracted " + n);
             if (contractionOrder.size() % 10000 == 0) {
                 long now = System.currentTimeMillis();
                 long runTimeSoFar = now-startTime;
                 long orderingTimeThisRun = millisSpentOnContractionOrdering-recentOrderingMillis;
                 float checksPerPass = (float)(nodePreContractChecks-recentPreContractChecks) / (float)(nodePreContractChecksPassed-recentPreContractChecksPassed);
-                System.out.println(runTimeSoFar+"," + contractionOrder.size() + 
-                        "," + (now-recentTime) + "," + orderingTimeThisRun + 
-                        "," + checksPerPass);
+                //System.out.println(runTimeSoFar+"," + contractionOrder.size() + 
+                //        "," + (now-recentTime) + "," + orderingTimeThisRun + 
+                //        "," + checksPerPass);
                 recentTime=now;
                 recentPreContractChecks=nodePreContractChecks;
                 recentPreContractChecksPassed=nodePreContractChecksPassed;
@@ -233,9 +248,6 @@ public class GraphContractor {
                 contractionOrder.put(newOrder, n);
                 return true;
             } catch (IllegalArgumentException e) {
-                System.out.println("Node " + n);
-                System.out.println("Removing " + oldOrder);
-                System.out.println("to add " + newOrder);
                 contractionOrder.keyForValue(n);
                 contractionOrder.remove(oldOrder);
                 throw e;

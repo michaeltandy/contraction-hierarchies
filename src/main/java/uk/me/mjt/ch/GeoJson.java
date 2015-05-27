@@ -2,7 +2,7 @@
 package uk.me.mjt.ch;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 
 
 public class GeoJson {
@@ -65,7 +65,7 @@ public class GeoJson {
     }
     
     public static String solution(DijkstraSolution solution) {
-        LinkedList<Node> nodes = solution.nodes;
+        List<Node> nodes = solution.nodes;
         if (nodes.isEmpty()) {
             // TODO decide what's a sensible thing to do here.
             return "{\"type\": \"FeatureCollection\",\"features\": []}";

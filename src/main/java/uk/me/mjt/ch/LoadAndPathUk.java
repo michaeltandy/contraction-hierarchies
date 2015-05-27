@@ -2,7 +2,7 @@ package uk.me.mjt.ch;
 
 import uk.me.mjt.ch.Dijkstra.Direction;
 import java.io.*;
-import java.util.HashMap;
+import java.util.*;
 import uk.me.mjt.ch.loader.BinaryFormat;
 import uk.me.mjt.ch.loader.NodeLoadCsv;
 
@@ -37,11 +37,21 @@ public class LoadAndPathUk {
                 contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
             
-            startTime = System.currentTimeMillis();
+            /*startTime = System.currentTimeMillis();
             for (int i=0 ; i<100 ; i++) {
                 contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
-            System.out.println("Repeated forwards search in " + (System.currentTimeMillis()-startTime) + "ms.");
+            System.out.println("Repeated forwards search in " + (System.currentTimeMillis()-startTime) + "ms.");*/
+            
+            ArrayList<Node> testLocations = new ArrayList();
+            for (Node n : allNodes.values()) {
+                testLocations.add(n);
+                if (testLocations.size() >= 200) break;
+            }
+            
+            startTime = System.currentTimeMillis();
+            HashMap<Node,HashMap<Node,DijkstraSolution>> allPaths = Dijkstra.contractedGraphDijkstra(allNodes, testLocations, testLocations);
+            System.out.println("Many-to-many path for " + testLocations.size() + " in " + (System.currentTimeMillis()-startTime) + "ms.");
             
             
             
