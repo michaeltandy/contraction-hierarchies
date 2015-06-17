@@ -21,6 +21,8 @@ public class DirectedEdge {
     }
 
     public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
+        Preconditions.checkNoneNull(from, to);
+        Preconditions.require(edgeId >= 0, driveTimeMs >= 0);
         this.edgeId = edgeId;
         this.from = from;
         this.to = to;
@@ -53,5 +55,8 @@ public class DirectedEdge {
         }
     }
     
+    public DirectedEdge cloneWithEdgeId(long edgeId) {
+        return new DirectedEdge(edgeId, from, to, driveTimeMs, first, second);
+    }
     
 }

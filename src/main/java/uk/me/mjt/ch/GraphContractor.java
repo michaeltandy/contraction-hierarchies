@@ -41,25 +41,12 @@ public class GraphContractor {
     }
 
     public void contractNode(Node n, int order, ArrayList<DirectedEdge> shortcuts) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"contractNode\": ").append(n.nodeId)
-                .append(", \"addShortcuts\": [");
-        
-        for (DirectedEdge se : shortcuts) {
-            se.from.edgesFrom.add(se);
-            se.to.edgesTo.add(se);
-            sb.append("{\"from\": ").append(se.from.nodeId)
-                    .append(", \"to\":").append(se.to.nodeId)
-                    .append(", \"contractionDepth\": ").append(se.contractionDepth)
-                    .append("},");
+        for (DirectedEdge s : shortcuts) {
+            DirectedEdge newShortcut = s.cloneWithEdgeId(maxEdgeId++);
+            newShortcut.from.edgesFrom.add(newShortcut);
+            newShortcut.to.edgesTo.add(newShortcut);
         }
-        if (sb.toString().endsWith(","))
-            sb.deleteCharAt(sb.length()-1);
-        sb.append("]},");
         n.contractionOrder = order;
-        
-        System.out.println(sb.toString());
-        
     }
 
     public ArrayList<DirectedEdge> findShortcuts(Node n) {
@@ -89,7 +76,7 @@ public class GraphContractor {
 
             for (DijkstraSolution ds : routed) {
                 if (ds.nodes.size() == 3 && ds.nodes.get(1)==n) {
-                    shortcuts.add(new DirectedEdge(maxEdgeId++,
+                    shortcuts.add(new DirectedEdge(0,
                             ds.getFirstNode(),
                             ds.getLastNode(),
                             ds.totalDriveTime,
@@ -162,9 +149,9 @@ public class GraphContractor {
             if (contractionOrder.size() % 10000 == 0) {
                 long now = System.currentTimeMillis();
                 long runTimeSoFar = now-startTime;
-                long orderingTimeThisRun = millisSpentOnContractionOrdering-recentOrderingMillis;
-                float checksPerPass = (float)(nodePreContractChecks-recentPreContractChecks) / (float)(nodePreContractChecksPassed-recentPreContractChecksPassed);
-                //System.out.println(runTimeSoFar+"," + contractionOrder.size() + 
+                //long orderingTimeThisRun = millisSpentOnContractionOrdering-recentOrderingMillis;
+                //float checksPerPass = (float)(nodePreContractChecks-recentPreContractChecks) / (float)(nodePreContractChecksPassed-recentPreContractChecksPassed);
+                System.out.println(runTimeSoFar+"," + contractionOrder.size());
                 //        "," + (now-recentTime) + "," + orderingTimeThisRun + 
                 //        "," + checksPerPass);
                 recentTime=now;

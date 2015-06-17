@@ -2,9 +2,6 @@
 package uk.me.mjt.ch;
 
 import java.util.HashMap;
-import uk.me.mjt.ch.DirectedEdge;
-import uk.me.mjt.ch.Node;
-
 
 public class MakeTestData {
     
@@ -32,6 +29,58 @@ public class MakeTestData {
         result.put(3L, n3);
         
         return result;
+    }
+    
+    private static final int rowCount = 2;
+    private static final int colCount = 10;
+    
+    public static HashMap<Long,Node> makeLadder() {
+        HashMap<Long,Node> result = new HashMap();
+        
+        float rowSpacing = Math.min(0.05f/rowCount,0.05f/colCount);
+        
+        for (int row = 0 ; row < rowCount ; row++) {
+            for (int column = 0 ; column < colCount ; column++) {
+                long nodeId = ladderNodeId(row,column);
+                Node n = new Node(nodeId,51.51f+rowSpacing*row,-0.12f+rowSpacing*column);
+                result.put(nodeId, n);
+            }
+        }
+        
+        int edgeId = 1000;
+        
+        for (int row = 0 ; row < rowCount ; row++) {
+            for (int column = 0 ; column < colCount ; column++) {
+                Node fromNode = result.get(ladderNodeId(row,column));
+                long[] possibleToNodeIds = {ladderNodeId(row,column+1),
+                            ladderNodeId(row+1,column)};
+                for (long toNodeId : possibleToNodeIds) {
+                    if (result.containsKey(toNodeId)) {
+                        Node toNode = result.get(toNodeId);
+                        makeEdgeAndAddToNodes(edgeId++,fromNode,toNode,1000);
+                        makeEdgeAndAddToNodes(edgeId++,toNode,fromNode,1000);
+                    }
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    private static long ladderNodeId(int row, int col) {
+        if (row >= rowCount || col >= colCount || row < 0 || col < 0) {
+            return Integer.MIN_VALUE;
+        } else {
+            return colCount * row + col;
+        }
+    }
+    
+    private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs) {
+        Preconditions.checkNoneNull(from,to);
+        DirectedEdge de = new DirectedEdge(edgeId, from, to, 1);
+        from.edgesFrom.add(de);
+        to.edgesTo.add(de);
+        return de;
     }
 
 }

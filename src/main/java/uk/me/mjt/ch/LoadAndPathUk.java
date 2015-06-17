@@ -20,12 +20,15 @@ public class LoadAndPathUk {
             HashMap<Long,Node> allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-ways.dat");
             Node startNode = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
+            //Node startNode = allNodes.get(60455099L); // https://www.openstreetmap.org/node/60455099 Albert Drive, Glasgow
             Node endNode = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
             System.out.println("Data load complete in " + (System.currentTimeMillis()-startTime) + "ms.");
             
             DijkstraSolution contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             System.out.println("Contraction: "+contracted);
             System.out.println(GeoJson.solution(contracted));
+            
+            printGraphStats(allNodes);
             
             if (!expectedPath.equals(contracted.toString())) {
                 System.exit(-1);
@@ -37,13 +40,13 @@ public class LoadAndPathUk {
                 contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
             
-            /*startTime = System.currentTimeMillis();
+            startTime = System.currentTimeMillis();
             for (int i=0 ; i<100 ; i++) {
                 contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
-            System.out.println("Repeated forwards search in " + (System.currentTimeMillis()-startTime) + "ms.");*/
+            System.out.println("Repeated forwards search in " + (System.currentTimeMillis()-startTime) + "ms.");
             
-            ArrayList<Node> testLocations = new ArrayList();
+            /*ArrayList<Node> testLocations = new ArrayList();
             for (Node n : allNodes.values()) {
                 testLocations.add(n);
                 if (testLocations.size() >= 200) break;
@@ -51,7 +54,7 @@ public class LoadAndPathUk {
             
             startTime = System.currentTimeMillis();
             HashMap<Node,HashMap<Node,DijkstraSolution>> allPaths = Dijkstra.contractedGraphDijkstra(allNodes, testLocations, testLocations);
-            System.out.println("Many-to-many path for " + testLocations.size() + " in " + (System.currentTimeMillis()-startTime) + "ms.");
+            System.out.println("Many-to-many path for " + testLocations.size() + " in " + (System.currentTimeMillis()-startTime) + "ms.");*/
             
             
             
@@ -59,6 +62,33 @@ public class LoadAndPathUk {
             e.printStackTrace();
             System.exit(-1);
         }
+    }
+    
+    private static void printGraphStats(HashMap<Long,Node> allNodes) {
+        int nodeCount = 0;
+        int nonShortcutEdgeCount = 0;
+        int shortcutEdgeCount = 0;
+        int maxContractionDepth = 0;
+        
+        for (Long nodeId : allNodes.keySet()) {
+            Node node = allNodes.get(nodeId);
+            
+            nodeCount++;
+            
+            for (DirectedEdge de : node.edgesFrom) {
+                if (de.isShortcut()) {
+                    shortcutEdgeCount++;
+                } else {
+                    nonShortcutEdgeCount++;
+                }
+                maxContractionDepth = Math.max(maxContractionDepth, de.contractionDepth);
+            }
+        }
+        
+        System.out.println("nodeCount: "+nodeCount);
+        System.out.println("nonShortcutEdgeCount: "+nonShortcutEdgeCount);
+        System.out.println("shortcutEdgeCount: "+shortcutEdgeCount);
+        System.out.println("maxContractionDepth: "+maxContractionDepth);
     }
     
 }
