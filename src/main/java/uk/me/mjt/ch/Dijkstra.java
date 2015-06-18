@@ -191,8 +191,8 @@ public class Dijkstra {
             for (DirectedEdge edge : (direction == Direction.FORWARDS ? shortestTimeNode.edgesFrom : shortestTimeNode.edgesTo)) {
                 Node n = (direction == Direction.FORWARDS ? edge.to : edge.from);
                 if (n.contractionOrder < shortestTimeNode.contractionOrder)
-                    continue;
-                    //break;
+                    //continue;
+                    break;
                 if (visitedNodes.contains(n))
                     continue;
                 int newTime = thisNodeDriveTime + edge.driveTimeMs;

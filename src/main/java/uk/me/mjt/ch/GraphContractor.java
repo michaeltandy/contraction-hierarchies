@@ -219,6 +219,7 @@ public class GraphContractor {
     
     private void reorderImmediateNeighbors(Node justContracted) {
         for (Node neighbor : justContracted.getNeighbors()) {
+            neighbor.sortNeighborLists();
             reorderNodeIfNeeded(neighbor);
         }
     }
