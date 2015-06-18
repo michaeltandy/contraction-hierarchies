@@ -1,6 +1,8 @@
 package uk.me.mjt.ch;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class Node {
     public static final long UNCONTRACTED = Long.MAX_VALUE;
@@ -70,4 +72,21 @@ public class Node {
     public String toString() {
         return nodeId + "@" + lat + "," + lon;
     }
+    
+    public void sortNeighborLists() {
+        Collections.sort(edgesFrom, new Comparator<DirectedEdge>() {
+            @Override
+            public int compare(DirectedEdge t, DirectedEdge t1) {
+                return Long.compare(t1.to.contractionOrder, t.to.contractionOrder);
+            }
+        });
+        
+        Collections.sort(edgesTo, new Comparator<DirectedEdge>() {
+            @Override
+            public int compare(DirectedEdge t, DirectedEdge t1) {
+                return Long.compare(t1.from.contractionOrder, t.from.contractionOrder);
+            }
+        });
+    }
+    
 }

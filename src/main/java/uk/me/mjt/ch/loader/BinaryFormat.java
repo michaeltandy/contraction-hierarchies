@@ -108,6 +108,9 @@ public class BinaryFormat {
             
         } catch (EOFException e) { }
         
+        for (Node n : nodesById.values()) {
+            n.sortNeighborLists();
+        }
     }
     
     
