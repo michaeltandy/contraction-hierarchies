@@ -160,6 +160,10 @@ public class GraphContractor {
                 recentOrderingMillis=millisSpentOnContractionOrdering;
             }
         }
+        
+        for (Node sortNode : allNodes.values()) {
+            sortNode.sortNeighborLists();
+        }
        
         System.out.println("findShortcutsCalls: "+findShortcutsCalls);
         System.out.println("nodePreContractChecks: "+nodePreContractChecks);

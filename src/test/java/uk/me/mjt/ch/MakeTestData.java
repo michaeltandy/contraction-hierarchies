@@ -31,17 +31,14 @@ public class MakeTestData {
         return result;
     }
     
-    private static final int rowCount = 2;
-    private static final int colCount = 10;
-    
-    public static HashMap<Long,Node> makeLadder() {
+    public static HashMap<Long,Node> makeLadder(int rowCount, int colCount) {
         HashMap<Long,Node> result = new HashMap();
         
         float rowSpacing = Math.min(0.05f/rowCount,0.05f/colCount);
         
         for (int row = 0 ; row < rowCount ; row++) {
             for (int column = 0 ; column < colCount ; column++) {
-                long nodeId = ladderNodeId(row,column);
+                long nodeId = ladderNodeId(row,column, rowCount,colCount);
                 Node n = new Node(nodeId,51.51f+rowSpacing*row,-0.12f+rowSpacing*column);
                 result.put(nodeId, n);
             }
@@ -51,9 +48,9 @@ public class MakeTestData {
         
         for (int row = 0 ; row < rowCount ; row++) {
             for (int column = 0 ; column < colCount ; column++) {
-                Node fromNode = result.get(ladderNodeId(row,column));
-                long[] possibleToNodeIds = {ladderNodeId(row,column+1),
-                            ladderNodeId(row+1,column)};
+                Node fromNode = result.get(ladderNodeId(row,column, rowCount,colCount));
+                long[] possibleToNodeIds = {ladderNodeId(row,column+1, rowCount,colCount),
+                            ladderNodeId(row+1,column, rowCount,colCount)};
                 for (long toNodeId : possibleToNodeIds) {
                     if (result.containsKey(toNodeId)) {
                         Node toNode = result.get(toNodeId);
@@ -67,7 +64,7 @@ public class MakeTestData {
         return result;
     }
 
-    private static long ladderNodeId(int row, int col) {
+    private static long ladderNodeId(int row, int col, int rowCount, int colCount) {
         if (row >= rowCount || col >= colCount || row < 0 || col < 0) {
             return Integer.MIN_VALUE;
         } else {

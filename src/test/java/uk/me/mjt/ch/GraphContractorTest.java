@@ -11,7 +11,7 @@ public class GraphContractorTest {
 
     @Test
     public void testContractAll() {
-        HashMap<Long,Node> graph = MakeTestData.makeLadder();
+        HashMap<Long,Node> graph = MakeTestData.makeLadder(2,10);
         
         System.out.println(GeoJson.allLinks(graph.values()));
         System.out.println("\n\n\n");
@@ -25,6 +25,11 @@ public class GraphContractorTest {
             
         DijkstraSolution contracted = Dijkstra.contractedGraphDijkstra(graph, startNode, endNode);
         System.out.println("Contraction: "+contracted);
+        
+        assertNotNull(contracted);
+        assertEquals(8, contracted.totalDriveTime);
+        assertEquals(9, contracted.nodes.size());
+        
     }
 
     
