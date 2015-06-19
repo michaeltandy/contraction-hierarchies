@@ -1,5 +1,6 @@
 package uk.me.mjt.ch;
 
+import com.sun.xml.internal.ws.policy.AssertionSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -151,6 +152,8 @@ public class Dijkstra {
         }
         return new DijkstraSolution(totalDriveTime, nodes, edges);
     }
+    
+    private static final int DEFAULT_SET_SIZE = 4096;
 
     /**
      * dijkstrasAlgorithm performs a best-first graph search starting at startNode
@@ -160,51 +163,57 @@ public class Dijkstra {
      */
     public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchTime, Direction direction ) {
         Preconditions.checkNoneNull(allNodes,startNode,direction);
-        HashSet<Node> visitedNodes = new HashSet<>();
-        HashMap<Node,Integer> minDriveTime = new HashMap<>();
-        HashMap<Node,Node> minTimeFrom = new HashMap<>();
-        HashMap<Node,DirectedEdge> minTimeVia = new HashMap<>();
-        ArrayList<DijkstraSolution> solutions = new ArrayList<>();
+        HashMap<Node,NodeInfo> nodeInfo = new HashMap<>(DEFAULT_SET_SIZE);
+        ArrayList<DijkstraSolution> solutions = new ArrayList<>(DEFAULT_SET_SIZE);
 
-        TreeSet<Node> unvisitedNodes = new TreeSet<Node>(new CompareNodes(minDriveTime));
-
-        minDriveTime.put(startNode, 0);
+        TreeSet<Node> unvisitedNodes = new TreeSet<>(new CompareNodes(nodeInfo));
         unvisitedNodes.add(startNode);
         
-        while (unvisitedNodes.size() > 0 && minDriveTime.get(unvisitedNodes.first()) <= maxSearchTime) {
-
+        NodeInfo startNodeInfo = new NodeInfo();
+        startNodeInfo.minDriveTime = 0;
+        nodeInfo.put(startNode, startNodeInfo);
+        
+        while (!unvisitedNodes.isEmpty()) {
             // Find the node with the shortest drive time so far:
             Node shortestTimeNode = unvisitedNodes.first();
-            int thisNodeDriveTime = minDriveTime.get(shortestTimeNode);
+            NodeInfo thisNodeInfo = nodeInfo.get(shortestTimeNode);
+            
+            if (thisNodeInfo.minDriveTime > maxSearchTime)
+                break;
 
             if (endNodes == null) {
-                solutions.add(extractShortest(shortestTimeNode, minDriveTime, minTimeFrom, minTimeVia));
+                solutions.add(extractShortest(shortestTimeNode, nodeInfo));
             } else if (endNodes.contains(shortestTimeNode)) {
-                solutions.add(extractShortest(shortestTimeNode, minDriveTime, minTimeFrom, minTimeVia));
+                solutions.add(extractShortest(shortestTimeNode, nodeInfo));
                 if (solutions.size() == endNodes.size())
                     return solutions;
             }
             
             unvisitedNodes.remove(shortestTimeNode);
-            visitedNodes.add(shortestTimeNode);
+            thisNodeInfo.visited = true;
 
             for (DirectedEdge edge : (direction == Direction.FORWARDS ? shortestTimeNode.edgesFrom : shortestTimeNode.edgesTo)) {
                 Node n = (direction == Direction.FORWARDS ? edge.to : edge.from);
                 if (n.contractionOrder < shortestTimeNode.contractionOrder)
-                    //continue;
                     break;
-                if (visitedNodes.contains(n))
+                
+                NodeInfo neighborNodeInfo = nodeInfo.get(n);
+                if (neighborNodeInfo == null) {
+                    neighborNodeInfo = new NodeInfo();
+                    nodeInfo.put(n, neighborNodeInfo);
+                }
+                
+                if (neighborNodeInfo.visited)
                     continue;
-                int newTime = thisNodeDriveTime + edge.driveTimeMs;
-
-                Integer previousTime = minDriveTime.get(n);
-                if (previousTime==null) previousTime = Integer.MAX_VALUE;
-
+                
+                int newTime = thisNodeInfo.minDriveTime + edge.driveTimeMs;
+                int previousTime = neighborNodeInfo.minDriveTime;
+                
                 if (newTime < previousTime) {
                     unvisitedNodes.remove(n);
-                    minDriveTime.put(n, newTime);
-                    minTimeFrom.put(n, shortestTimeNode);
-                    minTimeVia.put(n, edge);
+                    neighborNodeInfo.minDriveTime = newTime;
+                    neighborNodeInfo.minTimeFrom = shortestTimeNode;
+                    neighborNodeInfo.minTimeVia = edge;
                     unvisitedNodes.add(n);
                 }
             }
@@ -214,41 +223,52 @@ public class Dijkstra {
     }
 
     private static class CompareNodes implements Comparator<Node> {
-        final HashMap<Node,Integer> minDriveTime;
+        final HashMap<Node,NodeInfo> nodeInfo;
 
-        CompareNodes(HashMap<Node,Integer> minDriveTime) {
-            this.minDriveTime = minDriveTime;
+        CompareNodes(HashMap<Node,NodeInfo> nodeInfo) {
+            this.nodeInfo = nodeInfo;
         }
 
         public int compare(Node o1, Node o2) {
-            Integer timeA = minDriveTime.get(o1);
-            timeA = (timeA==null?Integer.MAX_VALUE:timeA);
-
-            Integer timeB = minDriveTime.get(o2);
-            timeB = (timeB==null?Integer.MAX_VALUE:timeB);
-
-            if (timeA < timeB) {
+            NodeInfo infoA = nodeInfo.get(o1);
+            if (infoA == null) infoA = new NodeInfo();
+            
+            NodeInfo infoB = nodeInfo.get(o2);
+            if (infoB == null) infoB = new NodeInfo();
+            
+            if (infoA.minDriveTime < infoB.minDriveTime) {
                 return -1;
-            } else if (timeA > timeB) {
+            } else if (infoA.minDriveTime > infoB.minDriveTime) {
                 return 1;
             } else {
                 return Long.compare(o1.nodeId,o2.nodeId);
             }
         }
     }
+    
+    private static final class NodeInfo {
+        boolean visited = false;
+        int minDriveTime = Integer.MAX_VALUE;
+        Node minTimeFrom = null;
+        DirectedEdge minTimeVia = null;
+    }
 
-    public static DijkstraSolution extractShortest(Node endNode, HashMap<Node,Integer> minDriveTime, HashMap<Node,Node> minTimeFrom, HashMap<Node,DirectedEdge> minTimeVia) {
-        Node thisNode = endNode;
-        int totalDriveTime = minDriveTime.get(endNode);
+    private static DijkstraSolution extractShortest(final Node endNode, HashMap<Node,NodeInfo> nodeInfo) {
+        NodeInfo endNodeInfo = nodeInfo.get(endNode);
+        int totalDriveTime = endNodeInfo.minDriveTime;
         
         LinkedList<Node> nodes = new LinkedList();
         LinkedList<DirectedEdge> edges = new LinkedList();
-
+        
+        Node thisNode = endNode;
+        NodeInfo thisNodeInfo = endNodeInfo;
+        
         while (thisNode != null) {
             nodes.addFirst(thisNode);
-            if (minTimeVia.containsKey(thisNode))
-                edges.addFirst(minTimeVia.get(thisNode));
-            thisNode = minTimeFrom.get(thisNode);
+            if (thisNodeInfo.minTimeVia != null)
+                edges.addFirst(thisNodeInfo.minTimeVia);
+            thisNode = thisNodeInfo.minTimeFrom;
+            thisNodeInfo = nodeInfo.get(thisNode);
         }
         
         if (nodes.isEmpty()) {
