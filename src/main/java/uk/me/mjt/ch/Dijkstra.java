@@ -15,6 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.teneighty.heap.FibonacciHeap;
+import org.teneighty.heap.Heap;
 
 public class Dijkstra {
 
@@ -166,16 +168,18 @@ public class Dijkstra {
         HashMap<Node,NodeInfo> nodeInfo = new HashMap<>(DEFAULT_SET_SIZE);
         ArrayList<DijkstraSolution> solutions = new ArrayList<>(DEFAULT_SET_SIZE);
 
-        TreeSet<Node> unvisitedNodes = new TreeSet<>(new CompareNodes(nodeInfo));
-        unvisitedNodes.add(startNode);
+        FibonacciHeap<DistanceOrder,Node> unvisitedNodes = new FibonacciHeap<>();
+        Heap.Entry<DistanceOrder,Node> startHeapEntry = unvisitedNodes.insert(new DistanceOrder(startNode.nodeId,0), startNode);
         
         NodeInfo startNodeInfo = new NodeInfo();
         startNodeInfo.minDriveTime = 0;
+        startNodeInfo.heapEntry = startHeapEntry;
         nodeInfo.put(startNode, startNodeInfo);
         
         while (!unvisitedNodes.isEmpty()) {
             // Find the node with the shortest drive time so far:
-            Node shortestTimeNode = unvisitedNodes.first();
+            Heap.Entry<DistanceOrder,Node> minHeapEntry = unvisitedNodes.extractMinimum();
+            Node shortestTimeNode = minHeapEntry.getValue();
             NodeInfo thisNodeInfo = nodeInfo.get(shortestTimeNode);
             
             if (thisNodeInfo.minDriveTime > maxSearchTime)
@@ -189,8 +193,8 @@ public class Dijkstra {
                     return solutions;
             }
             
-            unvisitedNodes.remove(shortestTimeNode);
             thisNodeInfo.visited = true;
+            thisNodeInfo.heapEntry = null;
 
             for (DirectedEdge edge : (direction == Direction.FORWARDS ? shortestTimeNode.edgesFrom : shortestTimeNode.edgesTo)) {
                 Node n = (direction == Direction.FORWARDS ? edge.to : edge.from);
@@ -210,11 +214,17 @@ public class Dijkstra {
                 int previousTime = neighborNodeInfo.minDriveTime;
                 
                 if (newTime < previousTime) {
-                    unvisitedNodes.remove(n);
                     neighborNodeInfo.minDriveTime = newTime;
                     neighborNodeInfo.minTimeFrom = shortestTimeNode;
                     neighborNodeInfo.minTimeVia = edge;
-                    unvisitedNodes.add(n);
+                    
+                    DistanceOrder newDistOrder = new DistanceOrder(n.nodeId, newTime);
+                    if (neighborNodeInfo.heapEntry == null) {
+                        neighborNodeInfo.heapEntry = unvisitedNodes.insert(newDistOrder, n);
+                    } else {
+                        unvisitedNodes.decreaseKey(neighborNodeInfo.heapEntry, newDistOrder);
+                    }
+                    
                 }
             }
         }
@@ -222,7 +232,7 @@ public class Dijkstra {
         return solutions;
     }
 
-    private static class CompareNodes implements Comparator<Node> {
+    /*private static class CompareNodes implements Comparator<Node> {
         final HashMap<Node,NodeInfo> nodeInfo;
 
         CompareNodes(HashMap<Node,NodeInfo> nodeInfo) {
@@ -244,13 +254,36 @@ public class Dijkstra {
                 return Long.compare(o1.nodeId,o2.nodeId);
             }
         }
+    }*/
+    
+    private static final class DistanceOrder implements Comparable<DistanceOrder> {
+        private final long nodeId;
+        private final int minDriveTime;
+
+        public DistanceOrder(long nodeId, int minDriveTime) {
+            this.nodeId = nodeId;
+            this.minDriveTime = minDriveTime;
+        }
+        
+        @Override
+        public int compareTo(DistanceOrder that) {
+            if (this.minDriveTime < that.minDriveTime) {
+                return -1;
+            } else if (this.minDriveTime > that.minDriveTime) {
+                return 1;
+            } else {
+                return Long.compare(this.nodeId,that.nodeId);
+            }
+        }
     }
+        
     
     private static final class NodeInfo {
         boolean visited = false;
         int minDriveTime = Integer.MAX_VALUE;
         Node minTimeFrom = null;
         DirectedEdge minTimeVia = null;
+        Heap.Entry<DistanceOrder,Node> heapEntry = null;
     }
 
     private static DijkstraSolution extractShortest(final Node endNode, HashMap<Node,NodeInfo> nodeInfo) {
