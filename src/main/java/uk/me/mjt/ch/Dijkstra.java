@@ -1,14 +1,11 @@
 package uk.me.mjt.ch;
 
-import com.sun.xml.internal.ws.policy.AssertionSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -232,30 +229,6 @@ public class Dijkstra {
         return solutions;
     }
 
-    /*private static class CompareNodes implements Comparator<Node> {
-        final HashMap<Node,NodeInfo> nodeInfo;
-
-        CompareNodes(HashMap<Node,NodeInfo> nodeInfo) {
-            this.nodeInfo = nodeInfo;
-        }
-
-        public int compare(Node o1, Node o2) {
-            NodeInfo infoA = nodeInfo.get(o1);
-            if (infoA == null) infoA = new NodeInfo();
-            
-            NodeInfo infoB = nodeInfo.get(o2);
-            if (infoB == null) infoB = new NodeInfo();
-            
-            if (infoA.minDriveTime < infoB.minDriveTime) {
-                return -1;
-            } else if (infoA.minDriveTime > infoB.minDriveTime) {
-                return 1;
-            } else {
-                return Long.compare(o1.nodeId,o2.nodeId);
-            }
-        }
-    }*/
-    
     private static final class DistanceOrder implements Comparable<DistanceOrder> {
         private final long nodeId;
         private final int minDriveTime;
