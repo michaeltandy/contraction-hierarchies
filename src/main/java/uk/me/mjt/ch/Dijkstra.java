@@ -257,30 +257,36 @@ public class Dijkstra {
         Node minTimeFrom = null;
         DirectedEdge minTimeVia = null;
         Heap.Entry<DistanceOrder,Node> heapEntry = null;
+        DijkstraSolution solution = null;
     }
 
     private static DijkstraSolution extractShortest(final Node endNode, HashMap<Node,NodeInfo> nodeInfo) {
         NodeInfo endNodeInfo = nodeInfo.get(endNode);
         int totalDriveTime = endNodeInfo.minDriveTime;
         
-        LinkedList<Node> nodes = new LinkedList();
-        LinkedList<DirectedEdge> edges = new LinkedList();
+        List<Node> nodes = new LinkedList();
+        List<DirectedEdge> edges = new LinkedList();
         
         Node thisNode = endNode;
-        NodeInfo thisNodeInfo = endNodeInfo;
-        
         while (thisNode != null) {
-            nodes.addFirst(thisNode);
-            if (thisNodeInfo.minTimeVia != null)
-                edges.addFirst(thisNodeInfo.minTimeVia);
-            thisNode = thisNodeInfo.minTimeFrom;
-            thisNodeInfo = nodeInfo.get(thisNode);
+            NodeInfo thisNodeInfo = nodeInfo.get(thisNode);
+            if (thisNodeInfo.solution == null) {
+                nodes.add(0, thisNode);
+                if (thisNodeInfo.minTimeVia != null)
+                    edges.add(0,thisNodeInfo.minTimeVia);
+                thisNode = thisNodeInfo.minTimeFrom;
+            } else {
+                nodes = new UnionList<>(thisNodeInfo.solution.nodes,nodes);
+                edges = new UnionList<>(thisNodeInfo.solution.edges,edges);
+                thisNode = null;
+            }
         }
         
         if (nodes.isEmpty()) {
             System.out.println("Created empty solution?!?!");
         }
         
-        return new DijkstraSolution(totalDriveTime, nodes, edges);
+        endNodeInfo.solution = new DijkstraSolution(totalDriveTime, nodes, edges);
+        return endNodeInfo.solution;
     }
 }
