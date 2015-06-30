@@ -1,17 +1,10 @@
 package uk.me.mjt.ch;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import org.teneighty.heap.FibonacciHeap;
 import org.teneighty.heap.Heap;
 
@@ -29,7 +22,7 @@ public class Dijkstra {
 
     public enum Direction{FORWARDS,BACKWARDS};
     
-    public static HashMap<Node,HashMap<Node,DijkstraSolution>> contractedGraphDijkstra(final HashMap<Long,Node> allNodes, Collection<Node> startNodes, Collection<Node> endNodes ) {
+    /*public static HashMap<Node,HashMap<Node,DijkstraSolution>> contractedGraphDijkstra(final HashMap<Long,Node> allNodes, Collection<Node> startNodes, Collection<Node> endNodes ) {
         Preconditions.checkNoneNull(allNodes,startNodes,endNodes);
         
         ExecutorService es = Executors.newFixedThreadPool(4);
@@ -75,8 +68,8 @@ public class Dijkstra {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-    }
-
+    }*/
+    
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long,Node> allNodes, Node startNode, Node endNode ) {
         Preconditions.checkNoneNull(allNodes,startNode,endNode);
         List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, startNode, null, Float.POSITIVE_INFINITY, Direction.FORWARDS);
@@ -98,13 +91,13 @@ public class Dijkstra {
             if (down.nodes.isEmpty()) {
                 System.out.println("Empty solution? " + down);
             } else {
-            Node n = down.getLastNode();
-            if (upwardPaths.containsKey(n)) {
-                DijkstraSolution up = upwardPaths.get(n);
-                if (shortestSolution == null || up.totalDriveTime+down.totalDriveTime < shortestSolution.totalDriveTime) {
-                    shortestSolution = upThenDown(up,down);
+                Node n = down.getLastNode();
+                if (upwardPaths.containsKey(n)) {
+                    DijkstraSolution up = upwardPaths.get(n);
+                    if (shortestSolution == null || up.totalDriveTime + down.totalDriveTime < shortestSolution.totalDriveTime) {
+                        shortestSolution = upThenDown(up, down);
+                    }
                 }
-            }
             }
         }
 
