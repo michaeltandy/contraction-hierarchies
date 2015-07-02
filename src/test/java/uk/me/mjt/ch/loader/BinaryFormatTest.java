@@ -33,7 +33,7 @@ public class BinaryFormatTest {
         HashMap<Long, Node> loopback = instance.readNodes(new DataInputStream(nodesIn));
         instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
         
-        assertTrue(Util.deepEquals(testData, loopback));
+        assertTrue(Util.deepEquals(testData, loopback, true));
     }
 
     

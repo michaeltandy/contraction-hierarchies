@@ -26,7 +26,7 @@ public class GraphContractor {
     
     public GraphContractor(HashMap<Long,Node> allNodes) {
         this.allNodes = allNodes;
-        this.maxEdgeId = 50000L;
+        this.maxEdgeId = 5000000000L;
     }
 
     private int getEdgeRemovedCount(Node n) {
@@ -75,7 +75,7 @@ public class GraphContractor {
             
             for (DijkstraSolution ds : routed) {
                 if (ds.nodes.size() == 3 && ds.nodes.get(1)==n) {
-                    shortcuts.add(new DirectedEdge(0,
+                    shortcuts.add(new DirectedEdge(DirectedEdge.PLACEHOLDER_ID,
                             ds.getFirstNode(),
                             ds.getLastNode(),
                             ds.totalDriveTime,

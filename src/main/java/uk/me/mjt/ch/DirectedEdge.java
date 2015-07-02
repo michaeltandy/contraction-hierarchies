@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class DirectedEdge {
+    public static final long PLACEHOLDER_ID = -123456L;
 
     public final long edgeId;
     public final Node from;
@@ -22,7 +23,11 @@ public class DirectedEdge {
 
     public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
         Preconditions.checkNoneNull(from, to);
-        Preconditions.require(edgeId >= 0, driveTimeMs >= 0);
+        Preconditions.require(edgeId>0||edgeId==PLACEHOLDER_ID, driveTimeMs >= 0);
+        if (edgeId>0 && first!=null && second!=null) {
+            // If this check starts failing, your edge IDs for shortcuts probably start too low.
+            Preconditions.require(edgeId > first.edgeId, edgeId>second.edgeId);
+        }
         this.edgeId = edgeId;
         this.from = from;
         this.to = to;

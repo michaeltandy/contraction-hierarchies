@@ -46,7 +46,7 @@ public class ContractAndSerialiseUk {
             HashMap<Long,Node> readback=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             
-            boolean readbackMatch = Util.deepEquals(allNodes, readback);
+            boolean readbackMatch = Util.deepEquals(allNodes, readback, true);
             
             if (!readbackMatch) {
                 System.out.println("Readback mismatch?!");

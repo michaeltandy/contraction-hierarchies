@@ -73,20 +73,48 @@ public class Node {
         return nodeId + "@" + lat + "," + lon;
     }
     
+    /**
+     * Sort incoming and outgoing lists of edges. Follows the following rules:
+     * 1. Higher contraction order first. We do this so, if we want to find 
+     * connected nodes with a higher contraction order than this one, they'll
+     * be at the start of the list. When all nodes are contracted, every node
+     * will have a different contraction order.
+     * 2. Shorter distance first. If contraction orders are equal for two edges,
+     * it means either the node on the other end is uncontracted. Shorter edges
+     * are usually more interesting, and we want the sort order to be 
+     * unambiguous, so this is our second means of ordering.
+     * 3. If results are equal for both those tests, sort by edge ID, which 
+     * should always be unique, to give us an unambiguous ordering.
+     */
+    
     public void sortNeighborLists() {
         Collections.sort(edgesFrom, new Comparator<DirectedEdge>() {
             @Override
             public int compare(DirectedEdge t, DirectedEdge t1) {
-                return Long.compare(t1.to.contractionOrder, t.to.contractionOrder);
+                if (t1.to.contractionOrder != t.to.contractionOrder) {
+                    return Long.compare(t1.to.contractionOrder, t.to.contractionOrder);
+                } else if (t1.driveTimeMs != t.driveTimeMs) {
+                    return Long.compare(t.driveTimeMs, t1.driveTimeMs);
+                } else {
+                    return Long.compare(t.edgeId, t1.edgeId);
+                }
             }
         });
         
         Collections.sort(edgesTo, new Comparator<DirectedEdge>() {
             @Override
             public int compare(DirectedEdge t, DirectedEdge t1) {
-                return Long.compare(t1.from.contractionOrder, t.from.contractionOrder);
+                if (t1.from.contractionOrder != t.from.contractionOrder) {
+                    return Long.compare(t1.from.contractionOrder, t.from.contractionOrder);
+                } else if (t1.driveTimeMs != t.driveTimeMs) {
+                    return Long.compare(t.driveTimeMs, t1.driveTimeMs);
+                } else {
+                    return Long.compare(t.edgeId, t1.edgeId);
+                }
             }
         });
     }
+    
+    
     
 }

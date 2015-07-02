@@ -14,12 +14,12 @@ public class UtilTest {
         System.out.println("deepEquals");
         HashMap<Long, Node> a = MakeTestData.makeSimpleThreeEntry();
         HashMap<Long, Node> b = MakeTestData.makeSimpleThreeEntry();
-        assertTrue(Util.deepEquals(a, b));
+        assertTrue(Util.deepEquals(a, b, false));
         
         Node n = a.get(2L);
         n.edgesFrom.remove(0);
         
-        assertFalse(Util.deepEquals(a, b));
+        assertFalse(Util.deepEquals(a, b, false));
     }
     
 }
