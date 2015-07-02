@@ -3,6 +3,8 @@ package uk.me.mjt.ch;
 import uk.me.mjt.ch.Dijkstra.Direction;
 import java.io.*;
 import java.util.*;
+import java.util.zip.GZIPOutputStream;
+import static uk.me.mjt.ch.Dijkstra.dijkstrasAlgorithm;
 import uk.me.mjt.ch.loader.BinaryFormat;
 import uk.me.mjt.ch.loader.NodeLoadCsv;
 
@@ -17,8 +19,8 @@ public class LoadAndPathUk {
             System.out.println("Loading data...");
             long startTime = System.currentTimeMillis();
             BinaryFormat bf = new BinaryFormat();
-            HashMap<Long,Node> allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-contracted-ways.dat");
+            HashMap<Long,Node> allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             Node startNode = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             //Node startNode = allNodes.get(60455099L); // https://www.openstreetmap.org/node/60455099 Albert Drive, Glasgow
             Node endNode = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
@@ -34,7 +36,24 @@ public class LoadAndPathUk {
                 System.exit(-1);
             }
             
+            /*// Serialisation size tests:
+            int j = 0;
+            for (Node n : allNodes.values()) {
+                List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, n, null, Float.POSITIVE_INFINITY, Direction.FORWARDS);
+                byte[] serialisedUp = serialiseUpwardSolution(upwardSolutions);
+                List<DijkstraSolution> downwardSolutions = dijkstrasAlgorithm(allNodes, n, null, Float.POSITIVE_INFINITY, Direction.BACKWARDS);
+                byte[] serialisedDown = serialiseUpwardSolution(downwardSolutions);
+                
+                System.out.println(n.nodeId + "," + upwardSolutions.size() + "," + serialisedUp.length + "," + downwardSolutions.size() + "," + serialisedDown.length);
+                
+                if (j++ >= 200) break;
+            }*/
+            
+            for (int i=0 ; i<1000 ; i++) {
+                contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
+            }
             System.out.println("Warmup completed.");
+            
             startTime = System.currentTimeMillis();
             for (int i=0 ; i<10000 ; i++) {
                 contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
@@ -56,6 +75,52 @@ public class LoadAndPathUk {
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
+        }
+    }
+    
+    private static byte[] serialiseUpwardSolution(List<DijkstraSolution> upwardSolutions) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(2500);
+            DataOutputStream dos = new DataOutputStream(new GZIPOutputStream(baos));
+            HashSet<Node> alreadySerialised = new HashSet<>();
+            
+            Node startNode = upwardSolutions.get(0).getFirstNode();
+            dos.writeLong(startNode.nodeId);
+            dos.writeInt(upwardSolutions.size());
+
+            for (DijkstraSolution ds : upwardSolutions) {
+                Node destination = ds.getLastNode();
+                Node deltaFrom = null;
+                if (ds.getPreceding() != null) {
+                    deltaFrom = ds.getPreceding().getLastNode();
+                }
+                if (deltaFrom!= null && !alreadySerialised.contains(deltaFrom)) {
+                    throw new RuntimeException("Unexpectedly found solutions were out of order?");
+                }
+
+                List<DirectedEdge> directedEdges = ds.getDeltaEdges();
+                
+                if (directedEdges.size() == 1) {
+                    dos.writeLong(directedEdges.get(0).edgeId);
+                } else if (destination.equals(startNode) && directedEdges.isEmpty()) {
+                    dos.writeLong(-1);
+                } else {
+                    throw new RuntimeException("Delta edge length isn't 1?");
+                }
+                
+                //dos.writeInt(directedEdges.size());
+                //for (DirectedEdge de : directedEdges) {
+                //    dos.writeLong(de.edgeId);
+                //}
+                
+                alreadySerialised.add(destination);
+            }
+            
+            dos.close();
+            return baos.toByteArray();
+        
+        } catch (IOException e) {
+            throw new RuntimeException("This shouldn't be possible.", e);
         }
     }
     
