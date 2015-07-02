@@ -59,4 +59,8 @@ public class DirectedEdge {
         return new DirectedEdge(edgeId, from, to, driveTimeMs, first, second);
     }
     
+    public String toString() {
+        return from.nodeId+"--"+driveTimeMs+"("+contractionDepth+")-->"+to.nodeId;
+    }
+    
 }

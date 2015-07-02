@@ -269,9 +269,8 @@ public class Dijkstra {
                     edges.add(0,thisNodeInfo.minTimeVia);
                 thisNode = thisNodeInfo.minTimeFrom;
             } else {
-                nodes = new UnionList<>(thisNodeInfo.solution.nodes,nodes);
-                edges = new UnionList<>(thisNodeInfo.solution.edges,edges);
-                thisNode = null;
+                endNodeInfo.solution = new DijkstraSolution(totalDriveTime, nodes, edges, thisNodeInfo.solution);
+                return endNodeInfo.solution;
             }
         }
         

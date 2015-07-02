@@ -31,6 +31,20 @@ public class GeoJson {
         return linksConditionally(allNodes, new PrintAllEdges());
     }
     
+    public static String allDirectedEdges(Collection<DirectedEdge> deList) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ \"type\": \"FeatureCollection\", \"features\": [\n");
+        
+        for (DirectedEdge de : deList) {
+            sb.append(directedEdgeToFeature(de)).append(",\n");
+        }
+        
+        if (sb.toString().endsWith(",\n"))
+            sb.deleteCharAt(sb.length()-2);
+        sb.append("]}");
+        return sb.toString();
+    }
+    
     private static class PrintAllEdges extends EdgePrintCondition {
         boolean shouldPrintEdge(DirectedEdge de) { return true; }
     }

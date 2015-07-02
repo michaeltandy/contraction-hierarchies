@@ -2,23 +2,22 @@ package uk.me.mjt.ch;
 
 import uk.me.mjt.ch.Dijkstra.Direction;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GraphContractor {
     private final HashMap<Long,Node> allNodes;
     private long maxEdgeId;
     
-    private long findShortcutsCalls = 0;
+    private final AtomicInteger findShortcutsCalls = new AtomicInteger();
     private long nodePreContractChecks = 0;
     private long nodePreContractChecksPassed = 0;
     private long millisSpentOnContractionOrdering = 0;
@@ -34,7 +33,7 @@ public class GraphContractor {
         return n.getCountOutgoingUncontractedEdges() + n.getCountIncomingUncontractedEdges();
     }
 
-    public int getBalanceOfEdgesRemoved(Node n) {
+    private int getBalanceOfEdgesRemoved(Node n) {
         int edgesRemoved = getEdgeRemovedCount(n);
         int shortcutsAdded = findShortcuts(n).size();
         return edgesRemoved-shortcutsAdded;
@@ -48,11 +47,11 @@ public class GraphContractor {
         }
         n.contractionOrder = order;
     }
-
+    
     public ArrayList<DirectedEdge> findShortcuts(Node n) {
-        findShortcutsCalls++;
+        findShortcutsCalls.incrementAndGet();
         ArrayList<DirectedEdge> shortcuts = new ArrayList<DirectedEdge>();
-
+        
         HashSet<Node> destinationNodes = new HashSet<Node>();
         int maxOutTime = 0;
         for (DirectedEdge outgoing : n.edgesFrom) {
@@ -67,13 +66,13 @@ public class GraphContractor {
             Node startNode = incoming.from;
             if (startNode.isContracted())
                 continue;
-
+            
             List<DijkstraSolution> routed = Dijkstra.dijkstrasAlgorithm(allNodes,
                     startNode,
                     new HashSet<>(destinationNodes),
                     incoming.driveTimeMs+maxOutTime,
                     Direction.FORWARDS);
-
+            
             for (DijkstraSolution ds : routed) {
                 if (ds.nodes.size() == 3 && ds.nodes.get(1)==n) {
                     shortcuts.add(new DirectedEdge(0,
@@ -87,7 +86,7 @@ public class GraphContractor {
                 }
             }
         }
-
+        
         return shortcuts;
     }
 
@@ -142,7 +141,7 @@ public class GraphContractor {
         long recentOrderingMillis = 0;
 
         Node n;
-        while ((n = lazyContractNextNode(contractionProgress++, false)) != null) {
+        while ((n = lazyContractNextNode(contractionProgress++, true)) != null) {
             reorderImmediateNeighbors(n);
             
             //System.out.println("Contracted " + n);
@@ -213,6 +212,9 @@ public class GraphContractor {
                 return null;
             }
             next = contractionOrder.pollFirstEntry();
+            if (recentlySorted && n.equals(next.getValue())) {
+                System.out.println("Same thing's at the top of the contraction order.");
+            }
         }
         return null;
     }
@@ -220,13 +222,16 @@ public class GraphContractor {
     private void reorderImmediateNeighbors(Node justContracted) {
         for (Node neighbor : justContracted.getNeighbors()) {
             neighbor.sortNeighborLists();
+        }
+        
+        for (Node neighbor : justContracted.getNeighbors()) {
             reorderNodeIfNeeded(neighbor);
         }
     }
     
     private boolean reorderNodeIfNeeded(Node n) {
         ContractionOrdering oldOrder = contractionOrder.keyForValue(n);
-        if (oldOrder == null) {
+        if (oldOrder == null) { // Already contracted (IIRC)
             return false;
         }
         
@@ -235,15 +240,9 @@ public class GraphContractor {
         ContractionOrdering newOrder = new ContractionOrdering(n,balanceOfEdgesRemoved);
         
         if (oldOrder.compareTo(newOrder) != 0) {
-            try {
-                contractionOrder.remove(oldOrder);
-                contractionOrder.put(newOrder, n);
-                return true;
-            } catch (IllegalArgumentException e) {
-                contractionOrder.keyForValue(n);
-                contractionOrder.remove(oldOrder);
-                throw e;
-            }
+            contractionOrder.remove(oldOrder);
+            contractionOrder.put(newOrder, n);
+            return true;
         } else {
             return false;
         }

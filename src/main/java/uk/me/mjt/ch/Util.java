@@ -26,10 +26,8 @@ public class Util {
         if (!shallowEquals(a,b)) {
             return false;
         } else {
-            sortEdgeArrays(a.edgesFrom);
-            sortEdgeArrays(a.edgesTo);
-            sortEdgeArrays(b.edgesFrom);
-            sortEdgeArrays(b.edgesTo);
+            a.sortNeighborLists();
+            b.sortNeighborLists();
             
             return compareEdgeArray(a.edgesFrom,b.edgesFrom)
                     && compareEdgeArray(a.edgesTo,b.edgesTo);

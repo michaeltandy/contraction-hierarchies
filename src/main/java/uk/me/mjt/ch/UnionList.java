@@ -31,4 +31,12 @@ public class UnionList<N> extends AbstractList<N> implements List<N> {
         return size;
     }
 
+    public List<N> getFirstSublist() {
+        return first;
+    }
+
+    public List<N> getSecondSublist() {
+        return second;
+    }
+    
 }
