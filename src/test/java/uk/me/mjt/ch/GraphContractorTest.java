@@ -23,7 +23,7 @@ public class GraphContractorTest {
         Node startNode = graph.get(1L);
         Node endNode = graph.get(18L);
             
-        DijkstraSolution contracted = Dijkstra.contractedGraphDijkstra(graph, startNode, endNode);
+        DijkstraSolution contracted = ContractedDjikstra.contractedGraphDijkstra(graph, startNode, endNode);
         System.out.println("Contraction: "+contracted);
         
         assertNotNull(contracted);

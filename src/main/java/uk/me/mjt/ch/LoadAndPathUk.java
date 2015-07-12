@@ -27,7 +27,7 @@ public class LoadAndPathUk {
             Node endNode = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
             System.out.println("Data load complete in " + (System.currentTimeMillis()-startTime) + "ms.");
             
-            DijkstraSolution contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
+            DijkstraSolution contracted = ContractedDjikstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             System.out.println("Contraction: "+contracted);
             System.out.println(GeoJson.solution(contracted));
             
@@ -72,14 +72,14 @@ public class LoadAndPathUk {
             
             SimpleCache cache = new SimpleCache();
             for (int i=0 ; i<testLocations.size()-1 ; i++) {
-                contracted = Dijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+                contracted = ContractedDjikstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
             }
             System.out.println("Warmup completed.");
             
             startTime = System.currentTimeMillis();
             for (int j=0 ; j<10 ; j++) {
                 for (int i=0 ; i<testLocations.size()-1 ; i++) {
-                    contracted = Dijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+                    contracted = ContractedDjikstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
                 }
             }
             System.out.println("Repeated cached search in " + (System.currentTimeMillis()-startTime) + "ms.");
