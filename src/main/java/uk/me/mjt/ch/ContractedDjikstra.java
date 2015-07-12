@@ -4,6 +4,8 @@ package uk.me.mjt.ch;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import uk.me.mjt.ch.PartialSolution.DownwardSolution;
+import uk.me.mjt.ch.PartialSolution.UpwardSolution;
 import uk.me.mjt.ch.cache.PartialSolutionCache;
 
 
@@ -19,9 +21,9 @@ public class ContractedDjikstra {
     }
 
     private static UpAndDownPair calculateUpDownPair(HashMap<Long, Node> allNodes, Node startEndNode) {
-        List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startEndNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.FORWARDS);
-        List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startEndNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.BACKWARDS);
-        return new UpAndDownPair(upwardSolutions, downwardSolutions);
+        UpwardSolution upwardSolution = calculateUpwardSolution(allNodes, startEndNode);
+        DownwardSolution downwardSolution = calculateDownwardSolution(allNodes, startEndNode);
+        return new UpAndDownPair(upwardSolution, downwardSolution);
     }
 
     /**
@@ -48,25 +50,25 @@ public class ContractedDjikstra {
     }
     
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode, PartialSolutionCache cache) {
-        List<DijkstraSolution> upwardSolutions = getOrCalculateUpDownPair(allNodes, startNode, cache).up;
-        List<DijkstraSolution> downwardSolutions = getOrCalculateUpDownPair(allNodes, endNode, cache).down;
-        return mergeUpwardAndDownwardSolutions(upwardSolutions, downwardSolutions);
+        UpAndDownPair startNodePair = getOrCalculateUpDownPair(allNodes, startNode, cache);
+        UpAndDownPair endNodePair = getOrCalculateUpDownPair(allNodes, endNode, cache);
+        return mergeUpwardAndDownwardSolutions(startNodePair.up, endNodePair.down);
     }
 
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode) {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);
-        List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.FORWARDS);
-        List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, endNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.BACKWARDS);
-        return mergeUpwardAndDownwardSolutions(upwardSolutions, downwardSolutions);
+        UpwardSolution upwardSolution = calculateUpwardSolution(allNodes, startNode);
+        DownwardSolution downwardSolution = calculateDownwardSolution(allNodes, endNode);
+        return mergeUpwardAndDownwardSolutions(upwardSolution, downwardSolution);
     }
 
-    private static DijkstraSolution mergeUpwardAndDownwardSolutions(List<DijkstraSolution> upwardSolutions, List<DijkstraSolution> downwardSolutions) {
-        HashMap<Node, DijkstraSolution> upwardPaths = new HashMap<Node, DijkstraSolution>();
-        for (DijkstraSolution ds : upwardSolutions) {
+    private static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
+        HashMap<Node, DijkstraSolution> upwardPaths = new HashMap<>();
+        for (DijkstraSolution ds : upwardSolution.getIndividualNodeSolutions()) {
             upwardPaths.put(ds.getLastNode(), ds);
         }
         DijkstraSolution shortestSolution = null;
-        for (DijkstraSolution down : downwardSolutions) {
+        for (DijkstraSolution down : downwardSolution.getIndividualNodeSolutions()) {
             if (down.nodes.isEmpty()) {
                 System.out.println("Empty solution? " + down);
             } else {
@@ -95,6 +97,16 @@ public class ContractedDjikstra {
             edges.add(down.edges.get(i));
         }
         return new DijkstraSolution(totalDriveTime, nodes, edges);
+    }
+    
+    private static UpwardSolution calculateUpwardSolution(HashMap<Long, Node> allNodes, Node startNode) {
+        List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.FORWARDS);
+        return new UpwardSolution(startNode, upwardSolutions);
+    }
+    
+    private static DownwardSolution calculateDownwardSolution(HashMap<Long, Node> allNodes, Node endNode) {
+        List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, endNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.BACKWARDS);
+        return new DownwardSolution(endNode, downwardSolutions);
     }
 
 }

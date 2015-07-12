@@ -1,15 +1,14 @@
 
 package uk.me.mjt.ch;
 
-import java.util.List;
-import uk.me.mjt.ch.DijkstraSolution;
-
+import uk.me.mjt.ch.PartialSolution.DownwardSolution;
+import uk.me.mjt.ch.PartialSolution.UpwardSolution;
 
 public class UpAndDownPair {
-    public final List<DijkstraSolution> up;
-    public final List<DijkstraSolution> down;
+    public final UpwardSolution up;
+    public final DownwardSolution down;
 
-    public UpAndDownPair(List<DijkstraSolution> up, List<DijkstraSolution> down) {
+    public UpAndDownPair(UpwardSolution up, DownwardSolution down) {
         this.up = up;
         this.down = down;
     }
