@@ -38,17 +38,28 @@ public abstract class PartialSolution {
             }
         });
     }
-    
+
+    Node getNodeOfInterest() {
+        return nodeOfInterest;
+    }
     
     public static class UpwardSolution extends PartialSolution {
         public UpwardSolution(Node nodeOfInterest, List<DijkstraSolution> ds) {
             super(nodeOfInterest,ds,Dijkstra.Direction.FORWARDS);
+        }
+        
+        public Node getStartNode() {
+            return getNodeOfInterest();
         }
     }
     
     public static class DownwardSolution extends PartialSolution {
         public DownwardSolution(Node nodeOfInterest, List<DijkstraSolution> ds) {
             super(nodeOfInterest,ds,Dijkstra.Direction.BACKWARDS);
+        }
+        
+        public Node getEndNode() {
+            return getNodeOfInterest();
         }
     }
 

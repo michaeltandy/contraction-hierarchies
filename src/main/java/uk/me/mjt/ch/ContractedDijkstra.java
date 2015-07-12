@@ -23,7 +23,10 @@ public class ContractedDijkstra {
         
         int upIdx = 0;
         int downIdx = 0;
-        DijkstraSolution shortestSolution = null;
+        //DijkstraSolution shortestSolution = null;
+        int shortestSolutionDriveTime = Integer.MAX_VALUE;
+        DijkstraSolution shortestSolutionUp = null;
+        DijkstraSolution shortestSolutionDown = null;
         
         while (upIdx<upDs.size() && downIdx<downDs.size()) {
             DijkstraSolution up = upDs.get(upIdx);
@@ -32,8 +35,10 @@ public class ContractedDijkstra {
             long downContractionOrder = downDs.get(downIdx).getLastNode().contractionOrder;
             
             if (upContractionOrder==downContractionOrder) {
-                if (shortestSolution == null || up.totalDriveTime + down.totalDriveTime < shortestSolution.totalDriveTime) {
-                    shortestSolution = upThenDown(up, down);
+                if (up.totalDriveTime + down.totalDriveTime < shortestSolutionDriveTime) {
+                    shortestSolutionDriveTime = up.totalDriveTime + down.totalDriveTime;
+                    shortestSolutionUp = up;
+                    shortestSolutionDown = down;
                 }
                 downIdx++;
                 upIdx++;
@@ -43,7 +48,13 @@ public class ContractedDijkstra {
                 upIdx++;
             }
         }
-        return unContract(shortestSolution);
+        
+        if (shortestSolutionDriveTime == Integer.MAX_VALUE) {
+            System.out.println("No merge found for " + upwardSolution.getStartNode() + " to " + downwardSolution.getEndNode());
+            return null;
+        }
+        
+        return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
     }
 
     private static DijkstraSolution upThenDown(DijkstraSolution up, DijkstraSolution down) {
