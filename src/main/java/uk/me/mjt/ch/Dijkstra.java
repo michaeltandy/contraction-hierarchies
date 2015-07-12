@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import org.teneighty.heap.FibonacciHeap;
 import org.teneighty.heap.Heap;
+import uk.me.mjt.ch.cache.PartialSolutionCache;
 
 public class Dijkstra {
 
@@ -69,6 +70,29 @@ public class Dijkstra {
             throw new RuntimeException(e);
         }
     }*/
+    
+    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long,Node> allNodes, Node startNode, Node endNode, PartialSolutionCache cache) {
+        List<DijkstraSolution> upwardSolutions = getOrCalculateUpDownPair(allNodes, startNode, cache).up;
+        List<DijkstraSolution> downwardSolutions = getOrCalculateUpDownPair(allNodes, endNode, cache).down;
+        
+        return mergeUpwardAndDownwardSolutions(upwardSolutions,downwardSolutions);
+    }
+    
+    private static UpAndDownPair getOrCalculateUpDownPair(HashMap<Long,Node> allNodes, Node startEndNode, PartialSolutionCache cache) {
+        UpAndDownPair udp = cache.getIfPresent(startEndNode);
+        if (udp == null) {
+            udp = calculateUpDownPair(allNodes,startEndNode);
+            cache.put(startEndNode, udp);
+        }
+        return udp;
+    }
+    
+    private static UpAndDownPair calculateUpDownPair(HashMap<Long,Node> allNodes, Node startEndNode) {
+        List<DijkstraSolution> upwardSolutions = dijkstrasAlgorithm(allNodes, startEndNode, null, Float.POSITIVE_INFINITY, Direction.FORWARDS);
+        List<DijkstraSolution> downwardSolutions = dijkstrasAlgorithm(allNodes, startEndNode, null, Float.POSITIVE_INFINITY, Direction.BACKWARDS);
+        return new UpAndDownPair(upwardSolutions, downwardSolutions);
+    }
+    
     
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long,Node> allNodes, Node startNode, Node endNode ) {
         Preconditions.checkNoneNull(allNodes,startNode,endNode);

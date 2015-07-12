@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 import static uk.me.mjt.ch.Dijkstra.dijkstrasAlgorithm;
+import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
 import uk.me.mjt.ch.loader.NodeLoadCsv;
 
@@ -48,7 +49,7 @@ public class LoadAndPathUk {
                 
                 if (j++ >= 200) break;
             }*/
-            
+            /*
             for (int i=0 ; i<1000 ; i++) {
                 contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
@@ -59,6 +60,29 @@ public class LoadAndPathUk {
                 contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
             System.out.println("Repeated forwards search in " + (System.currentTimeMillis()-startTime) + "ms.");
+            */
+            
+            System.out.println("Testing speed with caching...");
+            
+            ArrayList<Node> testLocations = new ArrayList();
+            for (Node n : allNodes.values()) {
+                testLocations.add(n);
+                if (testLocations.size() >= 4000) break;
+            }
+            
+            SimpleCache cache = new SimpleCache();
+            for (int i=0 ; i<testLocations.size()-1 ; i++) {
+                contracted = Dijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+            }
+            System.out.println("Warmup completed.");
+            
+            startTime = System.currentTimeMillis();
+            for (int j=0 ; j<10 ; j++) {
+                for (int i=0 ; i<testLocations.size()-1 ; i++) {
+                    contracted = Dijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+                }
+            }
+            System.out.println("Repeated cached search in " + (System.currentTimeMillis()-startTime) + "ms.");
             
             /*ArrayList<Node> testLocations = new ArrayList();
             for (Node n : allNodes.values()) {
