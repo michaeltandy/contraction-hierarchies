@@ -28,7 +28,7 @@ public class ContractAndSerialiseUk {
             
             Node startNode = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             Node endNode = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
-            DijkstraSolution contracted = ContractedDjikstra.contractedGraphDijkstra(allNodes, startNode, endNode);
+            DijkstraSolution contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             
             if (contracted.toString().equals(expectedPath)) {
                 System.out.println("Contracted and forwards match!");

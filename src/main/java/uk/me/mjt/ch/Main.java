@@ -50,7 +50,7 @@ public class Main {
             System.out.println("Performed contraction in " + duration + "ms.");
             
             long startTime3 = System.currentTimeMillis();
-            DijkstraSolution contracted = ContractedDjikstra.contractedGraphDijkstra(allNodes, startNode, endNode);
+            DijkstraSolution contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             System.out.println("Contraction: "+contracted);
             System.out.println("Contracted forwards search in " + (System.currentTimeMillis()-startTime3) + "ms.");
 

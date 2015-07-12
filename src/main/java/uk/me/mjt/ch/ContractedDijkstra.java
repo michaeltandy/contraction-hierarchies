@@ -9,7 +9,7 @@ import uk.me.mjt.ch.PartialSolution.UpwardSolution;
 import uk.me.mjt.ch.cache.PartialSolutionCache;
 
 
-public class ContractedDjikstra {
+public class ContractedDijkstra {
 
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode, PartialSolutionCache cache) {
         UpAndDownPair startNodePair = getOrCalculateUpDownPair(allNodes, startNode, cache);
