@@ -11,6 +11,12 @@ import uk.me.mjt.ch.cache.PartialSolutionCache;
 
 public class ContractedDjikstra {
 
+    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode, PartialSolutionCache cache) {
+        UpAndDownPair startNodePair = getOrCalculateUpDownPair(allNodes, startNode, cache);
+        UpAndDownPair endNodePair = getOrCalculateUpDownPair(allNodes, endNode, cache);
+        return mergeUpwardAndDownwardSolutions(startNodePair.up, endNodePair.down);
+    }
+    
     private static UpAndDownPair getOrCalculateUpDownPair(HashMap<Long, Node> allNodes, Node startEndNode, PartialSolutionCache cache) {
         UpAndDownPair udp = cache.getIfPresent(startEndNode);
         if (udp == null) {
@@ -25,36 +31,7 @@ public class ContractedDjikstra {
         DownwardSolution downwardSolution = calculateDownwardSolution(allNodes, startEndNode);
         return new UpAndDownPair(upwardSolution, downwardSolution);
     }
-
-    /**
-     * Take in a solution of some contracted nodes, and make a new solution with
-     * them uncontracted.
-     * @param ds
-     * @return
-     */
-    private static DijkstraSolution unContract(DijkstraSolution ds) {
-        if (ds == null) {
-            return null;
-        }
-        int totalDriveTime = ds.totalDriveTime;
-        LinkedList<Node> nodes = new LinkedList();
-        LinkedList<DirectedEdge> edges = new LinkedList();
-        for (DirectedEdge de : ds.edges) {
-            edges.addAll(de.getUncontractedEdges());
-        }
-        nodes.add(ds.getFirstNode());
-        for (DirectedEdge de : edges) {
-            nodes.add(de.to);
-        }
-        return new DijkstraSolution(totalDriveTime, nodes, edges);
-    }
     
-    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode, PartialSolutionCache cache) {
-        UpAndDownPair startNodePair = getOrCalculateUpDownPair(allNodes, startNode, cache);
-        UpAndDownPair endNodePair = getOrCalculateUpDownPair(allNodes, endNode, cache);
-        return mergeUpwardAndDownwardSolutions(startNodePair.up, endNodePair.down);
-    }
-
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode) {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);
         UpwardSolution upwardSolution = calculateUpwardSolution(allNodes, startNode);
@@ -95,6 +72,27 @@ public class ContractedDjikstra {
         edges.addAll(up.edges);
         for (int i = down.edges.size() - 1; i >= 0; i--) {
             edges.add(down.edges.get(i));
+        }
+        return new DijkstraSolution(totalDriveTime, nodes, edges);
+    }
+    
+    /**
+     * Take in a solution with some shortcut edges / contracted nodes and 
+     * convert to the equivalent non-contracted solution.
+     */
+    private static DijkstraSolution unContract(DijkstraSolution ds) {
+        if (ds == null) {
+            return null;
+        }
+        int totalDriveTime = ds.totalDriveTime;
+        LinkedList<Node> nodes = new LinkedList();
+        LinkedList<DirectedEdge> edges = new LinkedList();
+        for (DirectedEdge de : ds.edges) {
+            edges.addAll(de.getUncontractedEdges());
+        }
+        nodes.add(ds.getFirstNode());
+        for (DirectedEdge de : edges) {
+            nodes.add(de.to);
         }
         return new DijkstraSolution(totalDriveTime, nodes, edges);
     }
