@@ -1,7 +1,10 @@
 
 package uk.me.mjt.ch;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import uk.me.mjt.ch.Dijkstra.Direction;
 
 public abstract class PartialSolution {
     
@@ -14,10 +17,26 @@ public abstract class PartialSolution {
         this.nodeOfInterest = nodeOfInterest;
         this.individualNodeSolutions = individualNodeSolutions;
         this.direction = direction;
+        sortByContractionOrder();
     }
 
     public List<DijkstraSolution> getIndividualNodeSolutions() {
         return individualNodeSolutions;
+    }
+    
+    private void sortByContractionOrder() {
+        Collections.sort(individualNodeSolutions, new Comparator<DijkstraSolution>() {
+            @Override
+            public int compare(DijkstraSolution a, DijkstraSolution b) {
+                long aco = a.getLastNode().contractionOrder;
+                long bco = b.getLastNode().contractionOrder;
+                if (aco != bco) {
+                    return Long.compare(aco,bco);
+                } else {
+                    throw new RuntimeException("Two solutions with the same contraction order?!");
+                }
+            }
+        });
     }
     
     

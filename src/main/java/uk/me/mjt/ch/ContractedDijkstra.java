@@ -16,24 +16,31 @@ public class ContractedDijkstra {
         DownwardSolution downwardSolution = calculateDownwardSolution(allNodes, endNode);
         return mergeUpwardAndDownwardSolutions(upwardSolution, downwardSolution);
     }
-
+    
     public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
-        HashMap<Node, DijkstraSolution> upwardPaths = new HashMap<>();
-        for (DijkstraSolution ds : upwardSolution.getIndividualNodeSolutions()) {
-            upwardPaths.put(ds.getLastNode(), ds);
-        }
+        List<DijkstraSolution> upDs = upwardSolution.getIndividualNodeSolutions();
+        List<DijkstraSolution> downDs = downwardSolution.getIndividualNodeSolutions();
+        
+        int upIdx = 0;
+        int downIdx = 0;
         DijkstraSolution shortestSolution = null;
-        for (DijkstraSolution down : downwardSolution.getIndividualNodeSolutions()) {
-            if (down.nodes.isEmpty()) {
-                System.out.println("Empty solution? " + down);
-            } else {
-                Node n = down.getLastNode();
-                if (upwardPaths.containsKey(n)) {
-                    DijkstraSolution up = upwardPaths.get(n);
-                    if (shortestSolution == null || up.totalDriveTime + down.totalDriveTime < shortestSolution.totalDriveTime) {
-                        shortestSolution = upThenDown(up, down);
-                    }
+        
+        while (upIdx<upDs.size() && downIdx<downDs.size()) {
+            DijkstraSolution up = upDs.get(upIdx);
+            DijkstraSolution down = downDs.get(downIdx);
+            long upContractionOrder = upDs.get(upIdx).getLastNode().contractionOrder;
+            long downContractionOrder = downDs.get(downIdx).getLastNode().contractionOrder;
+            
+            if (upContractionOrder==downContractionOrder) {
+                if (shortestSolution == null || up.totalDriveTime + down.totalDriveTime < shortestSolution.totalDriveTime) {
+                    shortestSolution = upThenDown(up, down);
                 }
+                downIdx++;
+                upIdx++;
+            } else if (upContractionOrder > downContractionOrder) {
+                downIdx++;
+            } else {
+                upIdx++;
             }
         }
         return unContract(shortestSolution);
