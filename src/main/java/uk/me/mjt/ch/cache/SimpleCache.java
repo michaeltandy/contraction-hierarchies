@@ -1,7 +1,6 @@
 
 package uk.me.mjt.ch.cache;
 
-import uk.me.mjt.ch.UpAndDownPair;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;

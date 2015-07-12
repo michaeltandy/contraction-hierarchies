@@ -1,6 +1,5 @@
 package uk.me.mjt.ch.cache;
 
-import uk.me.mjt.ch.UpAndDownPair;
 import uk.me.mjt.ch.Node;
 
 public interface PartialSolutionCache {

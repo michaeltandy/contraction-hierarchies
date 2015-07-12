@@ -6,31 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 import uk.me.mjt.ch.PartialSolution.DownwardSolution;
 import uk.me.mjt.ch.PartialSolution.UpwardSolution;
-import uk.me.mjt.ch.cache.PartialSolutionCache;
 
 
 public class ContractedDijkstra {
-
-    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode, PartialSolutionCache cache) {
-        UpAndDownPair startNodePair = getOrCalculateUpDownPair(allNodes, startNode, cache);
-        UpAndDownPair endNodePair = getOrCalculateUpDownPair(allNodes, endNode, cache);
-        return mergeUpwardAndDownwardSolutions(startNodePair.up, endNodePair.down);
-    }
-    
-    private static UpAndDownPair getOrCalculateUpDownPair(HashMap<Long, Node> allNodes, Node startEndNode, PartialSolutionCache cache) {
-        UpAndDownPair udp = cache.getIfPresent(startEndNode);
-        if (udp == null) {
-            udp = calculateUpDownPair(allNodes, startEndNode);
-            cache.put(startEndNode, udp);
-        }
-        return udp;
-    }
-
-    private static UpAndDownPair calculateUpDownPair(HashMap<Long, Node> allNodes, Node startEndNode) {
-        UpwardSolution upwardSolution = calculateUpwardSolution(allNodes, startEndNode);
-        DownwardSolution downwardSolution = calculateDownwardSolution(allNodes, startEndNode);
-        return new UpAndDownPair(upwardSolution, downwardSolution);
-    }
     
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode) {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);
@@ -39,7 +17,7 @@ public class ContractedDijkstra {
         return mergeUpwardAndDownwardSolutions(upwardSolution, downwardSolution);
     }
 
-    private static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
+    public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
         HashMap<Node, DijkstraSolution> upwardPaths = new HashMap<>();
         for (DijkstraSolution ds : upwardSolution.getIndividualNodeSolutions()) {
             upwardPaths.put(ds.getLastNode(), ds);
@@ -97,12 +75,12 @@ public class ContractedDijkstra {
         return new DijkstraSolution(totalDriveTime, nodes, edges);
     }
     
-    private static UpwardSolution calculateUpwardSolution(HashMap<Long, Node> allNodes, Node startNode) {
+    public static UpwardSolution calculateUpwardSolution(HashMap<Long, Node> allNodes, Node startNode) {
         List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.FORWARDS);
         return new UpwardSolution(startNode, upwardSolutions);
     }
     
-    private static DownwardSolution calculateDownwardSolution(HashMap<Long, Node> allNodes, Node endNode) {
+    public static DownwardSolution calculateDownwardSolution(HashMap<Long, Node> allNodes, Node endNode) {
         List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, endNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.BACKWARDS);
         return new DownwardSolution(endNode, downwardSolutions);
     }

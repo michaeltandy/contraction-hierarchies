@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 import static uk.me.mjt.ch.Dijkstra.dijkstrasAlgorithm;
+import uk.me.mjt.ch.cache.CachedContractedDijkstra;
 import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
 import uk.me.mjt.ch.loader.NodeLoadCsv;
@@ -72,14 +73,14 @@ public class LoadAndPathUk {
             
             SimpleCache cache = new SimpleCache();
             for (int i=0 ; i<testLocations.size()-1 ; i++) {
-                contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+                contracted = CachedContractedDijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
             }
             System.out.println("Warmup completed.");
             
             startTime = System.currentTimeMillis();
             for (int j=0 ; j<10 ; j++) {
                 for (int i=0 ; i<testLocations.size()-1 ; i++) {
-                    contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+                    contracted = CachedContractedDijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
                 }
             }
             System.out.println("Repeated cached search in " + (System.currentTimeMillis()-startTime) + "ms.");

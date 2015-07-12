@@ -1,5 +1,5 @@
 
-package uk.me.mjt.ch;
+package uk.me.mjt.ch.cache;
 
 import uk.me.mjt.ch.PartialSolution.DownwardSolution;
 import uk.me.mjt.ch.PartialSolution.UpwardSolution;
