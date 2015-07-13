@@ -22,6 +22,8 @@ public class ContractAndSerialiseUk {
             Node herbalHill = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
             System.out.println(Dijkstra.dijkstrasAlgorithm(allNodes, hatfield, herbalHill, Dijkstra.Direction.FORWARDS).toString());
             
+            InaccessibleNodes.removeInaccessibleNodes(allNodes, hatfield);
+            
             GraphContractor contractor = new GraphContractor(allNodes);
 
             long startTime2 = System.currentTimeMillis();

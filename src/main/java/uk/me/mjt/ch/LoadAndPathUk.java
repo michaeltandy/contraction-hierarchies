@@ -65,15 +65,17 @@ public class LoadAndPathUk {
             
             System.out.println("Testing speed with caching...");
             
-            ArrayList<Node> testLocations = new ArrayList();
-            for (Node n : allNodes.values()) {
-                testLocations.add(n);
-                if (testLocations.size() >= 4000) break;
-            }
+            List<Node> testLocations = chooseRandomNodes(allNodes,4000);
             
             SimpleCache cache = new SimpleCache();
             for (int i=0 ; i<testLocations.size()-1 ; i++) {
                 contracted = CachedContractedDijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+                if (contracted==null) {
+                    Node from = testLocations.get(i);
+                    Node to = testLocations.get(i+1);
+                    System.out.println("No merge found for " + from + " to " + to + ". " + 
+                            String.format("http://www.openstreetmap.org/directions?engine=osrm_car&route=%.6f%%2C%.6f%%3B%.6f%%2C%.6f", from.lat,from.lon,to.lat,to.lon));
+                }
             }
             System.out.println("Warmup completed.");
             
@@ -85,22 +87,16 @@ public class LoadAndPathUk {
             }
             System.out.println("Repeated cached search in " + (System.currentTimeMillis()-startTime) + "ms.");
             
-            /*ArrayList<Node> testLocations = new ArrayList();
-            for (Node n : allNodes.values()) {
-                testLocations.add(n);
-                if (testLocations.size() >= 200) break;
-            }
-            
-            startTime = System.currentTimeMillis();
-            HashMap<Node,HashMap<Node,DijkstraSolution>> allPaths = Dijkstra.contractedGraphDijkstra(allNodes, testLocations, testLocations);
-            System.out.println("Many-to-many path for " + testLocations.size() + " in " + (System.currentTimeMillis()-startTime) + "ms.");*/
-            
-            
-            
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
         }
+    }
+    
+    private static List<Node> chooseRandomNodes(HashMap<Long,Node> allNodes, int howMany) {
+        ArrayList<Node> n = new ArrayList<>(allNodes.values());
+        Collections.shuffle(n, new Random(12345));
+        return new ArrayList(n.subList(0, howMany));
     }
     
     private static byte[] serialiseUpwardSolution(List<DijkstraSolution> upwardSolutions) {

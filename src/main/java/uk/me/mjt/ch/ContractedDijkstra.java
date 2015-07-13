@@ -50,7 +50,6 @@ public class ContractedDijkstra {
         }
         
         if (shortestSolutionDriveTime == Integer.MAX_VALUE) {
-            System.out.println("No merge found for " + upwardSolution.getStartNode() + " to " + downwardSolution.getEndNode());
             return null;
         }
         
