@@ -6,6 +6,7 @@ import java.util.List;
 
 public class DirectedEdge {
     public static final long PLACEHOLDER_ID = -123456L;
+    private static final int PREMAKE_UNCONTRACTED_THRESHOLD = 10;
 
     public final long edgeId;
     public final Node from;
@@ -16,6 +17,7 @@ public class DirectedEdge {
     public final DirectedEdge first;
     public final DirectedEdge second;
     public final int contractionDepth;
+    private final UnionList<DirectedEdge> uncontractedEdges;
     
     public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs) {
         this(edgeId,from,to,driveTimeMs,null,null);
@@ -36,8 +38,10 @@ public class DirectedEdge {
         this.second = second;
         if (first == null && second == null) {
             contractionDepth = 0;
+            uncontractedEdges = null;
         } else if (first != null && second != null){
             contractionDepth = Math.max(first.contractionDepth, second.contractionDepth)+1;
+            uncontractedEdges = new UnionList<>(first.getUncontractedEdges(),second.getUncontractedEdges());
         } else {
             throw new IllegalArgumentException("Must have either both or neither child edges set. Instead had " + first + " and " + second);
         }
@@ -51,9 +55,25 @@ public class DirectedEdge {
         if (!isShortcut()) {
             return Collections.singletonList(this);
         } else {
-            return new UnionList<>(first.getUncontractedEdges(),second.getUncontractedEdges());
+            return uncontractedEdges;
         }
     }
+    
+    /*public List<DirectedEdge> getUncontractedEdges() {
+        ArrayList<DirectedEdge> result = new ArrayList<>(4000);
+        appendUncontractedEdges(result);
+        result.trimToSize();
+        return Collections.unmodifiableList(result);
+    }
+    
+    private void appendUncontractedEdges(List<DirectedEdge> toAppend) {
+        if (!isShortcut()) {
+            toAppend.add(this);
+        } else {
+            first.appendUncontractedEdges(toAppend);
+            second.appendUncontractedEdges(toAppend);
+        }
+    }*/
     
     public DirectedEdge cloneWithEdgeId(long edgeId) {
         return new DirectedEdge(edgeId, from, to, driveTimeMs, first, second);
