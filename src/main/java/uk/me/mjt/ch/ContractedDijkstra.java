@@ -17,7 +17,7 @@ public class ContractedDijkstra {
         return mergeUpwardAndDownwardSolutions(upwardSolution, downwardSolution);
     }
     
-    public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
+    /*public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
         List<DijkstraSolution> upDs = upwardSolution.getIndividualNodeSolutions();
         List<DijkstraSolution> downDs = downwardSolution.getIndividualNodeSolutions();
         
@@ -53,6 +53,47 @@ public class ContractedDijkstra {
             return null;
         }
         
+        return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
+    }*/
+    
+    public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
+        long[] upArr = upwardSolution.getCompactFormat();
+        long[] downArr = downwardSolution.getCompactFormat();
+        
+        int upIdx = 0;
+        int downIdx = 0;
+        
+        int shortestSolutionDriveTime = Integer.MAX_VALUE;
+        int shortestUpIdx = -1;
+        int shortestDownIdx = -1;
+        
+        while (upIdx<upArr.length/4 && downIdx<downArr.length/4) {
+            long upContractionOrder = upArr[upIdx*4+1];
+            long downContractionOrder = downArr[downIdx*4+1];
+            
+            if (upContractionOrder==downContractionOrder) {
+                int upTotalDriveTime = (int)upArr[upIdx*4+2];
+                int downTotalDriveTime = (int)downArr[downIdx*4+2];
+                if (upTotalDriveTime + downTotalDriveTime < shortestSolutionDriveTime) {
+                    shortestSolutionDriveTime = upTotalDriveTime + downTotalDriveTime;
+                    shortestUpIdx = upIdx;
+                    shortestDownIdx = downIdx;
+                }
+                downIdx++;
+                upIdx++;
+            } else if (upContractionOrder > downContractionOrder) {
+                downIdx++;
+            } else {
+                upIdx++;
+            }
+        }
+        
+        if (shortestSolutionDriveTime == Integer.MAX_VALUE) {
+            return null;
+        }
+        
+        DijkstraSolution shortestSolutionUp = upwardSolution.getIndividualNodeSolutions().get(shortestUpIdx);
+        DijkstraSolution shortestSolutionDown = downwardSolution.getIndividualNodeSolutions().get(shortestDownIdx);
         return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
     }
 
