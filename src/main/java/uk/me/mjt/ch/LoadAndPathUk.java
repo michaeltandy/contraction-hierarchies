@@ -52,13 +52,13 @@ public class LoadAndPathUk {
             }*/
             /*
             for (int i=0 ; i<1000 ; i++) {
-                contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
+                contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
             System.out.println("Warmup completed.");
             
             startTime = System.currentTimeMillis();
             for (int i=0 ; i<10000 ; i++) {
-                contracted = Dijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
+                contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             }
             System.out.println("Repeated forwards search in " + (System.currentTimeMillis()-startTime) + "ms.");
             */
