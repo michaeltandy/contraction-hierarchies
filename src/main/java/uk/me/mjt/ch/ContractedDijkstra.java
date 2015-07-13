@@ -1,6 +1,7 @@
 
 package uk.me.mjt.ch;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,14 +122,16 @@ public class ContractedDijkstra {
             return null;
         }
         int totalDriveTime = ds.totalDriveTime;
-        LinkedList<Node> nodes = new LinkedList();
-        LinkedList<DirectedEdge> edges = new LinkedList();
+        List<DirectedEdge> edges = Collections.EMPTY_LIST;
         for (DirectedEdge de : ds.edges) {
-            edges.addAll(de.getUncontractedEdges());
+            edges = new UnionList<>(edges,de.getUncontractedEdges());
         }
-        nodes.add(ds.getFirstNode());
-        for (DirectedEdge de : edges) {
-            nodes.add(de.to);
+        
+        List<Node> nodes;
+        if (edges.isEmpty()) {
+            nodes = Collections.singletonList(ds.getFirstNode());
+        } else {
+            nodes = new NodeListFromEdgeList(edges);
         }
         return new DijkstraSolution(totalDriveTime, nodes, edges);
     }

@@ -51,12 +51,7 @@ public class DirectedEdge {
         if (!isShortcut()) {
             return Collections.singletonList(this);
         } else {
-            List<DirectedEdge> a = first.getUncontractedEdges();
-            List<DirectedEdge> b = second.getUncontractedEdges();
-            List<DirectedEdge> l = new ArrayList<DirectedEdge>(a.size()+b.size());
-            l.addAll(a);
-            l.addAll(b);
-            return l;
+            return new UnionList<>(first.getUncontractedEdges(),second.getUncontractedEdges());
         }
     }
     

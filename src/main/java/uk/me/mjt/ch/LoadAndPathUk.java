@@ -77,10 +77,15 @@ public class LoadAndPathUk {
                             String.format("http://www.openstreetmap.org/directions?engine=osrm_car&route=%.6f%%2C%.6f%%3B%.6f%%2C%.6f", from.lat,from.lon,to.lat,to.lon));
                 }
             }
-            System.out.println("Warmup completed.");
+            System.gc();
+            for (int i=0 ; i<testLocations.size()-1 ; i++) {
+                contracted = CachedContractedDijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
+            }            
+            System.out.println("Warmup/cache completed.");
+            
             
             startTime = System.currentTimeMillis();
-            for (int j=0 ; j<10 ; j++) {
+            for (int j=0 ; j<100 ; j++) {
                 for (int i=0 ; i<testLocations.size()-1 ; i++) {
                     contracted = CachedContractedDijkstra.contractedGraphDijkstra(allNodes, testLocations.get(i), testLocations.get(i+1), cache);
                 }
