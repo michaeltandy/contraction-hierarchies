@@ -1,14 +1,10 @@
 package uk.me.mjt.ch;
 
-import uk.me.mjt.ch.Dijkstra.Direction;
 import java.io.*;
 import java.util.*;
-import java.util.zip.GZIPOutputStream;
-import static uk.me.mjt.ch.Dijkstra.dijkstrasAlgorithm;
 import uk.me.mjt.ch.cache.CachedContractedDijkstra;
 import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
-import uk.me.mjt.ch.loader.NodeLoadCsv;
 
 public class BenchmarkUk {
     
@@ -69,7 +65,7 @@ public class BenchmarkUk {
         }
     }
     
-    public void benchmarkPathing() {
+    public void benchmarkPathing(int repetitions) {
         System.out.println("Benchmarking pathing. Warming up...");
         List<Node> testLocations = chooseRandomNodes(allNodes,4000);
         
@@ -80,7 +76,7 @@ public class BenchmarkUk {
         
         System.out.println("Warming up complete, benchmarking...");
         long startTime = System.currentTimeMillis();
-        for (int i=0 ; i<10 ; i++) {
+        for (int i=0 ; i<repetitions ; i++) {
             System.out.println("Iteration " + i);
             for (Node node : testLocations) {
                 ContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node);
@@ -88,10 +84,10 @@ public class BenchmarkUk {
             }
         }
         
-        System.out.println("10 repetitions uncached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
+        System.out.println(repetitions+" repetitions uncached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
     }
     
-    public void benchmarkCachedPathing() {
+    public void benchmarkCachedPathing(int repetitions) {
         System.out.println("Benchmarking cached pathing. Warming up & populating cache...");
         List<Node> testLocations = chooseRandomNodes(allNodes,4000);
         SimpleCache cache = new SimpleCache();
@@ -103,7 +99,7 @@ public class BenchmarkUk {
         
         System.out.println("Warming up complete, benchmarking...");
         long startTime = System.currentTimeMillis();
-        for (int i=0 ; i<10 ; i++) {
+        for (int i=0 ; i<repetitions ; i++) {
             System.out.println("Iteration " + i);
             for (Node node : testLocations) {
                 CachedContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node, cache);
@@ -111,7 +107,7 @@ public class BenchmarkUk {
             }
         }
         
-        System.out.println("10 repetitions cached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
+        System.out.println(repetitions+" repetitions cached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
     }
     
     
@@ -120,8 +116,10 @@ public class BenchmarkUk {
         try {
             BenchmarkUk instance = new BenchmarkUk();
             instance.loadAndCheckMapData();
-            instance.benchmarkPathing();
-            instance.benchmarkCachedPathing();
+            System.gc(); // Hopefully start the map data on its journey to oldgen :)
+            
+            instance.benchmarkPathing(2);
+            instance.benchmarkCachedPathing(100);
             
         } catch (Exception e) {
             e.printStackTrace();
