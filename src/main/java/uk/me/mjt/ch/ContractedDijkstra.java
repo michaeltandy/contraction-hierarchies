@@ -5,11 +5,46 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.*;
 import uk.me.mjt.ch.PartialSolution.DownwardSolution;
 import uk.me.mjt.ch.PartialSolution.UpwardSolution;
 
 
 public class ContractedDijkstra {
+    
+    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode, ExecutorService es) {
+        Preconditions.checkNoneNull(allNodes, startNode, endNode);
+        Future<UpwardSolution> fUpwardSolution = futureUpwardSolution(allNodes, startNode, es);
+        Future<DownwardSolution> fDownwardSolution = futureDownwardSolution(allNodes, endNode, es);
+        
+        return mergeUpwardAndDownwardSolutions(getFutureQuietly(fUpwardSolution), getFutureQuietly(fDownwardSolution));
+    }
+    
+    private static <E> E getFutureQuietly(Future<E> f) {
+        try {
+            return f.get();
+        } catch (ExecutionException|InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static Future<UpwardSolution> futureUpwardSolution(final HashMap<Long, Node> allNodes, final Node startNode, final ExecutorService es) {
+        return es.submit(new Callable<UpwardSolution>() {
+            @Override
+            public UpwardSolution call() throws Exception {
+                return calculateUpwardSolution(allNodes, startNode);
+            }
+        });
+    }
+    
+    public static Future<DownwardSolution> futureDownwardSolution(final HashMap<Long, Node> allNodes, final Node endNode, final ExecutorService es) {
+        return es.submit(new Callable<DownwardSolution>() {
+            @Override
+            public DownwardSolution call() throws Exception {
+                return calculateDownwardSolution(allNodes, endNode);
+            }
+        });
+    }
     
     public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode) {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);

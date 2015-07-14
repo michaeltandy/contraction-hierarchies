@@ -2,6 +2,8 @@ package uk.me.mjt.ch;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import uk.me.mjt.ch.cache.CachedContractedDijkstra;
 import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
@@ -87,6 +89,30 @@ public class BenchmarkUk {
         System.out.println(repetitions+" repetitions uncached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
     }
     
+    public void benchmarkParallelPathing(int repetitions) {
+        System.out.println("Benchmarking parallel uncached pathing. Warming up...");
+        List<Node> testLocations = chooseRandomNodes(allNodes,4000);
+        ExecutorService es = Executors.newFixedThreadPool(2);
+        
+        for (Node node : testLocations) {
+            ContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node, es);
+            ContractedDijkstra.contractedGraphDijkstra(allNodes, node, hatfield, es);
+        }
+        
+        System.out.println("Warming up complete, benchmarking...");
+        long startTime = System.currentTimeMillis();
+        for (int i=0 ; i<repetitions ; i++) {
+            System.out.println("Iteration " + i);
+            for (Node node : testLocations) {
+                ContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node, es);
+                ContractedDijkstra.contractedGraphDijkstra(allNodes, node, hatfield, es);
+            }
+        }
+        
+        System.out.println(repetitions+" repetitions parallel uncached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
+        es.shutdown();
+    }
+    
     public void benchmarkCachedPathing(int repetitions) {
         System.out.println("Benchmarking cached pathing. Warming up & populating cache...");
         List<Node> testLocations = chooseRandomNodes(allNodes,4000);
@@ -119,6 +145,7 @@ public class BenchmarkUk {
             System.gc(); // Hopefully start the map data on its journey to oldgen :)
             
             instance.benchmarkPathing(2);
+            instance.benchmarkParallelPathing(2);
             instance.benchmarkCachedPathing(100);
             
         } catch (Exception e) {
