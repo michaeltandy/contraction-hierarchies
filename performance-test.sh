@@ -28,7 +28,7 @@ cd contraction-hierarchies
 mvn clean install
 ch_git_rev=`git rev-parse master`
 
-git rev-parse master >> /mnt/runtimes.txt
+log -1 >> /mnt/runtimes.txt
 echo 'got map and compiled code' >> /mnt/runtimes.txt
 date >> /mnt/runtimes.txt
 
@@ -40,8 +40,11 @@ instance_id=`curl http://169.254.169.254/latest/meta-data/instance-id`
 
 for i in `seq 1 3`;
 do
-    java -cp /mnt/ch/contraction-hierarchies/target/ch-1.0-SNAPSHOT.jar -Xmx13g -Xms13g -XX:GCTimeLimit=60 uk.me.mjt.ch.BenchmarkUk | tee LoadAndPathUk-$i.txt
+    java -cp /mnt/ch/contraction-hierarchies/target/ch-1.0-SNAPSHOT.jar -Xmx28g -Xms28g -XX:GCTimeLimit=60 uk.me.mjt.ch.BenchmarkUk | tee LoadAndPathUk-$i.txt
     aws --region=us-west-1 s3 cp LoadAndPathUk-$i.txt s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
+    uncached_pathing_time=`cat LoadAndPathUk-$i.txt | grep 'repetitions uncached pathing' | sed 's/.*in //' | sed 's/ ms.//'`
+    cached_pathing_time=`cat LoadAndPathUk-$i.txt | grep 'repetitions cached pathing' | sed 's/.*in //' | sed 's/ ms.//'`
+    curl "https://docs.google.com/forms/d/1xFOZk3D1wnIjB0N3bhNIirppMSug1qJChYbyA4JGAf0/formResponse?ifq&entry.1150050082=$instance_id&entry.1477423851=$instance_type&entry.592766186=$ch_git_rev&entry.915449080=$uncached_pathing_time&entry.884534640=$cached_pathing_time&submit=Submit"
 done
 
 echo 'test complete, shutting down' >> /mnt/runtimes.txt
