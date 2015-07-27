@@ -1,8 +1,0 @@
-This code is from the MIT-licensed Teneighty heap package.
-
-See http://www.teneighty.org/software/index.html?f=heap&c=7a179 for details.
-
-If that URL ever dies, the code is mirrored here: https://code.google.com/p/java-heaps/
-For example: https://code.google.com/p/java-heaps/source/browse/trunk/src/main/java/org/teneighty/heap/FibonacciHeap.java
-
-I selected the teneighty implementation on the basis of https://gabormakrai.wordpress.com/2015/02/11/experimenting-with-dijkstras-algorithm/

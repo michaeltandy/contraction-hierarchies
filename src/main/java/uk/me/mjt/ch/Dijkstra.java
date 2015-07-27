@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import org.teneighty.heap.FibonacciHeap;
-import org.teneighty.heap.Heap;
+import java.util.PriorityQueue;
 
 public class Dijkstra {
     
@@ -37,18 +36,19 @@ public class Dijkstra {
         HashMap<Node,NodeInfo> nodeInfo = new HashMap<>(DEFAULT_SET_SIZE);
         ArrayList<DijkstraSolution> solutions = new ArrayList<>(DEFAULT_SET_SIZE);
 
-        FibonacciHeap<DistanceOrder,Node> unvisitedNodes = new FibonacciHeap<>();
-        Heap.Entry<DistanceOrder,Node> startHeapEntry = unvisitedNodes.insert(new DistanceOrder(startNode.nodeId,0), startNode);
+        PriorityQueue<DistanceOrder> unvisitedNodes = new PriorityQueue<>();
+        DistanceOrder startDo = new DistanceOrder(0,startNode);
+        unvisitedNodes.add(startDo);
         
         NodeInfo startNodeInfo = new NodeInfo();
         startNodeInfo.minDriveTime = 0;
-        startNodeInfo.heapEntry = startHeapEntry;
+        startNodeInfo.distanceOrder = startDo;
         nodeInfo.put(startNode, startNodeInfo);
         
         while (!unvisitedNodes.isEmpty()) {
             // Find the node with the shortest drive time so far:
-            Heap.Entry<DistanceOrder,Node> minHeapEntry = unvisitedNodes.extractMinimum();
-            Node shortestTimeNode = minHeapEntry.getValue();
+            DistanceOrder minHeapEntry = unvisitedNodes.poll();
+            Node shortestTimeNode = minHeapEntry.node;
             NodeInfo thisNodeInfo = nodeInfo.get(shortestTimeNode);
             
             if (thisNodeInfo.minDriveTime > maxSearchTime)
@@ -63,7 +63,7 @@ public class Dijkstra {
             }
             
             thisNodeInfo.visited = true;
-            thisNodeInfo.heapEntry = null;
+            thisNodeInfo.distanceOrder = null;
 
             for (DirectedEdge edge : (direction == Direction.FORWARDS ? shortestTimeNode.edgesFrom : shortestTimeNode.edgesTo)) {
                 Node n = (direction == Direction.FORWARDS ? edge.to : edge.from);
@@ -87,13 +87,12 @@ public class Dijkstra {
                     neighborNodeInfo.minTimeFrom = shortestTimeNode;
                     neighborNodeInfo.minTimeVia = edge;
                     
-                    DistanceOrder newDistOrder = new DistanceOrder(n.nodeId, newTime);
-                    if (neighborNodeInfo.heapEntry == null) {
-                        neighborNodeInfo.heapEntry = unvisitedNodes.insert(newDistOrder, n);
-                    } else {
-                        unvisitedNodes.decreaseKey(neighborNodeInfo.heapEntry, newDistOrder);
+                    if (neighborNodeInfo.distanceOrder != null) {
+                        unvisitedNodes.remove(neighborNodeInfo.distanceOrder);
                     }
-                    
+                    DistanceOrder newDistOrder = new DistanceOrder(newTime, n);
+                    neighborNodeInfo.distanceOrder = newDistOrder;
+                    unvisitedNodes.add(newDistOrder);
                 }
             }
         }
@@ -102,12 +101,12 @@ public class Dijkstra {
     }
 
     private static final class DistanceOrder implements Comparable<DistanceOrder> {
-        private final long nodeId;
         private final int minDriveTime;
+        public final Node node;
 
-        public DistanceOrder(long nodeId, int minDriveTime) {
-            this.nodeId = nodeId;
+        public DistanceOrder(int minDriveTime, Node node) {
             this.minDriveTime = minDriveTime;
+            this.node = node;
         }
         
         @Override
@@ -117,7 +116,7 @@ public class Dijkstra {
             } else if (this.minDriveTime > that.minDriveTime) {
                 return 1;
             } else {
-                return Long.compare(this.nodeId,that.nodeId);
+                return Long.compare(this.node.nodeId,that.node.nodeId);
             }
         }
     }
@@ -128,7 +127,7 @@ public class Dijkstra {
         int minDriveTime = Integer.MAX_VALUE;
         Node minTimeFrom = null;
         DirectedEdge minTimeVia = null;
-        Heap.Entry<DistanceOrder,Node> heapEntry = null;
+        DistanceOrder distanceOrder = null;
         DijkstraSolution solution = null;
     }
 
