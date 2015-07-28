@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# aws ec2 request-spot-instances --spot-price 0.03 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"r3.large\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
-
+# aws ec2 request-spot-instances --spot-price 0.07 --instance-count 2 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"r3.xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
 
 #14.04 LTS & instance store & PV: ami-6a3f7e1d
 #14.04 LTS & instance store & HVM: ami-7842030f <-- Supports r3.large (15gb, 4 cent spot), r3.xlarge (30gb, 7 cent spot)
@@ -24,7 +23,10 @@ aws --region=us-west-1 s3 cp s3://ch-test-mjt/great-britain-new-contracted.tar.g
 tar -xvf great-britain-new-contracted.tar.gz
 
 git clone https://github.com/michaeltandy/contraction-hierarchies.git
+
 cd contraction-hierarchies
+#git reset --hard aa0773713aec296f460dda1610cf7a1cb8689b09 # To test a particular git revision
+
 mvn clean install
 ch_git_rev=`git rev-parse master`
 
