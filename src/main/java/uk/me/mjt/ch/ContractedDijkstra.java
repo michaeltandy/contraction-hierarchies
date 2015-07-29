@@ -172,12 +172,12 @@ public class ContractedDijkstra {
     }
     
     public static UpwardSolution calculateUpwardSolution(HashMap<Long, Node> allNodes, Node startNode) {
-        List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.FORWARDS);
+        List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Integer.MAX_VALUE, Dijkstra.Direction.FORWARDS);
         return new UpwardSolution(startNode, upwardSolutions);
     }
     
     public static DownwardSolution calculateDownwardSolution(HashMap<Long, Node> allNodes, Node endNode) {
-        List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, endNode, null, Float.POSITIVE_INFINITY, Dijkstra.Direction.BACKWARDS);
+        List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, endNode, null, Integer.MAX_VALUE, Dijkstra.Direction.BACKWARDS);
         return new DownwardSolution(endNode, downwardSolutions);
     }
 

@@ -18,7 +18,7 @@ public class Dijkstra {
     public static DijkstraSolution dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, Node endNode, Direction direction) {
         HashSet<Node> hs = new HashSet<>(1);
         hs.add(endNode);
-        List<DijkstraSolution> solutions = dijkstrasAlgorithm(allNodes, startNode, hs, Float.POSITIVE_INFINITY, direction);
+        List<DijkstraSolution> solutions = dijkstrasAlgorithm(allNodes, startNode, hs, Integer.MAX_VALUE, direction);
         if (solutions.size() == 1)
             return solutions.get(0);
         else
@@ -31,7 +31,7 @@ public class Dijkstra {
      * solution has a drive time greater than maxSearchTime, whichever happens
      * first.
      */
-    public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, float maxSearchTime /* Fixme change to int, check performance impact */, Direction direction ) {
+    public static List<DijkstraSolution> dijkstrasAlgorithm(HashMap<Long,Node> allNodes, Node startNode, HashSet<Node> endNodes, int maxSearchTime, Direction direction ) {
         Preconditions.checkNoneNull(allNodes,startNode,direction);
         HashMap<Node,NodeInfo> nodeInfo = new HashMap<>(DEFAULT_SET_SIZE);
         ArrayList<DijkstraSolution> solutions = new ArrayList<>(DEFAULT_SET_SIZE);

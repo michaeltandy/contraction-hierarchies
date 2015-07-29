@@ -53,7 +53,7 @@ public class InaccessibleNodes {
     }
     
     private static HashSet<Node> findAccessibleByDirection(HashMap<Long,Node> allNodes, Node startNode, Direction direction) {
-        List<DijkstraSolution> solutionsThisDirection = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Float.POSITIVE_INFINITY, direction);
+        List<DijkstraSolution> solutionsThisDirection = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Integer.MAX_VALUE, direction);
         
         HashSet<Node> accessible = new HashSet<>(solutionsThisDirection.size());
         for (DijkstraSolution ds : solutionsThisDirection) {
