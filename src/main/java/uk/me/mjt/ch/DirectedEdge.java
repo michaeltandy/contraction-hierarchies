@@ -6,12 +6,13 @@ import java.util.List;
 
 public class DirectedEdge {
     public static final long PLACEHOLDER_ID = -123456L;
-    private static final int PREMAKE_UNCONTRACTED_THRESHOLD = 10;
-
+    
     public final long edgeId;
     public final Node from;
     public final Node to;
     public final int driveTimeMs;
+    //public final boolean isAccessOnly;
+    public AccessOnly accessOnly;
 
     // Parameters for graph contraction:
     public final DirectedEdge first;
@@ -19,16 +20,20 @@ public class DirectedEdge {
     public final int contractionDepth;
     private final UnionList<DirectedEdge> uncontractedEdges;
     
-    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs) {
-        this(edgeId,from,to,driveTimeMs,null,null);
+    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly isAccessOnly) {
+        this(edgeId,from,to,driveTimeMs,isAccessOnly,null,null);
+    }
+    
+    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
+        this(edgeId, from, to, driveTimeMs, null, first, second);
     }
 
-    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
+    private DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly, DirectedEdge first, DirectedEdge second) {
         Preconditions.checkNoneNull(from, to);
         Preconditions.require(edgeId>0||edgeId==PLACEHOLDER_ID, driveTimeMs >= 0);
         if (edgeId>0 && first!=null && second!=null) {
             // If this check starts failing, your edge IDs for shortcuts probably start too low.
-            Preconditions.require(edgeId > first.edgeId, edgeId>second.edgeId);
+            Preconditions.require(edgeId>first.edgeId, edgeId>second.edgeId);
         }
         this.edgeId = edgeId;
         this.from = from;
@@ -39,9 +44,12 @@ public class DirectedEdge {
         if (first == null && second == null) {
             contractionDepth = 0;
             uncontractedEdges = null;
+            Preconditions.require(accessOnly==AccessOnly.TRUE || accessOnly == AccessOnly.FALSE);
+            this.accessOnly = accessOnly;
         } else if (first != null && second != null){
             contractionDepth = Math.max(first.contractionDepth, second.contractionDepth)+1;
             uncontractedEdges = new UnionList<>(first.getUncontractedEdges(),second.getUncontractedEdges());
+            this.accessOnly = first.accessOnly.followedBy(second.accessOnly);
         } else {
             throw new IllegalArgumentException("Must have either both or neither child edges set. Instead had " + first + " and " + second);
         }
@@ -75,8 +83,10 @@ public class DirectedEdge {
         }
     }*/
     
+    
+    
     public DirectedEdge cloneWithEdgeId(long edgeId) {
-        return new DirectedEdge(edgeId, from, to, driveTimeMs, first, second);
+        return new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly, first, second);
     }
     
     public String toString() {

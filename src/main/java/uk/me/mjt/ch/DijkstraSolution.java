@@ -1,7 +1,6 @@
 package uk.me.mjt.ch;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class DijkstraSolution  {
@@ -9,16 +8,18 @@ public class DijkstraSolution  {
     public final int totalDriveTime;
     public final List<Node> nodes;
     public final List<DirectedEdge> edges;
+    public final AccessOnly accessOnly;
     
     private final DijkstraSolution preceding; // Can we remove this?
     
-    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges) {
-        this(totalDriveTime, nodes, edges, null);
+    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, AccessOnly accessOnly) {
+        this(totalDriveTime, nodes, edges, accessOnly, null);
     }
 
-    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, DijkstraSolution preceding) {
+    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, AccessOnly accessOnly, DijkstraSolution preceding) {
         Preconditions.checkNoneNull(nodes,edges);
         this.totalDriveTime = totalDriveTime;
+        this.accessOnly = accessOnly;
         if (preceding == null) {
             this.nodes = Collections.unmodifiableList(nodes);
             this.edges = Collections.unmodifiableList(edges);

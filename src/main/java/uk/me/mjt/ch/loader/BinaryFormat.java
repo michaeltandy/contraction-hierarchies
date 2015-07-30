@@ -2,6 +2,7 @@ package uk.me.mjt.ch.loader;
 
 import java.io.*;
 import java.util.*;
+import uk.me.mjt.ch.AccessOnly;
 import uk.me.mjt.ch.DirectedEdge;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Preconditions;
@@ -77,7 +78,9 @@ public class BinaryFormat {
                 long fromNodeId = source.readLong();
                 long toNodeId = source.readLong();
                 int driveTimeMs = source.readInt();
-                boolean isShortcut = source.readBoolean();
+                byte properties = source.readByte();
+                boolean isShortcut = (properties&0x01)==0x01;
+                boolean isAccessOnly = (properties&0x02)==0x02;
                 long firstEdgeId = source.readLong();
                 long secondEdgeId = source.readLong();
                 
@@ -98,7 +101,7 @@ public class BinaryFormat {
                     Preconditions.checkNoneNull(firstEdge,secondEdge);
                     de = new DirectedEdge(edgeId, fromNode, toNode, driveTimeMs, firstEdge, secondEdge);
                 } else {
-                    de = new DirectedEdge(edgeId, fromNode, toNode, driveTimeMs);
+                    de = new DirectedEdge(edgeId, fromNode, toNode, driveTimeMs, (isAccessOnly?AccessOnly.TRUE:AccessOnly.FALSE));
                 }
                 
                 fromNode.edgesFrom.add(de);

@@ -3,6 +3,7 @@ package uk.me.mjt.ch.loader;
 import java.io.*;
 import java.util.HashMap;
 import java.util.regex.*;
+import uk.me.mjt.ch.AccessOnly;
 import uk.me.mjt.ch.DirectedEdge;
 import uk.me.mjt.ch.Node;
 
@@ -43,7 +44,7 @@ public class NodeLoadCsv {
 
                     float distance = Float.parseFloat(parts[8]);
                     int driveTimeMs = (int) (distance * 1000.0); // Not the most elegant way of doing things, but...
-                    DirectedEdge de = new DirectedEdge(edgeId++, fromNode, toNode, driveTimeMs);
+                    DirectedEdge de = new DirectedEdge(edgeId++, fromNode, toNode, driveTimeMs, AccessOnly.FALSE);
                     fromNode.edgesFrom.add(de);
                     toNode.edgesTo.add(de);
                 } else { // If none of our parsers match it...

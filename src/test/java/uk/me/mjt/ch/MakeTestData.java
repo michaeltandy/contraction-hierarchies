@@ -10,8 +10,8 @@ public class MakeTestData {
         Node n2 = new Node(2, 52f, 0.2f);
         Node n3 = new Node(3, 52f, 0.3f);
         
-        DirectedEdge de1 = new DirectedEdge(1001, n1, n2, 1);
-        DirectedEdge de2 = new DirectedEdge(1002, n2, n3, 2);
+        DirectedEdge de1 = new DirectedEdge(1001, n1, n2, 1, AccessOnly.FALSE);
+        DirectedEdge de2 = new DirectedEdge(1002, n2, n3, 2, AccessOnly.FALSE);
         DirectedEdge de3 = new DirectedEdge(1003, n1, n3, 3, de1, de2);
         
         n1.edgesFrom.add(de1);
@@ -54,8 +54,8 @@ public class MakeTestData {
                 for (long toNodeId : possibleToNodeIds) {
                     if (result.containsKey(toNodeId)) {
                         Node toNode = result.get(toNodeId);
-                        makeEdgeAndAddToNodes(edgeId++,fromNode,toNode,1000);
-                        makeEdgeAndAddToNodes(edgeId++,toNode,fromNode,1000);
+                        makeEdgeAndAddToNodes(edgeId++,fromNode,toNode,1000, AccessOnly.FALSE);
+                        makeEdgeAndAddToNodes(edgeId++,toNode,fromNode,1000, AccessOnly.FALSE);
                     }
                 }
             }
@@ -72,9 +72,40 @@ public class MakeTestData {
         }
     }
     
-    private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs) {
+    /**
+     * Makes a ring of nodes, from 1 to 7, with an access-only edge between node
+     * 1 and node 7. Hence the shortest route from node 2 to node 6 would be 
+     * 6->7->1->2 ignoring access-only restrictions but 2->3->4->5->6 if access 
+     * only restrictions are respected.
+     * @return 
+     */
+    public static HashMap<Long,Node> makePartlyAccessOnlyRing() {
+        HashMap<Long,Node> result = new HashMap();
+        int edgeId = 1000;
+        
+        Node previous = null;
+        for (long i=1 ; i<=7 ; i++) {
+            Node newNode = new Node(i, 52f, 0.1f);
+            result.put(i, newNode);
+            if (previous != null) {
+                makeEdgeAndAddToNodes(edgeId++,previous,newNode,1000, AccessOnly.FALSE);
+                makeEdgeAndAddToNodes(edgeId++,newNode,previous,1000, AccessOnly.FALSE);
+            }
+            previous=newNode;
+        }
+        
+        Node firstNode = result.get(1L);
+        Node lastNode = result.get(7L);
+        
+        makeEdgeAndAddToNodes(edgeId++,firstNode,lastNode,1000, AccessOnly.TRUE);
+        makeEdgeAndAddToNodes(edgeId++,lastNode,firstNode,1000, AccessOnly.TRUE);
+        
+        return result;
+    } 
+    
+    private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
         Preconditions.checkNoneNull(from,to);
-        DirectedEdge de = new DirectedEdge(edgeId, from, to, 1);
+        DirectedEdge de = new DirectedEdge(edgeId, from, to, 1, accessOnly);
         from.edgesFrom.add(de);
         to.edgesTo.add(de);
         return de;

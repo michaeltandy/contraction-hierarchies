@@ -12,6 +12,7 @@ public abstract class PartialSolution {
     private final List<DijkstraSolution> individualNodeSolutions;
     private final Dijkstra.Direction direction;
     private final long[] compactFormat;
+    private final byte[] publicAccess ;
     
     private PartialSolution(Node nodeOfInterest, List<DijkstraSolution> individualNodeSolutions, Dijkstra.Direction direction) {
         Preconditions.checkNoneNull(nodeOfInterest,individualNodeSolutions,direction);
@@ -20,6 +21,7 @@ public abstract class PartialSolution {
         this.direction = direction;
         sortByContractionOrder();
         compactFormat = new long[individualNodeSolutions.size()*4];
+        publicAccess = new byte[individualNodeSolutions.size()];
         makeCompactFormat();
     }
 
@@ -56,6 +58,7 @@ public abstract class PartialSolution {
             compactFormat[4*i]=n.nodeId;
             compactFormat[4*i+1]=n.contractionOrder;
             compactFormat[4*i+2]=ds.totalDriveTime;
+            publicAccess[i] = (byte)ds.accessOnly.ordinal();
             
             List<DirectedEdge> directedEdges = ds.getDeltaEdges();
 
@@ -72,9 +75,17 @@ public abstract class PartialSolution {
     public long[] getCompactFormat() {
         return compactFormat;
     }
+    
+    public byte[] getCompactPublicAccess() {
+        return publicAccess;
+    }
 
     Node getNodeOfInterest() {
         return nodeOfInterest;
+    }
+    
+    public String toString() {
+        return individualNodeSolutions.toString();
     }
     
     public static class UpwardSolution extends PartialSolution {

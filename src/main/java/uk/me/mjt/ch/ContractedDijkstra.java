@@ -53,48 +53,12 @@ public class ContractedDijkstra {
         return mergeUpwardAndDownwardSolutions(upwardSolution, downwardSolution);
     }
     
-    /*public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
-        List<DijkstraSolution> upDs = upwardSolution.getIndividualNodeSolutions();
-        List<DijkstraSolution> downDs = downwardSolution.getIndividualNodeSolutions();
-        
-        int upIdx = 0;
-        int downIdx = 0;
-        //DijkstraSolution shortestSolution = null;
-        int shortestSolutionDriveTime = Integer.MAX_VALUE;
-        DijkstraSolution shortestSolutionUp = null;
-        DijkstraSolution shortestSolutionDown = null;
-        
-        while (upIdx<upDs.size() && downIdx<downDs.size()) {
-            DijkstraSolution up = upDs.get(upIdx);
-            DijkstraSolution down = downDs.get(downIdx);
-            long upContractionOrder = upDs.get(upIdx).getLastNode().contractionOrder;
-            long downContractionOrder = downDs.get(downIdx).getLastNode().contractionOrder;
-            
-            if (upContractionOrder==downContractionOrder) {
-                if (up.totalDriveTime + down.totalDriveTime < shortestSolutionDriveTime) {
-                    shortestSolutionDriveTime = up.totalDriveTime + down.totalDriveTime;
-                    shortestSolutionUp = up;
-                    shortestSolutionDown = down;
-                }
-                downIdx++;
-                upIdx++;
-            } else if (upContractionOrder > downContractionOrder) {
-                downIdx++;
-            } else {
-                upIdx++;
-            }
-        }
-        
-        if (shortestSolutionDriveTime == Integer.MAX_VALUE) {
-            return null;
-        }
-        
-        return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
-    }*/
-    
     public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
         long[] upArr = upwardSolution.getCompactFormat();
         long[] downArr = downwardSolution.getCompactFormat();
+        
+        byte[] upAo = upwardSolution.getCompactPublicAccess();
+        byte[] downAo = downwardSolution.getCompactPublicAccess();
         
         int upIdx = 0;
         int downIdx = 0;
@@ -111,9 +75,13 @@ public class ContractedDijkstra {
                 int upTotalDriveTime = (int)upArr[upIdx*4+2];
                 int downTotalDriveTime = (int)downArr[downIdx*4+2];
                 if (upTotalDriveTime + downTotalDriveTime < shortestSolutionDriveTime) {
-                    shortestSolutionDriveTime = upTotalDriveTime + downTotalDriveTime;
-                    shortestUpIdx = upIdx;
-                    shortestDownIdx = downIdx;
+                    AccessOnly upAO = AccessOnly.values()[upAo[upIdx]];
+                    AccessOnly downAO = AccessOnly.values()[downAo[downIdx]];
+                    if (upAO.mayBeFollowedBy(downAO.reverse())) {
+                        shortestSolutionDriveTime = upTotalDriveTime + downTotalDriveTime;
+                        shortestUpIdx = upIdx;
+                        shortestDownIdx = downIdx;
+                    }
                 }
                 downIdx++;
                 upIdx++;
@@ -145,7 +113,8 @@ public class ContractedDijkstra {
         for (int i = down.edges.size() - 1; i >= 0; i--) {
             edges.add(down.edges.get(i));
         }
-        return new DijkstraSolution(totalDriveTime, nodes, edges);
+        AccessOnly accessOnly = up.accessOnly.followedBy(down.accessOnly.reverse());
+        return new DijkstraSolution(totalDriveTime, nodes, edges, accessOnly);
     }
     
     /**
@@ -168,7 +137,7 @@ public class ContractedDijkstra {
         } else {
             nodes = new NodeListFromEdgeList(edges);
         }
-        return new DijkstraSolution(totalDriveTime, nodes, edges);
+        return new DijkstraSolution(totalDriveTime, nodes, edges, ds.accessOnly);
     }
     
     public static UpwardSolution calculateUpwardSolution(HashMap<Long, Node> allNodes, Node startNode) {
