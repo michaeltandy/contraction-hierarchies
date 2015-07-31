@@ -17,7 +17,7 @@ public class DijkstraSolution  {
     }
 
     public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, AccessOnly accessOnly, DijkstraSolution preceding) {
-        Preconditions.checkNoneNull(nodes,edges);
+        Preconditions.checkNoneNull(nodes,edges, accessOnly);
         this.totalDriveTime = totalDriveTime;
         this.accessOnly = accessOnly;
         if (preceding == null) {
@@ -40,7 +40,7 @@ public class DijkstraSolution  {
             for (Node n : nodes) {
                 sb.append(n.nodeId).append(",");
             }
-            sb.append(String.format(" Duration %.2f secs (%.2f mins)", totalDriveTime/1000.0, totalDriveTime/60000.0));
+            sb.append(String.format(" Duration %.2f secs (%.2f mins) %s", totalDriveTime/1000.0, totalDriveTime/60000.0, accessOnly.toString()));
             return sb.toString();
         }
     }

@@ -35,6 +35,26 @@ public class BinaryFormatTest {
         
         assertTrue(Util.deepEquals(testData, loopback, true));
     }
+    
+    @org.junit.Test
+    public void testLoopbackAccessOnly() throws Exception {
+        ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
+        ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
+        
+        HashMap<Long, Node> testData = MakeTestData.makePartlyAccessOnlyRing();
+        BinaryFormat instance = new BinaryFormat();
+        
+        instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));
+        instance.writeEdges(testData.values(), new DataOutputStream(waysOut));
+        
+        ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
+        ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
+        
+        HashMap<Long, Node> loopback = instance.readNodes(new DataInputStream(nodesIn));
+        instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
+        
+        assertTrue(Util.deepEquals(testData, loopback, true));
+    }
 
     
     

@@ -80,6 +80,7 @@ public class Util {
         return (a.edgeId == b.edgeId
                 && a.contractionDepth == b.contractionDepth
                 && a.driveTimeMs == b.driveTimeMs
+                && a.accessOnly == b.accessOnly
                 && shallowEquals(a.from,b.from)
                 && shallowEquals(a.to,b.to));
     }

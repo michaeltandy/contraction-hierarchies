@@ -164,7 +164,10 @@ public class BinaryFormat {
         dos.writeLong(de.from.nodeId);
         dos.writeLong(de.to.nodeId);
         dos.writeInt(de.driveTimeMs);
-        dos.writeBoolean(de.isShortcut());
+        
+        int properties = (de.isShortcut()?0x01:0x00) | (de.accessOnly==AccessOnly.TRUE?0x02:0x00);
+        dos.writeByte(properties);
+        
         if (de.isShortcut()) {
             dos.writeLong(de.first.edgeId);
             dos.writeLong(de.second.edgeId);

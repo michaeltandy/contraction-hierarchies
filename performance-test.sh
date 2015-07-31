@@ -19,8 +19,8 @@ cd
 mkdir /mnt/ch
 cd /mnt/ch
 
-aws --region=us-west-1 s3 cp s3://ch-test-mjt/great-britain-new-contracted.tar.gz .
-tar -xvf great-britain-new-contracted.tar.gz
+aws --region=us-west-1 s3 cp s3://ch-test-mjt/great-britain-new-contracted-accessonly.tar.gz .
+tar -xvf great-britain-new-contracted-accessonly.tar.gz
 
 git clone https://github.com/michaeltandy/contraction-hierarchies.git
 
