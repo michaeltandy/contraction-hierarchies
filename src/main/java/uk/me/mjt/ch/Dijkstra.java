@@ -13,7 +13,6 @@ public class Dijkstra {
     public enum Direction{FORWARDS,BACKWARDS};
     private static final int DEFAULT_SET_SIZE = 4096;
     
-    
     /**
      * Convenience method for a one-to-one search on an uncontracted graph.
      */
@@ -45,7 +44,6 @@ public class Dijkstra {
         NodeInfo startNodeInfo = new NodeInfo();
         startNodeInfo.minDriveTime = 0;
         startNodeInfo.distanceOrder = startDo;
-        startNodeInfo.accessOnly = AccessOnly.NO_EDGES_YET;
         nodeInfo.put(startNode, startNodeInfo);
         
         while (!unvisitedNodes.isEmpty()) {
@@ -73,9 +71,6 @@ public class Dijkstra {
                 if (n.contractionOrder < shortestTimeNode.contractionOrder)
                     break;
                 
-                if (!thisNodeInfo.accessOnly.mayBeFollowedBy(edge.accessOnly))
-                    continue;
-                
                 NodeInfo neighborNodeInfo = nodeInfo.get(n);
                 if (neighborNodeInfo == null) {
                     neighborNodeInfo = new NodeInfo();
@@ -92,8 +87,6 @@ public class Dijkstra {
                     neighborNodeInfo.minDriveTime = newTime;
                     neighborNodeInfo.minTimeFrom = shortestTimeNode;
                     neighborNodeInfo.minTimeVia = edge;
-                    
-                    neighborNodeInfo.accessOnly = thisNodeInfo.accessOnly.followedBy(edge.accessOnly);
                     
                     if (neighborNodeInfo.distanceOrder != null) {
                         unvisitedNodes.remove(neighborNodeInfo.distanceOrder);
@@ -137,13 +130,11 @@ public class Dijkstra {
         DirectedEdge minTimeVia = null;
         DistanceOrder distanceOrder = null;
         DijkstraSolution solution = null;
-        AccessOnly accessOnly = null;
     }
     
     private static DijkstraSolution extractShortest(final Node endNode, HashMap<Node,NodeInfo> nodeInfo) {
         NodeInfo endNodeInfo = nodeInfo.get(endNode);
         int totalDriveTime = endNodeInfo.minDriveTime;
-        AccessOnly accessOnly = endNodeInfo.accessOnly;
         
         List<Node> nodes = new LinkedList();
         List<DirectedEdge> edges = new LinkedList();
@@ -157,7 +148,7 @@ public class Dijkstra {
                     edges.add(0,thisNodeInfo.minTimeVia);
                 thisNode = thisNodeInfo.minTimeFrom;
             } else {
-                endNodeInfo.solution = new DijkstraSolution(totalDriveTime, nodes, edges, accessOnly, thisNodeInfo.solution);
+                endNodeInfo.solution = new DijkstraSolution(totalDriveTime, nodes, edges, thisNodeInfo.solution);
                 return endNodeInfo.solution;
             }
         }
@@ -166,7 +157,7 @@ public class Dijkstra {
             System.out.println("Created empty solution?!?!");
         }
         
-        endNodeInfo.solution = new DijkstraSolution(totalDriveTime, nodes, edges, accessOnly);
+        endNodeInfo.solution = new DijkstraSolution(totalDriveTime, nodes, edges);
         return endNodeInfo.solution;
     }
 }

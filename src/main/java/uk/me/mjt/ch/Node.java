@@ -115,6 +115,32 @@ public class Node {
         });
     }
     
+    public boolean anyEdgesAccessOnly() {
+        for (DirectedEdge de : edgesFrom) {
+            if (de.accessOnly == AccessOnly.TRUE) {
+                return true;
+            }
+        }
+        for (DirectedEdge de : edgesTo) {
+            if (de.accessOnly == AccessOnly.TRUE) {
+                return true;
+            }
+        }
+        return false;
+    }
     
+    public boolean allEdgesAccessOnly() {
+        for (DirectedEdge de : edgesFrom) {
+            if (de.accessOnly == AccessOnly.FALSE) {
+                return false;
+            }
+        }
+        for (DirectedEdge de : edgesTo) {
+            if (de.accessOnly == AccessOnly.FALSE) {
+                return false;
+            }
+        }
+        return true;
+    }
     
 }

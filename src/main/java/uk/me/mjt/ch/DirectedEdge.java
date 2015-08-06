@@ -44,12 +44,13 @@ public class DirectedEdge {
         if (first == null && second == null) {
             contractionDepth = 0;
             uncontractedEdges = null;
-            Preconditions.require(accessOnly==AccessOnly.TRUE || accessOnly == AccessOnly.FALSE);
+            Preconditions.checkNoneNull(accessOnly);
             this.accessOnly = accessOnly;
         } else if (first != null && second != null){
             contractionDepth = Math.max(first.contractionDepth, second.contractionDepth)+1;
             uncontractedEdges = new UnionList<>(first.getUncontractedEdges(),second.getUncontractedEdges());
-            this.accessOnly = first.accessOnly.followedBy(second.accessOnly);
+            // Eliminate access only nodes edges before performing contraction.
+            Preconditions.require(first.accessOnly==AccessOnly.FALSE && second.accessOnly==AccessOnly.FALSE); 
         } else {
             throw new IllegalArgumentException("Must have either both or neither child edges set. Instead had " + first + " and " + second);
         }

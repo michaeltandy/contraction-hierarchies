@@ -8,18 +8,16 @@ public class DijkstraSolution  {
     public final int totalDriveTime;
     public final List<Node> nodes;
     public final List<DirectedEdge> edges;
-    public final AccessOnly accessOnly;
     
     private final DijkstraSolution preceding; // Can we remove this?
     
-    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, AccessOnly accessOnly) {
-        this(totalDriveTime, nodes, edges, accessOnly, null);
+    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges) {
+        this(totalDriveTime, nodes, edges, null);
     }
 
-    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, AccessOnly accessOnly, DijkstraSolution preceding) {
-        Preconditions.checkNoneNull(nodes,edges, accessOnly);
+    public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, DijkstraSolution preceding) {
+        Preconditions.checkNoneNull(nodes,edges);
         this.totalDriveTime = totalDriveTime;
-        this.accessOnly = accessOnly;
         if (preceding == null) {
             this.nodes = Collections.unmodifiableList(nodes);
             this.edges = Collections.unmodifiableList(edges);
@@ -40,7 +38,7 @@ public class DijkstraSolution  {
             for (Node n : nodes) {
                 sb.append(n.nodeId).append(",");
             }
-            sb.append(String.format(" Duration %.2f secs (%.2f mins) %s", totalDriveTime/1000.0, totalDriveTime/60000.0, accessOnly.toString()));
+            sb.append(String.format(" Duration %.2f secs (%.2f mins)", totalDriveTime/1000.0, totalDriveTime/60000.0));
             return sb.toString();
         }
     }
