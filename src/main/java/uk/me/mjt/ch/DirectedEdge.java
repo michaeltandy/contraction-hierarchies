@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class DirectedEdge {
+public class DirectedEdge implements Comparable<DirectedEdge>{
     public static final long PLACEHOLDER_ID = -123456L;
     
     public final long edgeId;
@@ -92,6 +92,15 @@ public class DirectedEdge {
     
     public String toString() {
         return from.nodeId+"--"+driveTimeMs+"("+contractionDepth+")-->"+to.nodeId;
+    }
+
+    @Override
+    public int compareTo(DirectedEdge o) {
+        if (o==null) return -1;
+        if (this.edgeId==PLACEHOLDER_ID || o.edgeId==PLACEHOLDER_ID) {
+            throw new RuntimeException("Michael didn't write a very thorough comparator.");
+        }
+        return Long.compare(this.edgeId, o.edgeId);
     }
     
 }

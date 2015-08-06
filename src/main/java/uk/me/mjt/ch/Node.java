@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class Node {
+public class Node implements Comparable<Node> {
     public static final long UNCONTRACTED = Long.MAX_VALUE;
 
     public final long nodeId;
@@ -141,6 +141,12 @@ public class Node {
             }
         }
         return true;
+    }
+
+    @Override
+    public int compareTo(Node o) {
+        if (o == null) return -1;
+        return Long.compare(this.nodeId, o.nodeId);
     }
     
 }
