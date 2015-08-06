@@ -101,11 +101,35 @@ public class MakeTestData {
         makeEdgeAndAddToNodes(edgeId++,lastNode,firstNode,1000, AccessOnly.TRUE);
         
         return result;
-    } 
+    }
+    
+    /**
+     * A graph shaped like Þ so the shortest way to reach node 4 is via an
+     * access-only edge, but you can also access it via a non-access-only edge
+     * which is required to route 1->5.
+     */
+    public static HashMap<Long,Node> makePartlyAccessOnlyThorn() {
+        HashMap<Long,Node> result = new HashMap();
+        int edgeId = 1000;
+        
+        for (long i=1 ; i<=5 ; i++) {
+            Node newNode = new Node(i, 52f, 0.1f);
+            result.put(i, newNode);
+        }
+        
+        makeEdgeAndAddToNodes(edgeId++,result.get(1L),result.get(2L),1000, AccessOnly.FALSE);
+        makeEdgeAndAddToNodes(edgeId++,result.get(2L),result.get(3L),1000, AccessOnly.FALSE);
+        makeEdgeAndAddToNodes(edgeId++,result.get(3L),result.get(4L),1000, AccessOnly.FALSE);
+        makeEdgeAndAddToNodes(edgeId++,result.get(4L),result.get(5L),1000, AccessOnly.FALSE);
+        
+        makeEdgeAndAddToNodes(edgeId++,result.get(2L),result.get(4L),1000, AccessOnly.TRUE);
+        
+        return result;
+    }
     
     private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
         Preconditions.checkNoneNull(from,to);
-        DirectedEdge de = new DirectedEdge(edgeId, from, to, 1, accessOnly);
+        DirectedEdge de = new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly);
         from.edgesFrom.add(de);
         to.edgesTo.add(de);
         return de;

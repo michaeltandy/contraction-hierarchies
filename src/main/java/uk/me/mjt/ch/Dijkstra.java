@@ -1,6 +1,7 @@
 package uk.me.mjt.ch;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -73,7 +74,7 @@ public class Dijkstra {
                     break;
                 
                 if (!thisNodeInfo.accessOnly.mayBeFollowedBy(edge.accessOnly))
-                    break;
+                    continue;
                 
                 NodeInfo neighborNodeInfo = nodeInfo.get(n);
                 if (neighborNodeInfo == null) {

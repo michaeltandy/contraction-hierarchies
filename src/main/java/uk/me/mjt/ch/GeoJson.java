@@ -36,7 +36,7 @@ public class GeoJson {
         sb.append("{ \"type\": \"FeatureCollection\", \"features\": [\n");
         
         for (DirectedEdge de : deList) {
-            sb.append(directedEdgeToFeature(de)).append(",\n");
+            sb.append(singleDirectedEdge(de)).append(",\n");
         }
         
         if (sb.toString().endsWith(",\n"))
@@ -58,7 +58,7 @@ public class GeoJson {
         for (Node n : allNodes) {
             for (DirectedEdge de : n.edgesFrom) {
                 if (condition.shouldPrintEdge(de)) {
-                    sb.append(directedEdgeToFeature(de)).append(",\n");
+                    sb.append(singleDirectedEdge(de)).append(",\n");
                 }
             }
         }
@@ -70,7 +70,7 @@ public class GeoJson {
     
     
     
-    private static String directedEdgeToFeature(DirectedEdge de) {
+    public static String singleDirectedEdge(DirectedEdge de) {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"type\": \"Feature\",\"properties\": {},\"geometry\": {\"type\": \"LineString\",\"coordinates\": [");
         sb.append(String.format("[%.6f,%.6f],[%.6f,%.6f]", de.from.lon, de.from.lat, de.to.lon, de.to.lat));
