@@ -55,7 +55,7 @@ public abstract class PartialSolution {
             Node n = ds.getLastNode();
             compactFormat[4*i]=n.nodeId;
             compactFormat[4*i+1]=n.contractionOrder;
-            compactFormat[4*i+2]=ds.totalDriveTime;
+            compactFormat[4*i+2]=ds.totalDriveTimeMs;
             
             List<DirectedEdge> directedEdges = ds.getDeltaEdges();
 

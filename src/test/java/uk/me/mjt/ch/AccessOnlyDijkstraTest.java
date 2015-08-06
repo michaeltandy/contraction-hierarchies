@@ -53,7 +53,7 @@ public class AccessOnlyDijkstraTest {
         System.out.println("Solution: "+ds);
         
         assertNotNull(ds);
-        assertEquals(4000, ds.totalDriveTime);
+        assertEquals(4000, ds.totalDriveTimeMs);
         assertEquals(5, ds.nodes.size());
     }
 

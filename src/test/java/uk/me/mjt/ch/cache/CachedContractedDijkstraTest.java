@@ -30,14 +30,14 @@ public class CachedContractedDijkstraTest {
         DijkstraSolution result1 = CachedContractedDijkstra.contractedGraphDijkstra(graph, startNode, endNode, cache);
         System.out.println("Contraction: "+result1);
         assertNotNull(result1);
-        assertEquals(8, result1.totalDriveTime);
+        assertEquals(8000, result1.totalDriveTimeMs);
         assertEquals(9, result1.nodes.size());
         
         // This should be retrieved from the cache:
         DijkstraSolution result2 = CachedContractedDijkstra.contractedGraphDijkstra(graph, startNode, endNode, cache);
         System.out.println("Contraction: "+result2);
         assertNotNull(result2);
-        assertEquals(8, result2.totalDriveTime);
+        assertEquals(8000, result2.totalDriveTimeMs);
         assertEquals(9, result2.nodes.size());
     }
 

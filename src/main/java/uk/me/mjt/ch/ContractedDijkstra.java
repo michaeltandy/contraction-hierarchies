@@ -95,7 +95,7 @@ public class ContractedDijkstra {
     }
 
     private static DijkstraSolution upThenDown(DijkstraSolution up, DijkstraSolution down) {
-        int totalDriveTime = up.totalDriveTime + down.totalDriveTime;
+        int totalDriveTime = up.totalDriveTimeMs + down.totalDriveTimeMs;
         LinkedList<Node> nodes = new LinkedList();
         nodes.addAll(up.nodes);
         for (int i = down.nodes.size() - 1; i >= 0; i--) {
@@ -117,7 +117,7 @@ public class ContractedDijkstra {
         if (ds == null) {
             return null;
         }
-        int totalDriveTime = ds.totalDriveTime;
+        int totalDriveTime = ds.totalDriveTimeMs;
         List<DirectedEdge> edges = Collections.EMPTY_LIST;
         for (DirectedEdge de : ds.edges) {
             edges = new UnionList<>(edges,de.getUncontractedEdges());

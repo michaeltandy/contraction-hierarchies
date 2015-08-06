@@ -78,7 +78,7 @@ public class GraphContractor {
                     shortcuts.add(new DirectedEdge(DirectedEdge.PLACEHOLDER_ID,
                             ds.getFirstNode(),
                             ds.getLastNode(),
-                            ds.totalDriveTime,
+                            ds.totalDriveTimeMs,
                             ds.edges.get(0),
                             ds.edges.get(1)));
                 } else {

@@ -27,7 +27,7 @@ public class GraphContractorTest {
         System.out.println("Contraction: "+contracted);
         
         assertNotNull(contracted);
-        assertEquals(8, contracted.totalDriveTime);
+        assertEquals(8000, contracted.totalDriveTimeMs);
         assertEquals(9, contracted.nodes.size());
         
     }

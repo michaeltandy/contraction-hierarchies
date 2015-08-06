@@ -5,7 +5,7 @@ import java.util.List;
 
 public class DijkstraSolution  {
 
-    public final int totalDriveTime;
+    public final int totalDriveTimeMs;
     public final List<Node> nodes;
     public final List<DirectedEdge> edges;
     
@@ -17,7 +17,7 @@ public class DijkstraSolution  {
 
     public DijkstraSolution(int totalDriveTime, List<Node> nodes, List<DirectedEdge> edges, DijkstraSolution preceding) {
         Preconditions.checkNoneNull(nodes,edges);
-        this.totalDriveTime = totalDriveTime;
+        this.totalDriveTimeMs = totalDriveTime;
         if (preceding == null) {
             this.nodes = Collections.unmodifiableList(nodes);
             this.edges = Collections.unmodifiableList(edges);
@@ -32,13 +32,13 @@ public class DijkstraSolution  {
     @Override
     public String toString() {
         if (nodes.isEmpty()) {
-            return "Empty NodeList, length " + totalDriveTime;
+            return "Empty NodeList, length " + totalDriveTimeMs;
         } else {
             StringBuilder sb = new StringBuilder();
             for (Node n : nodes) {
                 sb.append(n.nodeId).append(",");
             }
-            sb.append(String.format(" Duration %.2f secs (%.2f mins)", totalDriveTime/1000.0, totalDriveTime/60000.0));
+            sb.append(String.format(" Duration %.2f secs (%.2f mins)", totalDriveTimeMs/1000.0, totalDriveTimeMs/60000.0));
             return sb.toString();
         }
     }

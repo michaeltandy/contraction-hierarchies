@@ -50,7 +50,8 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
             contractionDepth = Math.max(first.contractionDepth, second.contractionDepth)+1;
             uncontractedEdges = new UnionList<>(first.getUncontractedEdges(),second.getUncontractedEdges());
             // Eliminate access only nodes edges before performing contraction.
-            Preconditions.require(first.accessOnly==AccessOnly.FALSE && second.accessOnly==AccessOnly.FALSE); 
+            Preconditions.require(first.accessOnly==AccessOnly.FALSE,second.accessOnly==AccessOnly.FALSE); 
+            this.accessOnly = AccessOnly.FALSE;
         } else {
             throw new IllegalArgumentException("Must have either both or neither child edges set. Instead had " + first + " and " + second);
         }
