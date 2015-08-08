@@ -1,10 +1,10 @@
 
 package uk.me.mjt.ch;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -30,7 +30,40 @@ public class AccessOnlyTest {
         AccessOnly.AccessOnlyCluster cluster = result.get(0);
         
         assertEquals(expectedCluster, cluster.nodes);
-        assertEquals(2,cluster.edges.size());
+    }
+    
+    @Test
+    public void testCloneNodesAndConnections() {
+        HashMap<Long,Node> original = MakeTestData.makePartlyAccessOnlyRing();
+        
+        HashMap<Long,Node> clone = AccessOnly.cloneNodesAndConnectionsAddingPrefix(original.values(), 0L, new AtomicLong(1));
+        
+        assertEquals(original.keySet(),clone.keySet());
+        for (Long nodeId : original.keySet()) {
+            Node originalNode = original.get(nodeId);
+            Node cloneNode = clone.get(nodeId);
+            
+            assertEquals(originalNode,cloneNode);
+            assertEquals(originalNode.edgesFrom.toString(),cloneNode.edgesFrom.toString());
+            assertEquals(originalNode.edgesTo.toString(),cloneNode.edgesTo.toString());
+        }
+    }
+    
+    @Test
+    public void testStratify() {
+        HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyRing();
+        assertEquals(7, graph.size());
+        
+        Node partAccessOnly1 = graph.get(1L);
+        Node partAccessOnly7 = graph.get(7L);
+        assertTrue(partAccessOnly1.getNeighbors().contains(partAccessOnly7));
+        assertTrue(partAccessOnly7.getNeighbors().contains(partAccessOnly1));
+        
+        AccessOnly.stratifyAllAccessOnlyClusters(graph);
+        
+        assertEquals(11, graph.size());
+        assertFalse(partAccessOnly1.getNeighbors().contains(partAccessOnly7));
+        assertFalse(partAccessOnly7.getNeighbors().contains(partAccessOnly1));
     }
     
 }

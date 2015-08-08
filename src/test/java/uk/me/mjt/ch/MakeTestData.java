@@ -28,6 +28,7 @@ public class MakeTestData {
         result.put(2L, n2);
         result.put(3L, n3);
         
+        Node.sortNeighborListsAll(result.values());
         return result;
     }
     
@@ -61,6 +62,7 @@ public class MakeTestData {
             }
         }
         
+        Node.sortNeighborListsAll(result.values());
         return result;
     }
 
@@ -100,6 +102,7 @@ public class MakeTestData {
         makeEdgeAndAddToNodes(edgeId++,firstNode,lastNode,1000, AccessOnly.TRUE);
         makeEdgeAndAddToNodes(edgeId++,lastNode,firstNode,1000, AccessOnly.TRUE);
         
+        Node.sortNeighborListsAll(result.values());
         return result;
     }
     
@@ -124,6 +127,7 @@ public class MakeTestData {
         
         makeEdgeAndAddToNodes(edgeId++,result.get(2L),result.get(4L),1000, AccessOnly.TRUE);
         
+        Node.sortNeighborListsAll(result.values());
         return result;
     }
     

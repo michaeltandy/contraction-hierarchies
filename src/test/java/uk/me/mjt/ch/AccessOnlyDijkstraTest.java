@@ -12,6 +12,7 @@ public class AccessOnlyDijkstraTest {
     @Test
     public void testDijkstra() {
         HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyRing();
+        AccessOnly.stratifyAllAccessOnlyClusters(graph);
         
         Node startNode = graph.get(2L);
         Node endNode = graph.get(6L);
@@ -20,12 +21,14 @@ public class AccessOnlyDijkstraTest {
         System.out.println("Solution: "+ds);
         
         assertNotNull(ds);
+        assertEquals(4000, ds.totalDriveTimeMs);
         assertEquals(5, ds.nodes.size());
     }
     
     @Test
     public void testWithContraction() {
         HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyRing();
+        AccessOnly.stratifyAllAccessOnlyClusters(graph);
         
         Node startNode = graph.get(2L);
         Node endNode = graph.get(6L);
@@ -38,13 +41,14 @@ public class AccessOnlyDijkstraTest {
         System.out.println("Solution: "+ds);
         
         assertNotNull(ds);
+        assertEquals(4000, ds.totalDriveTimeMs);
         assertEquals(5, ds.nodes.size());
-        
     }
 
     @Test
     public void testThorn() {
         HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyThorn();
+        AccessOnly.stratifyAllAccessOnlyClusters(graph);
         
         Node startNode = graph.get(1L);
         Node endNode = graph.get(5L);

@@ -1,12 +1,13 @@
 package uk.me.mjt.ch;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
 public class Node implements Comparable<Node> {
     public static final long UNCONTRACTED = Long.MAX_VALUE;
-
+    
     public final long nodeId;
     public final ArrayList<DirectedEdge> edgesFrom = new ArrayList<DirectedEdge>();
     public final ArrayList<DirectedEdge> edgesTo = new ArrayList<DirectedEdge>();
@@ -95,6 +96,8 @@ public class Node implements Comparable<Node> {
                     return Long.compare(t1.to.contractionOrder, t.to.contractionOrder);
                 } else if (t1.driveTimeMs != t.driveTimeMs) {
                     return Long.compare(t.driveTimeMs, t1.driveTimeMs);
+                } else if (t.to.nodeId != t1.to.nodeId) {
+                    return Long.compare(t.to.nodeId, t1.to.nodeId);
                 } else {
                     return Long.compare(t.edgeId, t1.edgeId);
                 }
@@ -108,6 +111,8 @@ public class Node implements Comparable<Node> {
                     return Long.compare(t1.from.contractionOrder, t.from.contractionOrder);
                 } else if (t1.driveTimeMs != t.driveTimeMs) {
                     return Long.compare(t.driveTimeMs, t1.driveTimeMs);
+                } else if (t.from.nodeId != t1.from.nodeId) {
+                    return Long.compare(t.from.nodeId, t1.from.nodeId);
                 } else {
                     return Long.compare(t.edgeId, t1.edgeId);
                 }
@@ -147,6 +152,12 @@ public class Node implements Comparable<Node> {
     public int compareTo(Node o) {
         if (o == null) return -1;
         return Long.compare(this.nodeId, o.nodeId);
+    }
+    
+    public static void sortNeighborListsAll(Collection<Node> nodes) {
+        for (Node n : nodes) {
+            n.sortNeighborLists();
+        }
     }
     
 }
