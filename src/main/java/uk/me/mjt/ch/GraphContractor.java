@@ -259,18 +259,18 @@ public class GraphContractor {
     class ContractionOrdering implements Comparable<ContractionOrdering> {
         final int edgeCountReduction;
         final int contractionDepth;
-        final int namehash; // If everything else is equal we don't care about the order - but it's useful for it to be stable between runs.
+        final long idHash; // If everything else is equal we don't care about the order - but it's useful for it to be stable between runs.
 
         public ContractionOrdering(Node n, int edgeCountReduction) {
             this.edgeCountReduction = edgeCountReduction;
             contractionDepth = Math.max(getMaxContractionDepth(n.edgesFrom), getMaxContractionDepth(n.edgesTo));
-            namehash = improveHash(n.hashCode());
+            idHash = hashNodeId(n.nodeId);
         }
         
-        private int improveHash(int initialHash) {
+        private long hashNodeId(long nodeId) {
             // If nodes happen to go 1,2,3,4,5,6... we'd rather not contract
             // them in that order.
-            return 1103515245 * initialHash + 12345;
+            return 6364136223846793005L * nodeId + 1442695040888963407L;
         }
 
         public int compareTo(ContractionOrdering o) {
@@ -284,8 +284,8 @@ public class GraphContractor {
                 return Integer.compare(this.contractionDepth,o.contractionDepth);
             } else if (this.edgeCountReduction != o.edgeCountReduction) {
                 return Integer.compare(o.edgeCountReduction,this.edgeCountReduction);
-            } else if (this.namehash != o.namehash) {
-                return Integer.compare(this.namehash,o.namehash);
+            } else if (this.idHash != o.idHash) {
+                return Long.compare(this.idHash,o.idHash);
             } else {
                 return 0;
             }
@@ -296,7 +296,7 @@ public class GraphContractor {
             int hash = 3;
             hash = 17 * hash + this.edgeCountReduction;
             hash = 17 * hash + this.contractionDepth;
-            hash = 17 * hash + this.namehash;
+            hash = 17 * hash + (int)(this.idHash ^ (this.idHash >>> 32));;
             return hash;
         }
 
@@ -308,12 +308,12 @@ public class GraphContractor {
             final ContractionOrdering other = (ContractionOrdering) obj;
             return (this.edgeCountReduction == other.edgeCountReduction
                     && this.contractionDepth == other.contractionDepth
-                    && this.namehash == other.namehash);
+                    && this.idHash == other.idHash);
         }
 
         @Override
         public String toString() {
-            return "(edge reduction=" + edgeCountReduction + ", depth=" + contractionDepth + ", hash=" + namehash + ')';
+            return "(edge reduction=" + edgeCountReduction + ", depth=" + contractionDepth + ", idHash=" + idHash + ')';
         }
     }
     
@@ -326,5 +326,5 @@ public class GraphContractor {
             this.value = value;
         }
     }
-
+    
 }

@@ -19,9 +19,11 @@ public class ContractAndSerialiseUk {
             Node hatfield = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             Node herbalHill = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
             System.out.println(Dijkstra.dijkstrasAlgorithm(allNodes, hatfield, herbalHill, Dijkstra.Direction.FORWARDS).toString());
-            CheckOsmRouting.checkUncontracted(allNodes);
             
-            InaccessibleNodes.removeInaccessibleNodes(allNodes, hatfield);
+            InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
+            AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, hatfield);
+            
+            CheckOsmRouting.checkUncontracted(allNodes);
             
             GraphContractor contractor = new GraphContractor(allNodes);
 

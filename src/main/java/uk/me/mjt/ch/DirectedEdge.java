@@ -3,6 +3,7 @@ package uk.me.mjt.ch;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class DirectedEdge implements Comparable<DirectedEdge>{
     public static final long PLACEHOLDER_ID = -123456L;
@@ -11,7 +12,6 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     public final Node from;
     public final Node to;
     public final int driveTimeMs;
-    //public final boolean isAccessOnly;
     public AccessOnly accessOnly;
 
     // Parameters for graph contraction:
@@ -69,24 +69,6 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
         }
     }
     
-    /*public List<DirectedEdge> getUncontractedEdges() {
-        ArrayList<DirectedEdge> result = new ArrayList<>(4000);
-        appendUncontractedEdges(result);
-        result.trimToSize();
-        return Collections.unmodifiableList(result);
-    }
-    
-    private void appendUncontractedEdges(List<DirectedEdge> toAppend) {
-        if (!isShortcut()) {
-            toAppend.add(this);
-        } else {
-            first.appendUncontractedEdges(toAppend);
-            second.appendUncontractedEdges(toAppend);
-        }
-    }*/
-    
-    
-    
     public DirectedEdge cloneWithEdgeId(long edgeId) {
         return new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly, first, second);
     }
@@ -103,5 +85,30 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
         }
         return Long.compare(this.edgeId, o.edgeId);
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 19 * hash + (int) (this.edgeId ^ (this.edgeId >>> 32));
+        hash = 19 * hash + Objects.hashCode(this.from);
+        hash = 19 * hash + Objects.hashCode(this.to);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final DirectedEdge other = (DirectedEdge) obj;
+        if (this.edgeId != other.edgeId
+                || !Objects.equals(this.from, other.from)
+                || !Objects.equals(this.to, other.to)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
     
 }

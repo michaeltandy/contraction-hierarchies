@@ -3,15 +3,84 @@ package uk.me.mjt.ch;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import uk.me.mjt.ch.Dijkstra.Direction;
 
 public enum AccessOnly {
     TRUE, FALSE;
     
-    public static final long ACCESSONLY_START_NODE_ID_PREFIX = 0x4000000000000000L;
-    public static final long ACCESSONLY_END_NODE_ID_PREFIX = 0x2000000000000000L;
+    public static final long ACCESSONLY_START_NODE_ID_PREFIX = 400000000000000000L;
+    public static final long ACCESSONLY_END_NODE_ID_PREFIX = 200000000000000000L;
     public static final long INITIAL_NEW_EDGE_ID = 1000000000L;
     
-    public static void stratifyAllAccessOnlyClusters(HashMap<Long,Node> allNodes) {
+    public static void stratifyMarkedAndImplicitAccessOnlyClusters(HashMap<Long,Node> allNodes, Node startPoint) {
+        markImplicitlyAccessOnlyEdges(allNodes.values(), startPoint);
+        stratifyMarkedAccessOnlyClusters(allNodes);
+    }
+    
+    /**
+     * Mark edges that, while not tagged access only, you can only get to or
+     * can only leave via access only edges.
+     * https://www.openstreetmap.org/node/1653073939
+     * https://www.openstreetmap.org/node/1499442487
+     * https://www.openstreetmap.org/way/151879439
+     */
+    private static void markImplicitlyAccessOnlyEdges(Collection<Node> allNodes, Node startPoint) {
+        HashSet<DirectedEdge> accessibleForwards = accessibleEdgesFrom(startPoint, Direction.FORWARDS, AccessOnly.FALSE);
+        HashSet<DirectedEdge> accessibleBackwards = accessibleEdgesFrom(startPoint, Direction.BACKWARDS, AccessOnly.FALSE);
+        
+        HashSet<DirectedEdge> implicitlyAccessOnly = new HashSet();
+        for (Node n : allNodes) {
+            for (DirectedEdge de : n.edgesFrom) {
+                if (accessibleForwards.contains(de) && accessibleBackwards.contains(de)) {
+                    // Looks fine to me!
+                } else {
+                    implicitlyAccessOnly.add(de);
+                }
+            }
+        }
+        
+        for (DirectedEdge de : implicitlyAccessOnly) {
+            if (de.accessOnly == AccessOnly.FALSE) {
+                de.accessOnly = AccessOnly.TRUE;
+            }
+        }
+    }
+    
+    private static HashSet<DirectedEdge> accessibleEdgesFrom(Node startPoint, Direction direction, AccessOnly accessOnly) {
+        HashSet<DirectedEdge> result = new HashSet<>();
+        HashSet<Node> visited = new HashSet<>();
+        TreeSet<Node> toVisit = new TreeSet<>();
+        toVisit.add(startPoint);
+        
+        while (!toVisit.isEmpty()) {
+            Node visiting = toVisit.pollFirst();
+            visited.add(visiting);
+            
+            
+            Collection<DirectedEdge> toFollow;
+            if (direction==Direction.FORWARDS) {
+                toFollow=visiting.edgesFrom;
+            } else if (direction==Direction.BACKWARDS) {
+                toFollow=visiting.edgesTo;
+            } else {
+                toFollow=new UnionList<>(visiting.edgesFrom,visiting.edgesTo);
+            }
+            
+            for (DirectedEdge de : toFollow ) {
+                if (de.accessOnly == accessOnly) {
+                    if (!visited.contains(de.to))
+                        toVisit.add(de.to);
+                    if (!visited.contains(de.from))
+                        toVisit.add(de.from);
+                    result.add(de);
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    public static void stratifyMarkedAccessOnlyClusters(HashMap<Long,Node> allNodes) {
         List<AccessOnlyCluster> clusters = findAccessOnlyClusters(allNodes.values());
         AtomicLong edgeIdCounter = new AtomicLong(INITIAL_NEW_EDGE_ID);
         

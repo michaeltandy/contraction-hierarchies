@@ -34,7 +34,9 @@ public class BidirectionalTreeMap<K extends Comparable<K>,V> {
         boolean reverseContains = reverseMap.containsKey(value);
         
         if (forwardContains || reverseContains) {
-            throw new IllegalArgumentException("One or both values are already in the map?");
+            throw new IllegalArgumentException("One or both values are already in the map?"
+                    + " K:" + key + " " + forwardContains 
+                    + " V:" + value + " " + reverseContains);
         }
         
         forwardMap.put(key, value);

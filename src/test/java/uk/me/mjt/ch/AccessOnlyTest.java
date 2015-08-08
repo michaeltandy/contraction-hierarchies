@@ -59,7 +59,7 @@ public class AccessOnlyTest {
         assertTrue(partAccessOnly1.getNeighbors().contains(partAccessOnly7));
         assertTrue(partAccessOnly7.getNeighbors().contains(partAccessOnly1));
         
-        AccessOnly.stratifyAllAccessOnlyClusters(graph);
+        AccessOnly.stratifyMarkedAccessOnlyClusters(graph);
         
         assertEquals(11, graph.size());
         assertFalse(partAccessOnly1.getNeighbors().contains(partAccessOnly7));
