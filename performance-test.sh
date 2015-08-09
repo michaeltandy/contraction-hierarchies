@@ -27,15 +27,23 @@ git clone https://github.com/michaeltandy/contraction-hierarchies.git
 cd contraction-hierarchies
 #git reset --hard aa0773713aec296f460dda1610cf7a1cb8689b09 # To test a particular git revision
 
+git log -1 >> /mnt/runtimes.txt
+
+echo 'got map and source code' >> /mnt/runtimes.txt
+date >> /mnt/runtimes.txt
+
+lsb_release -a
 mvn --version
-mvn help:effective-pom
 mvn help:system
+mvn dependency:resolve dependency:resolve-plugins
+
+echo 'Resolved maven dependencies' >> /mnt/runtimes.txt
+date >> /mnt/runtimes.txt
 
 mvn clean install
 ch_git_rev=`git rev-parse master`
 
-git log -1 >> /mnt/runtimes.txt
-echo 'got map and compiled code' >> /mnt/runtimes.txt
+echo 'Compiled code' >> /mnt/runtimes.txt
 date >> /mnt/runtimes.txt
 
 cd /mnt/ch
@@ -71,5 +79,5 @@ date >> /mnt/runtimes.txt
 aws --region=us-west-1 s3 cp /mnt/runtimes.txt s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
 aws --region=us-west-1 s3 cp /var/log/cloud-init-output.log s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
 
-sudo shutdown -h 10
+sudo shutdown -h now
 
