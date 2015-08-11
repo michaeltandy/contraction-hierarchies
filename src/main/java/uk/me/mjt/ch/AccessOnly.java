@@ -13,7 +13,7 @@ public enum AccessOnly {
     public static final long INITIAL_NEW_EDGE_ID = 1000000000L;
     
     public static void stratifyMarkedAndImplicitAccessOnlyClusters(HashMap<Long,Node> allNodes, Node startPoint) {
-        markImplicitlyAccessOnlyEdges(allNodes.values(), startPoint);
+        markImplicitlyAccessOnlyEdges(allNodes, startPoint);
         stratifyMarkedAccessOnlyClusters(allNodes);
     }
     
@@ -24,12 +24,17 @@ public enum AccessOnly {
      * https://www.openstreetmap.org/node/1499442487
      * https://www.openstreetmap.org/way/151879439
      */
-    private static void markImplicitlyAccessOnlyEdges(Collection<Node> allNodes, Node startPoint) {
+    private static void markImplicitlyAccessOnlyEdges(HashMap<Long,Node> allNodes, Node startPoint) {
+        if (!InaccessibleNodes.findNodesNotBidirectionallyAccessible(allNodes,startPoint).isEmpty()) {
+            throw new IllegalArgumentException("We can only mark implicitly access-only edges for graphs "
+                    + "where all nodes are bidirectionally accessible. This one doesn't seem to be!");
+        }
+        
         HashSet<DirectedEdge> accessibleForwards = accessibleEdgesFrom(startPoint, Direction.FORWARDS, AccessOnly.FALSE);
         HashSet<DirectedEdge> accessibleBackwards = accessibleEdgesFrom(startPoint, Direction.BACKWARDS, AccessOnly.FALSE);
         
         HashSet<DirectedEdge> implicitlyAccessOnly = new HashSet();
-        for (Node n : allNodes) {
+        for (Node n : allNodes.values()) {
             for (DirectedEdge de : n.edgesFrom) {
                 if (accessibleForwards.contains(de) && accessibleBackwards.contains(de)) {
                     // Looks fine to me!
@@ -167,7 +172,7 @@ public enum AccessOnly {
         
         for (Node n : toClone) {
             long newId = n.nodeId+nodeIdPrefix;
-            Node clone = new Node(newId, n.lat, n.lon);
+            Node clone = new Node(newId, n.lat, n.lon, Barrier.FALSE);
             clones.put(newId, clone);
         }
         

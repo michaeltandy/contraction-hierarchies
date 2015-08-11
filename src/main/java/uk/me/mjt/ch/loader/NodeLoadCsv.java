@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.regex.*;
 import uk.me.mjt.ch.AccessOnly;
+import uk.me.mjt.ch.Barrier;
 import uk.me.mjt.ch.DirectedEdge;
 import uk.me.mjt.ch.Node;
 
@@ -61,7 +62,7 @@ public class NodeLoadCsv {
             n.contractionAllowed = n.contractionAllowed&&contractAllowed;
             return n;
         } else {
-            Node n = new Node(nodeId,lat,lon);
+            Node n = new Node(nodeId,lat,lon,Barrier.FALSE);
             n.contractionAllowed = contractAllowed;
             allNodes.put(nodeId, n);
             return n;

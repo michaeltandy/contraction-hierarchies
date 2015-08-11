@@ -1,9 +1,6 @@
 package uk.me.mjt.ch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class Node implements Comparable<Node> {
     public static final long UNCONTRACTED = Long.MAX_VALUE;
@@ -14,13 +11,15 @@ public class Node implements Comparable<Node> {
     public final float lat;
     public final float lon;
     public boolean contractionAllowed = true;
+    public Barrier barrier;
 
     public long contractionOrder = UNCONTRACTED;
     
-    public Node(long nodeId, float lat, float lon) {
+    public Node(long nodeId, float lat, float lon, Barrier barrier) {
         this.nodeId = nodeId;
         this.lat = lat;
         this.lon = lon;
+        this.barrier = barrier;
     }
 
     int getCountOutgoingUncontractedEdges() {
@@ -45,15 +44,15 @@ public class Node implements Comparable<Node> {
         return contractionOrder!=UNCONTRACTED;
     }
     
-    public ArrayList<Node> getNeighbors() {
-        ArrayList<Node> neighbors = new ArrayList<>();
+    public List<Node> getNeighbors() {
+        HashSet<Node> neighbors = new HashSet<>();
         for (DirectedEdge de : edgesFrom) {
             neighbors.add(de.to);
         }
         for (DirectedEdge de : edgesTo) {
             neighbors.add(de.from);
         }
-        return neighbors;
+        return new ArrayList(neighbors);
     }
 
     @Override

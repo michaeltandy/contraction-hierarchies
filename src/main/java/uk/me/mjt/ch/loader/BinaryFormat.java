@@ -3,6 +3,7 @@ package uk.me.mjt.ch.loader;
 import java.io.*;
 import java.util.*;
 import uk.me.mjt.ch.AccessOnly;
+import uk.me.mjt.ch.Barrier;
 import uk.me.mjt.ch.DirectedEdge;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Preconditions;
@@ -52,11 +53,13 @@ public class BinaryFormat {
             while(true) {
                 long nodeId = source.readLong();
                 long contrctionOrder = source.readLong();
-                boolean isBorderNode = source.readBoolean();
+                int properties = source.readByte();
+                boolean isBorderNode = (properties&0x01)!=0;
+                boolean isBarrier = (properties&0x02)!=0;
                 double lat = source.readDouble();
                 double lon = source.readDouble();
                 
-                Node n = new Node(nodeId,(float)lat,(float)lon);
+                Node n = new Node(nodeId,(float)lat,(float)lon,(isBarrier?Barrier.TRUE:Barrier.FALSE));
                 n.contractionAllowed = !isBorderNode;
                 n.contractionOrder=contrctionOrder;
                 
@@ -122,7 +125,8 @@ public class BinaryFormat {
         for (Node n : toWrite) {
             dest.writeLong(n.nodeId);
             dest.writeLong(n.contractionOrder);
-            dest.writeBoolean(!n.contractionAllowed);
+            int properties = (!n.contractionAllowed?0x01:0x00) | (n.barrier==Barrier.TRUE?0x02:0x00);
+            dest.writeByte(properties);
             dest.writeDouble(n.lat);
             dest.writeDouble(n.lon);
         }

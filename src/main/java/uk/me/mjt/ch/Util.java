@@ -46,7 +46,8 @@ public class Util {
                 && a.contractionAllowed == b.contractionAllowed
                 && a.contractionOrder == b.contractionOrder
                 && a.edgesFrom.size() == b.edgesFrom.size()
-                && a.edgesTo.size() == b.edgesTo.size());
+                && a.edgesTo.size() == b.edgesTo.size()
+                && a.barrier == b.barrier);
     }
     
     private static void printShallowDiff(Node a, Node b) {
@@ -57,6 +58,7 @@ public class Util {
         System.out.println("Contraction Allowed: " + a.contractionAllowed +","+ b.contractionAllowed);
         System.out.println("Edges from: " + a.edgesFrom.size() +","+ b.edgesFrom.size());
         System.out.println("Edges to: " + a.edgesTo.size() +","+ b.edgesTo.size());
+        System.out.println("Barrier: " + a.barrier +","+ b.barrier);
         
         System.out.println("Edges from a:" + a.edgesFrom);
         System.out.println("Edges from b:" + b.edgesFrom);

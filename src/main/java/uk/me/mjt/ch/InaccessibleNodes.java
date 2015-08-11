@@ -15,15 +15,9 @@ public class InaccessibleNodes {
      */
     public static void removeNodesNotBidirectionallyAccessible(HashMap<Long,Node> allNodes, Node startNode) {
         System.out.println("Before removal, " + allNodes.size() + " nodes.");
-        Set<Node> inaccessibleForwards = findInaccessibleByDirection(allNodes, startNode, Direction.FORWARDS);
-        Set<Node> inaccessibleBackwards = findInaccessibleByDirection(allNodes, startNode, Direction.BACKWARDS);
+        Set<Node> toRemove = findNodesNotBidirectionallyAccessible(allNodes,startNode);
         
-        HashSet<Node> toRemove = new HashSet(inaccessibleForwards);
-        toRemove.addAll(inaccessibleBackwards);
-        
-        System.out.println("Removing " + toRemove.size() + " nodes; " +
-                inaccessibleForwards.size() + " of which can't be accessed forwards and " + 
-                inaccessibleBackwards.size() + " of which can't be accessed backwards.");
+        System.out.println("Removing " + toRemove.size() + " nodes.");
         removeNodes(allNodes, toRemove);
         
         System.out.println("After removal, " + allNodes.size() + " nodes.");
@@ -43,7 +37,16 @@ public class InaccessibleNodes {
         }
     }
     
-    public static Set<Node> findNodesNotUnidirectionallyAccessible(HashMap<Long,Node> allNodes, Node startNode) {
+    public static Set<Node> findNodesNotBidirectionallyAccessible(HashMap<Long,Node> allNodes, Node startNode) {
+        Set<Node> inaccessibleForwards = findInaccessibleByDirection(allNodes, startNode, Direction.FORWARDS);
+        Set<Node> inaccessibleBackwards = findInaccessibleByDirection(allNodes, startNode, Direction.BACKWARDS);
+        
+        HashSet<Node> notBidirectionallyAccessible = new HashSet(inaccessibleForwards);
+        notBidirectionallyAccessible.addAll(inaccessibleBackwards);
+        return notBidirectionallyAccessible;
+    }
+    
+    /*public static Set<Node> findNodesNotUnidirectionallyAccessible(HashMap<Long,Node> allNodes, Node startNode) {
         Set<Node> inaccessibleForwards = findInaccessibleByDirection(allNodes, startNode, Direction.FORWARDS);
         Set<Node> inaccessibleBackwards = findInaccessibleByDirection(allNodes, startNode, Direction.BACKWARDS);
         
@@ -55,7 +58,7 @@ public class InaccessibleNodes {
         }
         
         return inaccessible;
-    }
+    }*/
     
     private static HashSet<Node> findInaccessibleByDirection(HashMap<Long,Node> allNodes, Node startNode, Direction direction) {
         List<DijkstraSolution> solutionsThisDirection = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Integer.MAX_VALUE, direction);
