@@ -21,6 +21,7 @@ public class ContractAndSerialiseUk {
             System.out.println(Dijkstra.dijkstrasAlgorithm(allNodes, hatfield, herbalHill, Dijkstra.Direction.FORWARDS).toString());
             
             InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
+            Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
             AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, hatfield);
             
             CheckOsmRouting.checkUncontracted(allNodes);

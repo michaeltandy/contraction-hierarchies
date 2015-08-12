@@ -39,8 +39,9 @@ public enum Barrier {
         List<Node> neigbors = n.getNeighbors();
         int neighborCount = neigbors.size();
         if (neighborCount == 0 || neighborCount > 2) {
-            throw new RuntimeException("Unexpectedly saw a barrier with " + neighborCount + 
-                    " neighbors? Node " + n + " neighbors " + n.getNeighbors());
+            // There are about 260 of these in the UK OSM data. 
+            System.out.println("Ignoring barrier with " + neighborCount + " neighbors " + n);
+            n.barrier = Barrier.FALSE;
         } else if (n.getNeighbors().size() == 1) {
             // Barrier at the end of a road (e.g. transition from a road to a footpath)
             n.barrier = Barrier.FALSE;
