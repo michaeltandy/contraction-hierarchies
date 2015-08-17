@@ -11,7 +11,7 @@ public class GraphContractorTest {
 
     @Test
     public void testContractAll() {
-        HashMap<Long,Node> graph = MakeTestData.makeLadder(2,10);
+        MapData graph = MakeTestData.makeLadder(2,10);
         
         System.out.println(GeoJson.allLinks(graph.values()));
         System.out.println("\n\n\n");

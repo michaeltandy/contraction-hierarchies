@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 public class Util {
     
-    public static boolean deepEquals(HashMap<Long,Node> a, HashMap<Long,Node> b, final boolean printDiff) {
+    public static boolean deepEquals(MapData a, MapData b, final boolean printDiff) {
         if (!a.keySet().equals(b.keySet())) {
             if (printDiff) System.out.println("Map keysets are different?!");
             return false;

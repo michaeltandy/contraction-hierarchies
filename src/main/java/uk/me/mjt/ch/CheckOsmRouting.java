@@ -20,17 +20,17 @@ public class CheckOsmRouting {
             add(sunlightGardensAvoidGate);
         }};
     
-    public static void checkUncontracted(HashMap<Long,Node> allNodes) {
+    public static void checkUncontracted(MapData allNodes) {
         for (RoutingTestCase tc : testCases) {
             Node from = allNodes.get(tc.fromNode);
             Node to = allNodes.get(tc.toNode);
             
-            DijkstraSolution computed = Dijkstra.dijkstrasAlgorithm(allNodes, from, to, Dijkstra.Direction.FORWARDS);
+            DijkstraSolution computed = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
             compare(tc, computed);
         }
     }
     
-    public static void checkContracted(HashMap<Long,Node> allNodes) {
+    public static void checkContracted(MapData allNodes) {
         for (RoutingTestCase tc : testCases) {
             Node from = allNodes.get(tc.fromNode);
             Node to = allNodes.get(tc.toNode);

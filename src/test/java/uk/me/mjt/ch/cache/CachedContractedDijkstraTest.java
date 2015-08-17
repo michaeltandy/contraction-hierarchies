@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 import uk.me.mjt.ch.DijkstraSolution;
 import uk.me.mjt.ch.GraphContractor;
 import uk.me.mjt.ch.MakeTestData;
+import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
 
 public class CachedContractedDijkstraTest {
@@ -16,7 +17,7 @@ public class CachedContractedDijkstraTest {
 
     @Test
     public void testContractedGraphDijkstra() {
-        HashMap<Long,Node> graph = MakeTestData.makeLadder(2,10);
+        MapData graph = MakeTestData.makeLadder(2,10);
         GraphContractor instance = new GraphContractor(graph);
         instance.initialiseContractionOrder();
         instance.contractAll();

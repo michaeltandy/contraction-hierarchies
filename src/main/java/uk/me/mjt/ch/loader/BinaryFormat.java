@@ -5,16 +5,17 @@ import java.util.*;
 import uk.me.mjt.ch.AccessOnly;
 import uk.me.mjt.ch.Barrier;
 import uk.me.mjt.ch.DirectedEdge;
+import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Preconditions;
 
 public class BinaryFormat {
     
-    public HashMap<Long,Node> read(String nodeFile, String wayFile) throws IOException {
+    public MapData read(String nodeFile, String wayFile) throws IOException {
         FileInputStream nodesIn = new FileInputStream(nodeFile);
         FileInputStream waysIn = new FileInputStream(wayFile);
         
-        HashMap<Long, Node> result = readNodes(new DataInputStream(new BufferedInputStream(nodesIn)));
+        MapData result = readNodes(new DataInputStream(new BufferedInputStream(nodesIn)));
         loadEdgesGivenNodes(result,new DataInputStream(new BufferedInputStream(waysIn)));
         
         return result;
@@ -45,7 +46,7 @@ public class BinaryFormat {
         writeEdges(toWrite, dos);
     }*/
     
-    public HashMap<Long,Node> readNodes(DataInputStream source) throws IOException {
+    public MapData readNodes(DataInputStream source) throws IOException {
         HashMap<Long,Node> nodesById = new HashMap(1000);
         
         try {
@@ -68,10 +69,10 @@ public class BinaryFormat {
             
         } catch (EOFException e) { }
         
-        return nodesById;
+        return new MapData(nodesById);
     }
     
-    public void loadEdgesGivenNodes(HashMap<Long,Node> nodesById, DataInputStream source) throws IOException {
+    public void loadEdgesGivenNodes(MapData nodesById, DataInputStream source) throws IOException {
         HashMap<Long,DirectedEdge> edgesById = new HashMap(1000);
         
         try {

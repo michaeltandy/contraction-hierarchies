@@ -12,11 +12,11 @@ public class BarrierTest {
     
     @Test
     public void testSimpleReplaceDoesntBreakDijkstra() {
-        HashMap<Long, Node> allNodes = MakeTestData.makeGatedRow();
+        MapData allNodes = MakeTestData.makeGatedRow();
         Node startNode = allNodes.get(1L);
         Node endNode = allNodes.get(3L);
         
-        DijkstraSolution ignoringBarrier = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, endNode, Dijkstra.Direction.FORWARDS);
+        DijkstraSolution ignoringBarrier = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         assertEquals(2000,ignoringBarrier.totalDriveTimeMs);
         System.out.println(ignoringBarrier);
         assertEquals(2,ignoringBarrier.edges.size());
@@ -25,21 +25,21 @@ public class BarrierTest {
         AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, startNode);
         
         endNode = allNodes.get(3L+AccessOnly.ACCESSONLY_END_NODE_ID_PREFIX);
-        DijkstraSolution replacedAndStratified = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, endNode, Dijkstra.Direction.FORWARDS);
+        DijkstraSolution replacedAndStratified = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         
         assertEquals(2000,replacedAndStratified.totalDriveTimeMs);
     }
     
     @Test
     public void testDivertAroundAvoidableGate() {
-        HashMap<Long, Node> allNodes = MakeTestData.makeGatedThorn();
+        MapData allNodes = MakeTestData.makeGatedThorn();
         Node startNode = allNodes.get(1L);
         Node endNode = allNodes.get(5L);
         
         Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
         AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, startNode);
         
-        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, endNode, Dijkstra.Direction.FORWARDS);
+        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         
         assertEquals(4000,ds.totalDriveTimeMs);
     }

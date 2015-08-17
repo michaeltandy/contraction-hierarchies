@@ -12,7 +12,7 @@ import uk.me.mjt.ch.PartialSolution.UpwardSolution;
 
 public class ContractedDijkstra {
     
-    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode, ExecutorService es) {
+    public static DijkstraSolution contractedGraphDijkstra(MapData allNodes, Node startNode, Node endNode, ExecutorService es) {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);
         Future<UpwardSolution> fUpwardSolution = futureUpwardSolution(allNodes, startNode, es);
         Future<DownwardSolution> fDownwardSolution = futureDownwardSolution(allNodes, endNode, es);
@@ -28,7 +28,7 @@ public class ContractedDijkstra {
         }
     }
     
-    public static Future<UpwardSolution> futureUpwardSolution(final HashMap<Long, Node> allNodes, final Node startNode, final ExecutorService es) {
+    public static Future<UpwardSolution> futureUpwardSolution(final MapData allNodes, final Node startNode, final ExecutorService es) {
         return es.submit(new Callable<UpwardSolution>() {
             @Override
             public UpwardSolution call() throws Exception {
@@ -37,7 +37,7 @@ public class ContractedDijkstra {
         });
     }
     
-    public static Future<DownwardSolution> futureDownwardSolution(final HashMap<Long, Node> allNodes, final Node endNode, final ExecutorService es) {
+    public static Future<DownwardSolution> futureDownwardSolution(final MapData allNodes, final Node endNode, final ExecutorService es) {
         return es.submit(new Callable<DownwardSolution>() {
             @Override
             public DownwardSolution call() throws Exception {
@@ -46,7 +46,7 @@ public class ContractedDijkstra {
         });
     }
     
-    public static DijkstraSolution contractedGraphDijkstra(HashMap<Long, Node> allNodes, Node startNode, Node endNode) {
+    public static DijkstraSolution contractedGraphDijkstra(MapData allNodes, Node startNode, Node endNode) {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);
         UpwardSolution upwardSolution = calculateUpwardSolution(allNodes, startNode);
         DownwardSolution downwardSolution = calculateDownwardSolution(allNodes, endNode);
@@ -132,13 +132,13 @@ public class ContractedDijkstra {
         return new DijkstraSolution(totalDriveTime, nodes, edges);
     }
     
-    public static UpwardSolution calculateUpwardSolution(HashMap<Long, Node> allNodes, Node startNode) {
-        List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, startNode, null, Integer.MAX_VALUE, Dijkstra.Direction.FORWARDS);
+    public static UpwardSolution calculateUpwardSolution(MapData allNodes, Node startNode) {
+        List<DijkstraSolution> upwardSolutions = Dijkstra.dijkstrasAlgorithm(startNode, null, Integer.MAX_VALUE, Dijkstra.Direction.FORWARDS);
         return new UpwardSolution(startNode, upwardSolutions);
     }
     
-    public static DownwardSolution calculateDownwardSolution(HashMap<Long, Node> allNodes, Node endNode) {
-        List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(allNodes, endNode, null, Integer.MAX_VALUE, Dijkstra.Direction.BACKWARDS);
+    public static DownwardSolution calculateDownwardSolution(MapData allNodes, Node endNode) {
+        List<DijkstraSolution> downwardSolutions = Dijkstra.dijkstrasAlgorithm(endNode, null, Integer.MAX_VALUE, Dijkstra.Direction.BACKWARDS);
         return new DownwardSolution(endNode, downwardSolutions);
     }
 

@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 public class MakeTestData {
     
-    public static HashMap<Long,Node> makeSimpleThreeEntry() {
+    public static MapData makeSimpleThreeEntry() {
         Node n1 = new Node(1, 52f, 0.1f, Barrier.FALSE);
         Node n2 = new Node(2, 52f, 0.2f, Barrier.FALSE);
         Node n3 = new Node(3, 52f, 0.3f, Barrier.FALSE);
@@ -29,10 +29,10 @@ public class MakeTestData {
         result.put(3L, n3);
         
         Node.sortNeighborListsAll(result.values());
-        return result;
+        return new MapData(result);
     }
     
-    public static HashMap<Long,Node> makeLadder(int rowCount, int colCount) {
+    public static MapData makeLadder(int rowCount, int colCount) {
         HashMap<Long,Node> result = new HashMap();
         
         float rowSpacing = Math.min(0.05f/rowCount,0.05f/colCount);
@@ -63,7 +63,7 @@ public class MakeTestData {
         }
         
         Node.sortNeighborListsAll(result.values());
-        return result;
+        return new MapData(result);
     }
 
     private static long ladderNodeId(int row, int col, int rowCount, int colCount) {
@@ -80,7 +80,7 @@ public class MakeTestData {
      * 6->7->1->2 ignoring access-only restrictions but 2->3->4->5->6 if access 
      * only restrictions are respected.
      */
-    public static HashMap<Long,Node> makePartlyAccessOnlyRing() {
+    public static MapData makePartlyAccessOnlyRing() {
         HashMap<Long,Node> result = makeRow(7);
         
         Node firstNode = result.get(1L);
@@ -90,7 +90,7 @@ public class MakeTestData {
         makeEdgeAndAddToNodes(5001,lastNode,firstNode,1000, AccessOnly.TRUE);
         
         Node.sortNeighborListsAll(result.values());
-        return result;
+        return new MapData(result);
     }
     
     /**
@@ -98,17 +98,17 @@ public class MakeTestData {
      * access-only edge, but you can also access it via a non-access-only edge
      * which is required to route 1->5.
      */
-    public static HashMap<Long,Node> makePartlyAccessOnlyThorn() {
+    public static MapData makePartlyAccessOnlyThorn() {
         HashMap<Long,Node> result = makeRow(5);
         makeEdgeAndAddToNodes(5000,result.get(2L),result.get(4L),1000, AccessOnly.TRUE);
         Node.sortNeighborListsAll(result.values());
-        return result;
+        return new MapData(result);
     }
     
     /**
      * A graph shaped like Þ with a gate on the short path between nodes 2 and 4.
      */
-    public static HashMap<Long,Node> makeGatedThorn() {
+    public static MapData makeGatedThorn() {
         HashMap<Long,Node> result = makeRow(5);
         Node newNode = new Node(10, 52f, 0.1f, Barrier.TRUE);
         result.put(newNode.nodeId, newNode);
@@ -116,7 +116,7 @@ public class MakeTestData {
         makeEdgeAndAddToNodes(5000,result.get(2L),newNode,500, AccessOnly.FALSE);
         makeEdgeAndAddToNodes(5001,newNode,result.get(4L),500, AccessOnly.FALSE);
         Node.sortNeighborListsAll(result.values());
-        return result;
+        return new MapData(result);
     }
     
     private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
@@ -130,13 +130,13 @@ public class MakeTestData {
     /**
      * Makes a row of three nodes, with the middle node marked as a barrier.
      */
-    public static HashMap<Long,Node> makeGatedRow() {
+    public static MapData makeGatedRow() {
         HashMap<Long,Node> result = makeRow(3);
         result.get(2L).barrier = Barrier.TRUE;
-        return result;
+        return new MapData(result);
     }
     
-    public static HashMap<Long,Node> makeRow(int numberOfNodes) {
+    private static HashMap<Long,Node> makeRow(int numberOfNodes) {
         Preconditions.require(numberOfNodes > 0);
         HashMap<Long,Node> result = new HashMap();
         int edgeId = 1000;

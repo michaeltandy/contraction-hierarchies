@@ -11,7 +11,7 @@ public enum Barrier {
     public static final long BARRIER_NODE_ID_PREFIX = 100000000000000000L;
     public static final long INITIAL_NEW_EDGE_ID = 2000000000L;
     
-    public static void replaceBarriersWithAccessOnlyEdges(HashMap<Long,Node> allNodes) {
+    public static void replaceBarriersWithAccessOnlyEdges(MapData allNodes) {
         Preconditions.checkNoneNull(allNodes);
         
         List<Node> barrierNodes = barrierNodesIn(allNodes.values());
@@ -32,7 +32,7 @@ public enum Barrier {
         return barrierNodes;
     }
     
-    private static void replaceBarrierNodeWithAccessOnlyEdge(HashMap<Long,Node> allNodes, Node n, AtomicLong edgeIdCounter) {
+    private static void replaceBarrierNodeWithAccessOnlyEdge(MapData allNodes, Node n, AtomicLong edgeIdCounter) {
         Preconditions.checkNoneNull(allNodes, n);
         Preconditions.require(n.barrier==Barrier.TRUE);
         
@@ -47,7 +47,7 @@ public enum Barrier {
             n.barrier = Barrier.FALSE;
         } else {
             Node newNode = makeNewNodeLinkedByAccessOnlyEdges(n, edgeIdCounter);
-            allNodes.put(newNode.nodeId, newNode);
+            allNodes.add(newNode);
             
             Node firstNeighbor = neigbors.get(0);
             

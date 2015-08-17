@@ -15,7 +15,7 @@ public class AccessOnlyTest {
     
     @Test
     public void testFindAccessOnlyClusters() {
-        HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyRing();
+        MapData graph = MakeTestData.makePartlyAccessOnlyRing();
         
         Node partAccessOnly1 = graph.get(1L);
         Node partAccessOnly7 = graph.get(7L);
@@ -34,7 +34,7 @@ public class AccessOnlyTest {
     
     @Test
     public void testCloneNodesAndConnections() {
-        HashMap<Long,Node> original = MakeTestData.makePartlyAccessOnlyRing();
+        MapData original = MakeTestData.makePartlyAccessOnlyRing();
         
         HashMap<Long,Node> clone = AccessOnly.cloneNodesAndConnectionsAddingPrefix(original.values(), 0L, new AtomicLong(1));
         
@@ -51,7 +51,7 @@ public class AccessOnlyTest {
     
     @Test
     public void testStratify() {
-        HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyRing();
+        MapData graph = MakeTestData.makePartlyAccessOnlyRing();
         assertEquals(7, graph.size());
         
         Node partAccessOnly1 = graph.get(1L);

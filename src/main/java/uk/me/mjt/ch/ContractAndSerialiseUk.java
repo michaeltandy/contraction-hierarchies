@@ -13,12 +13,12 @@ public class ContractAndSerialiseUk {
             System.out.println("Loading data...");
             long startTime = System.currentTimeMillis();
             BinaryFormat bf = new BinaryFormat();
-            HashMap<Long,Node> allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-nodes.dat",
+            MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat");
             
             Node hatfield = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             Node herbalHill = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
-            System.out.println(Dijkstra.dijkstrasAlgorithm(allNodes, hatfield, herbalHill, Dijkstra.Direction.FORWARDS).toString());
+            System.out.println(Dijkstra.dijkstrasAlgorithm(hatfield, herbalHill, Dijkstra.Direction.FORWARDS).toString());
             
             InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
             Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
@@ -40,7 +40,7 @@ public class ContractAndSerialiseUk {
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             
-            HashMap<Long,Node> readback=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
+            MapData readback=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             
             boolean readbackMatch = Util.deepEquals(allNodes, readback, true);

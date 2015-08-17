@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.util.HashMap;
 import static org.junit.Assert.*;
 import uk.me.mjt.ch.MakeTestData;
+import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Util;
 
@@ -21,7 +22,7 @@ public class BinaryFormatTest {
         ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
         ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
         
-        HashMap<Long, Node> testData = MakeTestData.makeSimpleThreeEntry();
+        MapData testData = MakeTestData.makeSimpleThreeEntry();
         BinaryFormat instance = new BinaryFormat();
         
         instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));
@@ -30,7 +31,7 @@ public class BinaryFormatTest {
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
         
-        HashMap<Long, Node> loopback = instance.readNodes(new DataInputStream(nodesIn));
+        MapData loopback = instance.readNodes(new DataInputStream(nodesIn));
         instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
         
         assertTrue(Util.deepEquals(testData, loopback, true));
@@ -41,7 +42,7 @@ public class BinaryFormatTest {
         ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
         ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
         
-        HashMap<Long, Node> testData = MakeTestData.makePartlyAccessOnlyRing();
+        MapData testData = MakeTestData.makePartlyAccessOnlyRing();
         BinaryFormat instance = new BinaryFormat();
         
         instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));
@@ -50,7 +51,7 @@ public class BinaryFormatTest {
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
         
-        HashMap<Long, Node> loopback = instance.readNodes(new DataInputStream(nodesIn));
+        MapData loopback = instance.readNodes(new DataInputStream(nodesIn));
         instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
         
         assertTrue(Util.deepEquals(testData, loopback, true));
@@ -61,7 +62,7 @@ public class BinaryFormatTest {
         ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
         ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
         
-        HashMap<Long, Node> testData = MakeTestData.makeGatedRow();
+        MapData testData = MakeTestData.makeGatedRow();
         BinaryFormat instance = new BinaryFormat();
         
         instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));
@@ -70,7 +71,7 @@ public class BinaryFormatTest {
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
         
-        HashMap<Long, Node> loopback = instance.readNodes(new DataInputStream(nodesIn));
+        MapData loopback = instance.readNodes(new DataInputStream(nodesIn));
         instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
         
         assertTrue(Util.deepEquals(testData, loopback, true));

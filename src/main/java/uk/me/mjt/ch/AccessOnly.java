@@ -12,7 +12,7 @@ public enum AccessOnly {
     public static final long ACCESSONLY_END_NODE_ID_PREFIX = 200000000000000000L;
     public static final long INITIAL_NEW_EDGE_ID = 1000000000L;
     
-    public static void stratifyMarkedAndImplicitAccessOnlyClusters(HashMap<Long,Node> allNodes, Node startPoint) {
+    public static void stratifyMarkedAndImplicitAccessOnlyClusters(MapData allNodes, Node startPoint) {
         markImplicitlyAccessOnlyEdges(allNodes, startPoint);
         stratifyMarkedAccessOnlyClusters(allNodes);
     }
@@ -24,7 +24,7 @@ public enum AccessOnly {
      * https://www.openstreetmap.org/node/1499442487
      * https://www.openstreetmap.org/way/151879439
      */
-    private static void markImplicitlyAccessOnlyEdges(HashMap<Long,Node> allNodes, Node startPoint) {
+    private static void markImplicitlyAccessOnlyEdges(MapData allNodes, Node startPoint) {
         if (!InaccessibleNodes.findNodesNotBidirectionallyAccessible(allNodes,startPoint).isEmpty()) {
             throw new IllegalArgumentException("We can only mark implicitly access-only edges for graphs "
                     + "where all nodes are bidirectionally accessible. This one doesn't seem to be!");
@@ -85,7 +85,7 @@ public enum AccessOnly {
         return result;
     }
     
-    public static void stratifyMarkedAccessOnlyClusters(HashMap<Long,Node> allNodes) {
+    public static void stratifyMarkedAccessOnlyClusters(MapData allNodes) {
         List<AccessOnlyCluster> clusters = findAccessOnlyClusters(allNodes.values());
         AtomicLong edgeIdCounter = new AtomicLong(INITIAL_NEW_EDGE_ID);
         
@@ -151,12 +151,12 @@ public enum AccessOnly {
         return filtered;
     }
     
-    private static void stratifyCluster(HashMap<Long,Node> allNodes, AccessOnlyCluster cluster, AtomicLong edgeIdCounter) {
+    private static void stratifyCluster(MapData allNodes, AccessOnlyCluster cluster, AtomicLong edgeIdCounter) {
         HashMap<Long,Node> startStrata = cloneNodesAndConnectionsAddingPrefix(cluster.nodes, ACCESSONLY_START_NODE_ID_PREFIX, edgeIdCounter);
         HashMap<Long,Node> endStrata = cloneNodesAndConnectionsAddingPrefix(cluster.nodes, ACCESSONLY_END_NODE_ID_PREFIX, edgeIdCounter);
         
-        allNodes.putAll(startStrata);
-        allNodes.putAll(endStrata);
+        allNodes.addAll(startStrata.values());
+        allNodes.addAll(endStrata.values());
         
         linkBordersAndStratas(cluster, startStrata, endStrata, edgeIdCounter);
         removeAccessOnlyEdgesThatHaveBeenReplaced(cluster);
@@ -221,10 +221,10 @@ public enum AccessOnly {
         }
     }
     
-    private static void removeAccessOnlyNodesThatHaveBeenReplaced(HashMap<Long,Node> allNodes, AccessOnlyCluster cluster) {
+    private static void removeAccessOnlyNodesThatHaveBeenReplaced(MapData allNodes, AccessOnlyCluster cluster) {
         for (Node n : cluster.nodes) {
             if (n.edgesFrom.isEmpty() && n.edgesTo.isEmpty()) {
-                allNodes.remove(n.nodeId);
+                allNodes.removeNodeAndConnectedEdges(n);
             }
         }
     }

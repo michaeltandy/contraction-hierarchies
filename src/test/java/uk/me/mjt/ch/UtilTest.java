@@ -12,8 +12,8 @@ public class UtilTest {
     @Test
     public void testDeepEquals_HashMap_HashMap() {
         System.out.println("deepEquals");
-        HashMap<Long, Node> a = MakeTestData.makeSimpleThreeEntry();
-        HashMap<Long, Node> b = MakeTestData.makeSimpleThreeEntry();
+        MapData a = MakeTestData.makeSimpleThreeEntry();
+        MapData b = MakeTestData.makeSimpleThreeEntry();
         assertTrue(Util.deepEquals(a, b, false));
         
         Node n = a.get(2L);

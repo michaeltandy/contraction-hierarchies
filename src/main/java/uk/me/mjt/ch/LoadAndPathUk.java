@@ -21,7 +21,7 @@ public class LoadAndPathUk {
             System.out.println("Loading data...");
             long startTime = System.currentTimeMillis();
             BinaryFormat bf = new BinaryFormat();
-            HashMap<Long,Node> allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
+            MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             Node startNode = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             //Node startNode = allNodes.get(60455099L); // https://www.openstreetmap.org/node/60455099 Albert Drive, Glasgow
@@ -31,8 +31,6 @@ public class LoadAndPathUk {
             DijkstraSolution contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);
             System.out.println("Contraction: "+contracted);
             System.out.println(GeoJson.solution(contracted));
-            
-            printGraphStats(allNodes);
             
             if (!expectedPath.equals(contracted.toString())) {
                 System.exit(-1);
@@ -65,7 +63,7 @@ public class LoadAndPathUk {
             
             System.out.println("Testing speed with caching...");
             
-            List<Node> testLocations = chooseRandomNodes(allNodes,4000);
+            List<Node> testLocations = allNodes.chooseRandomNodes(4000);
             
             SimpleCache cache = new SimpleCache();
             for (int i=0 ; i<testLocations.size()-1 ; i++) {
@@ -96,12 +94,6 @@ public class LoadAndPathUk {
             e.printStackTrace();
             System.exit(-1);
         }
-    }
-    
-    private static List<Node> chooseRandomNodes(HashMap<Long,Node> allNodes, int howMany) {
-        ArrayList<Node> n = new ArrayList<>(allNodes.values());
-        Collections.shuffle(n, new Random(12345));
-        return new ArrayList(n.subList(0, howMany));
     }
     
     private static byte[] serialiseUpwardSolution(List<DijkstraSolution> upwardSolutions) {
@@ -149,32 +141,4 @@ public class LoadAndPathUk {
             throw new RuntimeException("This shouldn't be possible.", e);
         }
     }
-    
-    private static void printGraphStats(HashMap<Long,Node> allNodes) {
-        int nodeCount = 0;
-        int nonShortcutEdgeCount = 0;
-        int shortcutEdgeCount = 0;
-        int maxContractionDepth = 0;
-        
-        for (Long nodeId : allNodes.keySet()) {
-            Node node = allNodes.get(nodeId);
-            
-            nodeCount++;
-            
-            for (DirectedEdge de : node.edgesFrom) {
-                if (de.isShortcut()) {
-                    shortcutEdgeCount++;
-                } else {
-                    nonShortcutEdgeCount++;
-                }
-                maxContractionDepth = Math.max(maxContractionDepth, de.contractionDepth);
-            }
-        }
-        
-        System.out.println("nodeCount: "+nodeCount);
-        System.out.println("nonShortcutEdgeCount: "+nonShortcutEdgeCount);
-        System.out.println("shortcutEdgeCount: "+shortcutEdgeCount);
-        System.out.println("maxContractionDepth: "+maxContractionDepth);
-    }
-    
 }

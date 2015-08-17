@@ -10,7 +10,7 @@ import uk.me.mjt.ch.loader.BinaryFormat;
 
 public class BenchmarkUk {
     
-    HashMap<Long,Node> allNodes;
+    MapData allNodes;
     Node hatfield;
     
     public void loadAndCheckMapData() throws IOException {
@@ -45,7 +45,7 @@ public class BenchmarkUk {
     
     public void benchmarkPathing(int repetitions) {
         System.out.println("Benchmarking pathing. Warming up...");
-        List<Node> testLocations = chooseRandomNodes(allNodes,4000);
+        List<Node> testLocations = allNodes.chooseRandomNodes(4000);
         
         for (Node node : testLocations) {
             ContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node);
@@ -67,7 +67,7 @@ public class BenchmarkUk {
     
     public void benchmarkParallelPathing(int repetitions) {
         System.out.println("Benchmarking parallel uncached pathing. Warming up...");
-        List<Node> testLocations = chooseRandomNodes(allNodes,4000);
+        List<Node> testLocations = allNodes.chooseRandomNodes(4000);
         ExecutorService es = Executors.newFixedThreadPool(2);
         
         for (Node node : testLocations) {
@@ -91,7 +91,7 @@ public class BenchmarkUk {
     
     public void benchmarkCachedPathing(int repetitions) {
         System.out.println("Benchmarking cached pathing. Warming up & populating cache...");
-        List<Node> testLocations = chooseRandomNodes(allNodes,4000);
+        List<Node> testLocations = allNodes.chooseRandomNodes(4000);
         SimpleCache cache = new SimpleCache();
         
         for (Node node : testLocations) {
@@ -128,12 +128,6 @@ public class BenchmarkUk {
             e.printStackTrace();
             System.exit(-1);
         }
-    }
-    
-    private static List<Node> chooseRandomNodes(HashMap<Long,Node> allNodes, int howMany) {
-        ArrayList<Node> n = new ArrayList<>(allNodes.values());
-        Collections.shuffle(n, new Random(12345));
-        return new ArrayList(n.subList(0, howMany));
     }
     
 }

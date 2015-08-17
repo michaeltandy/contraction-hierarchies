@@ -11,13 +11,13 @@ public class AccessOnlyDijkstraTest {
 
     @Test
     public void testDijkstra() {
-        HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyRing();
+        MapData graph = MakeTestData.makePartlyAccessOnlyRing();
         AccessOnly.stratifyMarkedAccessOnlyClusters(graph);
         
         Node startNode = graph.get(2L);
         Node endNode = graph.get(6L);
         
-        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(graph, startNode, endNode, Dijkstra.Direction.FORWARDS);
+        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         System.out.println("Solution: "+ds);
         
         assertNotNull(ds);
@@ -27,7 +27,7 @@ public class AccessOnlyDijkstraTest {
     
     @Test
     public void testWithContraction() {
-        HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyRing();
+        MapData graph = MakeTestData.makePartlyAccessOnlyRing();
         AccessOnly.stratifyMarkedAccessOnlyClusters(graph);
         
         Node startNode = graph.get(2L);
@@ -47,13 +47,13 @@ public class AccessOnlyDijkstraTest {
 
     @Test
     public void testThorn() {
-        HashMap<Long,Node> graph = MakeTestData.makePartlyAccessOnlyThorn();
+        MapData graph = MakeTestData.makePartlyAccessOnlyThorn();
         AccessOnly.stratifyMarkedAccessOnlyClusters(graph);
         
         Node startNode = graph.get(1L);
         Node endNode = graph.get(5L);
         
-        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(graph, startNode, endNode, Dijkstra.Direction.FORWARDS);
+        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         System.out.println("Solution: "+ds);
         
         assertNotNull(ds);

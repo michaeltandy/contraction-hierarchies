@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GraphContractor {
-    private final HashMap<Long,Node> allNodes;
+    private final MapData allNodes;
     private long maxEdgeId;
     
     private final AtomicInteger findShortcutsCalls = new AtomicInteger();
@@ -24,7 +24,7 @@ public class GraphContractor {
     
     private ExecutorService es = Executors.newFixedThreadPool(8);
     
-    public GraphContractor(HashMap<Long,Node> allNodes) {
+    public GraphContractor(MapData allNodes) {
         this.allNodes = allNodes;
         this.maxEdgeId = 5000000000L;
     }
@@ -67,7 +67,7 @@ public class GraphContractor {
             if (startNode.isContracted())
                 continue;
             
-            List<DijkstraSolution> routed = Dijkstra.dijkstrasAlgorithm(allNodes,
+            List<DijkstraSolution> routed = Dijkstra.dijkstrasAlgorithm(
                     startNode,
                     new HashSet<>(destinationNodes),
                     incoming.driveTimeMs+maxOutTime,
