@@ -13,15 +13,15 @@ public class GraphContractorTest {
     public void testContractAll() {
         MapData graph = MakeTestData.makeLadder(2,10);
         
-        System.out.println(GeoJson.allLinks(graph.values()));
+        System.out.println(GeoJson.allLinks(graph.getAllNodes()));
         System.out.println("\n\n\n");
         
         GraphContractor instance = new GraphContractor(graph);
         instance.initialiseContractionOrder();
         instance.contractAll();
         
-        Node startNode = graph.get(1L);
-        Node endNode = graph.get(18L);
+        Node startNode = graph.getNodeById(1L);
+        Node endNode = graph.getNodeById(18L);
             
         DijkstraSolution contracted = ContractedDijkstra.contractedGraphDijkstra(graph, startNode, endNode);
         System.out.println("Contraction: "+contracted);

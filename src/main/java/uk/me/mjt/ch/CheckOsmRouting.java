@@ -22,8 +22,8 @@ public class CheckOsmRouting {
     
     public static void checkUncontracted(MapData allNodes) {
         for (RoutingTestCase tc : testCases) {
-            Node from = allNodes.get(tc.fromNode);
-            Node to = allNodes.get(tc.toNode);
+            Node from = allNodes.getNodeById(tc.fromNode);
+            Node to = allNodes.getNodeById(tc.toNode);
             
             DijkstraSolution computed = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
             compare(tc, computed);
@@ -32,8 +32,8 @@ public class CheckOsmRouting {
     
     public static void checkContracted(MapData allNodes) {
         for (RoutingTestCase tc : testCases) {
-            Node from = allNodes.get(tc.fromNode);
-            Node to = allNodes.get(tc.toNode);
+            Node from = allNodes.getNodeById(tc.fromNode);
+            Node to = allNodes.getNodeById(tc.toNode);
             
             DijkstraSolution computed = ContractedDijkstra.contractedGraphDijkstra(allNodes, from, to);
             compare(tc, computed);

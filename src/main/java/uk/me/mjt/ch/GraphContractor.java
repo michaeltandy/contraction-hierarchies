@@ -103,8 +103,8 @@ public class GraphContractor {
     }
     
     private void parallelInitContractionOrder() {
-        ArrayList<Callable<KeyValue>> callables = new ArrayList(allNodes.size());
-        for (final Node n : allNodes.values()) {
+        ArrayList<Callable<KeyValue>> callables = new ArrayList(allNodes.getNodeCount());
+        for (final Node n : allNodes.getAllNodes()) {
             if (n.contractionAllowed && !n.isContracted()) {
                 callables.add(new Callable<KeyValue>() {
                     public KeyValue call() throws Exception {
@@ -160,7 +160,7 @@ public class GraphContractor {
             }
         }
         
-        for (Node sortNode : allNodes.values()) {
+        for (Node sortNode : allNodes.getAllNodes()) {
             sortNode.sortNeighborLists();
         }
        

@@ -23,9 +23,9 @@ public class LoadAndPathUk {
             BinaryFormat bf = new BinaryFormat();
             MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
-            Node startNode = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
+            Node startNode = allNodes.getNodeById(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             //Node startNode = allNodes.get(60455099L); // https://www.openstreetmap.org/node/60455099 Albert Drive, Glasgow
-            Node endNode = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
+            Node endNode = allNodes.getNodeById(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
             System.out.println("Data load complete in " + (System.currentTimeMillis()-startTime) + "ms.");
             
             DijkstraSolution contracted = ContractedDijkstra.contractedGraphDijkstra(allNodes, startNode, endNode);

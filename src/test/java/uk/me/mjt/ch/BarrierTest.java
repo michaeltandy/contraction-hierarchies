@@ -13,8 +13,8 @@ public class BarrierTest {
     @Test
     public void testSimpleReplaceDoesntBreakDijkstra() {
         MapData allNodes = MakeTestData.makeGatedRow();
-        Node startNode = allNodes.get(1L);
-        Node endNode = allNodes.get(3L);
+        Node startNode = allNodes.getNodeById(1L);
+        Node endNode = allNodes.getNodeById(3L);
         
         DijkstraSolution ignoringBarrier = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         assertEquals(2000,ignoringBarrier.totalDriveTimeMs);
@@ -24,7 +24,7 @@ public class BarrierTest {
         Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
         AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, startNode);
         
-        endNode = allNodes.get(3L+AccessOnly.ACCESSONLY_END_NODE_ID_PREFIX);
+        endNode = allNodes.getNodeById(3L+AccessOnly.ACCESSONLY_END_NODE_ID_PREFIX);
         DijkstraSolution replacedAndStratified = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         
         assertEquals(2000,replacedAndStratified.totalDriveTimeMs);
@@ -33,8 +33,8 @@ public class BarrierTest {
     @Test
     public void testDivertAroundAvoidableGate() {
         MapData allNodes = MakeTestData.makeGatedThorn();
-        Node startNode = allNodes.get(1L);
-        Node endNode = allNodes.get(5L);
+        Node startNode = allNodes.getNodeById(1L);
+        Node endNode = allNodes.getNodeById(5L);
         
         Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
         AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, startNode);

@@ -34,7 +34,7 @@ public enum AccessOnly {
         HashSet<DirectedEdge> accessibleBackwards = accessibleEdgesFrom(startPoint, Direction.BACKWARDS, AccessOnly.FALSE);
         
         HashSet<DirectedEdge> implicitlyAccessOnly = new HashSet();
-        for (Node n : allNodes.values()) {
+        for (Node n : allNodes.getAllNodes()) {
             for (DirectedEdge de : n.edgesFrom) {
                 if (accessibleForwards.contains(de) && accessibleBackwards.contains(de)) {
                     // Looks fine to me!
@@ -86,7 +86,7 @@ public enum AccessOnly {
     }
     
     public static void stratifyMarkedAccessOnlyClusters(MapData allNodes) {
-        List<AccessOnlyCluster> clusters = findAccessOnlyClusters(allNodes.values());
+        List<AccessOnlyCluster> clusters = findAccessOnlyClusters(allNodes.getAllNodes());
         AtomicLong edgeIdCounter = new AtomicLong(INITIAL_NEW_EDGE_ID);
         
         for (AccessOnlyCluster cluster : clusters) {

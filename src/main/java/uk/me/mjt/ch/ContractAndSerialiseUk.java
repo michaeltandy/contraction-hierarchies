@@ -16,8 +16,8 @@ public class ContractAndSerialiseUk {
             MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat");
             
-            Node hatfield = allNodes.get(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
-            Node herbalHill = allNodes.get(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
+            Node hatfield = allNodes.getNodeById(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
+            Node herbalHill = allNodes.getNodeById(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
             System.out.println(Dijkstra.dijkstrasAlgorithm(hatfield, herbalHill, Dijkstra.Direction.FORWARDS).toString());
             
             InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
@@ -36,7 +36,7 @@ public class ContractAndSerialiseUk {
             
             CheckOsmRouting.checkContracted(allNodes);
             
-            bf.writeWays(allNodes.values(), 
+            bf.writeWays(allNodes.getAllNodes(), 
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             

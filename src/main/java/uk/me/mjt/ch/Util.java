@@ -10,13 +10,13 @@ import java.util.HashMap;
 public class Util {
     
     public static boolean deepEquals(MapData a, MapData b, final boolean printDiff) {
-        if (!a.keySet().equals(b.keySet())) {
+        if (!a.getAllNodeIds().equals(b.getAllNodeIds())) {
             if (printDiff) System.out.println("Map keysets are different?!");
             return false;
         }
         
-        for (Long key : a.keySet()) {
-            if (!deepEquals(a.get(key), b.get(key), printDiff)) {
+        for (Long key : a.getAllNodeIds()) {
+            if (!deepEquals(a.getNodeById(key), b.getNodeById(key), printDiff)) {
                 return false;
             }
         }

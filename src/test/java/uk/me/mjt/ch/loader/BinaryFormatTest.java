@@ -25,8 +25,8 @@ public class BinaryFormatTest {
         MapData testData = MakeTestData.makeSimpleThreeEntry();
         BinaryFormat instance = new BinaryFormat();
         
-        instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));
-        instance.writeEdges(testData.values(), new DataOutputStream(waysOut));
+        instance.writeNodesWithoutEdges(testData.getAllNodes(), new DataOutputStream(nodesOut));
+        instance.writeEdges(testData.getAllNodes(), new DataOutputStream(waysOut));
         
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
@@ -45,8 +45,8 @@ public class BinaryFormatTest {
         MapData testData = MakeTestData.makePartlyAccessOnlyRing();
         BinaryFormat instance = new BinaryFormat();
         
-        instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));
-        instance.writeEdges(testData.values(), new DataOutputStream(waysOut));
+        instance.writeNodesWithoutEdges(testData.getAllNodes(), new DataOutputStream(nodesOut));
+        instance.writeEdges(testData.getAllNodes(), new DataOutputStream(waysOut));
         
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
@@ -65,8 +65,8 @@ public class BinaryFormatTest {
         MapData testData = MakeTestData.makeGatedRow();
         BinaryFormat instance = new BinaryFormat();
         
-        instance.writeNodesWithoutEdges(testData.values(), new DataOutputStream(nodesOut));
-        instance.writeEdges(testData.values(), new DataOutputStream(waysOut));
+        instance.writeNodesWithoutEdges(testData.getAllNodes(), new DataOutputStream(nodesOut));
+        instance.writeEdges(testData.getAllNodes(), new DataOutputStream(waysOut));
         
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());

@@ -14,13 +14,13 @@ public class InaccessibleNodes {
      * This only works on the uncontracted graph.
      */
     public static void removeNodesNotBidirectionallyAccessible(MapData allNodes, Node startNode) {
-        System.out.println("Before removal, " + allNodes.size() + " nodes.");
+        System.out.println("Before removal, " + allNodes.getNodeCount() + " nodes.");
         Set<Node> toRemove = findNodesNotBidirectionallyAccessible(allNodes,startNode);
         
         System.out.println("Removing " + toRemove.size() + " nodes.");
         allNodes.removeAll(toRemove);
         
-        System.out.println("After removal, " + allNodes.size() + " nodes.");
+        System.out.println("After removal, " + allNodes.getNodeCount() + " nodes.");
     }
     
     public static Set<Node> findNodesNotBidirectionallyAccessible(MapData allNodes, Node startNode) {
@@ -54,7 +54,7 @@ public class InaccessibleNodes {
             accessible.add(ds.getLastNode());
         }
         
-        HashSet<Node> inaccessible = new HashSet<>(allNodes.values());
+        HashSet<Node> inaccessible = new HashSet<>(allNodes.getAllNodes());
         inaccessible.removeAll(accessible);
         return new HashSet<>(inaccessible);
     }

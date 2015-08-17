@@ -16,7 +16,7 @@ public class UtilTest {
         MapData b = MakeTestData.makeSimpleThreeEntry();
         assertTrue(Util.deepEquals(a, b, false));
         
-        Node n = a.get(2L);
+        Node n = a.getNodeById(2L);
         n.edgesFrom.remove(0);
         
         assertFalse(Util.deepEquals(a, b, false));

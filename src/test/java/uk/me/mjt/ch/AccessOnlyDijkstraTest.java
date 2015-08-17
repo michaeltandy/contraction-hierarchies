@@ -14,8 +14,8 @@ public class AccessOnlyDijkstraTest {
         MapData graph = MakeTestData.makePartlyAccessOnlyRing();
         AccessOnly.stratifyMarkedAccessOnlyClusters(graph);
         
-        Node startNode = graph.get(2L);
-        Node endNode = graph.get(6L);
+        Node startNode = graph.getNodeById(2L);
+        Node endNode = graph.getNodeById(6L);
         
         DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         System.out.println("Solution: "+ds);
@@ -30,8 +30,8 @@ public class AccessOnlyDijkstraTest {
         MapData graph = MakeTestData.makePartlyAccessOnlyRing();
         AccessOnly.stratifyMarkedAccessOnlyClusters(graph);
         
-        Node startNode = graph.get(2L);
-        Node endNode = graph.get(6L);
+        Node startNode = graph.getNodeById(2L);
+        Node endNode = graph.getNodeById(6L);
         
         GraphContractor instance = new GraphContractor(graph);
         instance.initialiseContractionOrder();
@@ -50,8 +50,8 @@ public class AccessOnlyDijkstraTest {
         MapData graph = MakeTestData.makePartlyAccessOnlyThorn();
         AccessOnly.stratifyMarkedAccessOnlyClusters(graph);
         
-        Node startNode = graph.get(1L);
-        Node endNode = graph.get(5L);
+        Node startNode = graph.getNodeById(1L);
+        Node endNode = graph.getNodeById(5L);
         
         DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         System.out.println("Solution: "+ds);

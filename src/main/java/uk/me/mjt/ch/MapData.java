@@ -11,19 +11,19 @@ public class MapData {
         this.nodesById = nodesById;
     }
     
-    public Node get(long nodeId) {
+    public Node getNodeById(long nodeId) {
         return nodesById.get(nodeId);
     }
     
-    public int size() {
+    public int getNodeCount() {
         return nodesById.size();
     }
     
-    public Collection<Node> values() {
+    public Collection<Node> getAllNodes() {
         return Collections.unmodifiableCollection(nodesById.values());
     }
     
-    public Set<Long> keySet() {
+    public Set<Long> getAllNodeIds() {
         return Collections.unmodifiableSet(nodesById.keySet());
     }
     

@@ -14,7 +14,7 @@ public enum Barrier {
     public static void replaceBarriersWithAccessOnlyEdges(MapData allNodes) {
         Preconditions.checkNoneNull(allNodes);
         
-        List<Node> barrierNodes = barrierNodesIn(allNodes.values());
+        List<Node> barrierNodes = barrierNodesIn(allNodes.getAllNodes());
         AtomicLong edgeIdCounter = new AtomicLong(INITIAL_NEW_EDGE_ID);
         
         for (Node n : barrierNodes) {

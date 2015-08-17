@@ -36,7 +36,7 @@ public class BenchmarkUk {
         if (new File(nodeFile).exists() && new File(wayFile).exists()) {
             System.out.println("Loading data from " + nodeFile + " and " + wayFile);
             allNodes=bf.read(nodeFile,wayFile);
-            hatfield = allNodes.get(253199386L);
+            hatfield = allNodes.getNodeById(253199386L);
             return true;
         } else {
             return false;

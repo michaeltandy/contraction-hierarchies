@@ -22,8 +22,8 @@ public class CachedContractedDijkstraTest {
         instance.initialiseContractionOrder();
         instance.contractAll();
         
-        Node startNode = graph.get(1L);
-        Node endNode = graph.get(18L);
+        Node startNode = graph.getNodeById(1L);
+        Node endNode = graph.getNodeById(18L);
         
         SimpleCache cache = new SimpleCache();
         

@@ -88,8 +88,8 @@ public class BinaryFormat {
                 long firstEdgeId = source.readLong();
                 long secondEdgeId = source.readLong();
                 
-                Node fromNode = nodesById.get(fromNodeId);
-                Node toNode = nodesById.get(toNodeId);
+                Node fromNode = nodesById.getNodeById(fromNodeId);
+                Node toNode = nodesById.getNodeById(toNodeId);
                 if (fromNode==null || toNode==null) {
                     String problem = "Tried to load nodes " + fromNodeId + 
                             " and " + toNodeId + " for edge " + edgeId + 
@@ -115,7 +115,7 @@ public class BinaryFormat {
             
         } catch (EOFException e) { }
         
-        for (Node n : nodesById.values()) {
+        for (Node n : nodesById.getAllNodes()) {
             n.sortNeighborLists();
         }
     }
