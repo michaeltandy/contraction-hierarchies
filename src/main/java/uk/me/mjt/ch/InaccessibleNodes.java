@@ -32,20 +32,6 @@ public class InaccessibleNodes {
         return notBidirectionallyAccessible;
     }
     
-    /*public static Set<Node> findNodesNotUnidirectionallyAccessible(HashMap<Long,Node> allNodes, Node startNode) {
-        Set<Node> inaccessibleForwards = findInaccessibleByDirection(allNodes, startNode, Direction.FORWARDS);
-        Set<Node> inaccessibleBackwards = findInaccessibleByDirection(allNodes, startNode, Direction.BACKWARDS);
-        
-        HashSet<Node> inaccessible = new HashSet<>();
-        for (Node n : inaccessibleForwards) {
-            if (inaccessibleBackwards.contains(n)) {
-                inaccessible.add(n);
-            }
-        }
-        
-        return inaccessible;
-    }*/
-    
     private static HashSet<Node> findInaccessibleByDirection(MapData allNodes, Node startNode, Direction direction) {
         List<DijkstraSolution> solutionsThisDirection = Dijkstra.dijkstrasAlgorithm(startNode, null, Integer.MAX_VALUE, direction);
         

@@ -35,17 +35,6 @@ public class BinaryFormat {
         return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
     }
     
-    /*public void writeData(HashMap<Long,Node> toWrite, OutputStream destination) throws IOException {
-        writeData(toWrite.values(),destination);
-    }
-    
-    public void writeData(Collection<Node> toWrite, OutputStream destination) throws IOException {
-        DataOutputStream dos = new DataOutputStream(destination);
-        
-        writeNodesWithoutEdges(toWrite, dos);
-        writeEdges(toWrite, dos);
-    }*/
-    
     public MapData readNodes(DataInputStream source) throws IOException {
         HashMap<Long,Node> nodesById = new HashMap(1000);
         

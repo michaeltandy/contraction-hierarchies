@@ -1,14 +1,11 @@
 package uk.me.mjt.ch;
 
-import uk.me.mjt.ch.Dijkstra.Direction;
 import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
-import static uk.me.mjt.ch.Dijkstra.dijkstrasAlgorithm;
 import uk.me.mjt.ch.cache.CachedContractedDijkstra;
 import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
-import uk.me.mjt.ch.loader.NodeLoadCsv;
 
 public class LoadAndPathUk {
     
