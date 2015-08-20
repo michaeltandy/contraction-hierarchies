@@ -2,13 +2,11 @@ package uk.me.mjt.ch.loader;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.HashMap;
+import java.io.IOException;
 import static org.junit.Assert.*;
 import uk.me.mjt.ch.MakeTestData;
 import uk.me.mjt.ch.MapData;
-import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Util;
 
 public class BinaryFormatTest {
@@ -19,60 +17,44 @@ public class BinaryFormatTest {
 
     @org.junit.Test
     public void testLoopback() throws Exception {
-        ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
-        ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
-        
         MapData testData = MakeTestData.makeSimpleThreeEntry();
-        BinaryFormat instance = new BinaryFormat();
-        
-        instance.writeNodesWithoutEdges(testData.getAllNodes(), new DataOutputStream(nodesOut));
-        instance.writeEdges(testData.getAllNodes(), new DataOutputStream(waysOut));
-        
-        ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
-        ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
-        
-        MapData loopback = instance.readNodes(new DataInputStream(nodesIn));
-        instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
-        
-        assertTrue(Util.deepEquals(testData, loopback, true));
+        writeAndReadBack(testData);
     }
     
     @org.junit.Test
     public void testLoopbackAccessOnly() throws Exception {
-        ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
-        ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
-        
         MapData testData = MakeTestData.makePartlyAccessOnlyRing();
-        BinaryFormat instance = new BinaryFormat();
-        
-        instance.writeNodesWithoutEdges(testData.getAllNodes(), new DataOutputStream(nodesOut));
-        instance.writeEdges(testData.getAllNodes(), new DataOutputStream(waysOut));
-        
-        ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
-        ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
-        
-        MapData loopback = instance.readNodes(new DataInputStream(nodesIn));
-        instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
-        
-        assertTrue(Util.deepEquals(testData, loopback, true));
+        writeAndReadBack(testData);
     }
     
     @org.junit.Test
     public void testLoopbackGate() throws Exception {
+        MapData testData = MakeTestData.makeGatedRow();
+        writeAndReadBack(testData);
+    }
+    
+    @org.junit.Test
+    public void testTurnRestricted() throws Exception {
+        MapData testData = MakeTestData.makeTurnRestrictedH();
+        writeAndReadBack(testData);
+    }
+    
+    private void writeAndReadBack(MapData testData) throws IOException {
         ByteArrayOutputStream nodesOut = new ByteArrayOutputStream();
         ByteArrayOutputStream waysOut = new ByteArrayOutputStream();
+        ByteArrayOutputStream turnRestrictionsOut = new ByteArrayOutputStream();
         
-        MapData testData = MakeTestData.makeGatedRow();
         BinaryFormat instance = new BinaryFormat();
         
         instance.writeNodesWithoutEdges(testData.getAllNodes(), new DataOutputStream(nodesOut));
         instance.writeEdges(testData.getAllNodes(), new DataOutputStream(waysOut));
+        instance.writeTurnRestrictions(testData.allTurnRestrictions(), new DataOutputStream(turnRestrictionsOut));
         
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
+        ByteArrayInputStream turnRestrictionsIn = new ByteArrayInputStream(turnRestrictionsOut.toByteArray());
         
-        MapData loopback = instance.readNodes(new DataInputStream(nodesIn));
-        instance.loadEdgesGivenNodes(loopback,new DataInputStream(waysIn));
+        MapData loopback = instance.read(nodesIn, waysIn, turnRestrictionsIn);
         
         assertTrue(Util.deepEquals(testData, loopback, true));
     }

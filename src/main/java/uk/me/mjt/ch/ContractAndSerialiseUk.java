@@ -14,7 +14,8 @@ public class ContractAndSerialiseUk {
             long startTime = System.currentTimeMillis();
             BinaryFormat bf = new BinaryFormat();
             MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat");
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat",
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-turnrestrictions.dat");
             
             Node hatfield = allNodes.getNodeById(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             Node herbalHill = allNodes.getNodeById(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill

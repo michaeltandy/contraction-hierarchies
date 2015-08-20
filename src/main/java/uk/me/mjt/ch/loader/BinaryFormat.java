@@ -8,17 +8,34 @@ import uk.me.mjt.ch.DirectedEdge;
 import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Preconditions;
+import uk.me.mjt.ch.TurnRestriction;
 
 public class BinaryFormat {
     
     public MapData read(String nodeFile, String wayFile) throws IOException {
         FileInputStream nodesIn = new FileInputStream(nodeFile);
         FileInputStream waysIn = new FileInputStream(wayFile);
+        return read(nodesIn, waysIn, null);
+    }
+    
+    public MapData read(String nodeFile, String wayFile, String turnRestrictionFile) throws IOException {
+        FileInputStream nodesIn = new FileInputStream(nodeFile);
+        FileInputStream waysIn = new FileInputStream(wayFile);
+        FileInputStream restrictionsIn = new FileInputStream(turnRestrictionFile);
         
-        MapData result = readNodes(new DataInputStream(new BufferedInputStream(nodesIn)));
-        loadEdgesGivenNodes(result,new DataInputStream(new BufferedInputStream(waysIn)));
+        return read(nodesIn, waysIn, restrictionsIn);
+    }
+    
+    public MapData read(InputStream nodesIn, InputStream waysIn, InputStream restrictionsIn) throws IOException {
+        HashMap<Long,TurnRestriction> turnRestrictions;
+        if (restrictionsIn != null)
+            turnRestrictions = readTurnRestrictions(new DataInputStream(new BufferedInputStream(restrictionsIn)));
+        else
+            turnRestrictions = new HashMap<>();
+        HashMap<Long,Node> nodesById = readNodes(new DataInputStream(new BufferedInputStream(nodesIn)));
+        loadEdgesGivenNodes(nodesById,new DataInputStream(new BufferedInputStream(waysIn)));
         
-        return result;
+        return new MapData(nodesById, turnRestrictions);
     }
     
     public void writeWays(Collection<Node> toWrite, String nodeFile, String wayFile) throws IOException {
@@ -35,7 +52,7 @@ public class BinaryFormat {
         return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
     }
     
-    public MapData readNodes(DataInputStream source) throws IOException {
+    private HashMap<Long,Node> readNodes(DataInputStream source) throws IOException {
         HashMap<Long,Node> nodesById = new HashMap(1000);
         
         try {
@@ -58,10 +75,10 @@ public class BinaryFormat {
             
         } catch (EOFException e) { }
         
-        return new MapData(nodesById);
+        return nodesById;
     }
     
-    public void loadEdgesGivenNodes(MapData nodesById, DataInputStream source) throws IOException {
+    private void loadEdgesGivenNodes(HashMap<Long,Node> nodesById, DataInputStream source) throws IOException {
         HashMap<Long,DirectedEdge> edgesById = new HashMap(1000);
         
         try {
@@ -77,8 +94,8 @@ public class BinaryFormat {
                 long firstEdgeId = source.readLong();
                 long secondEdgeId = source.readLong();
                 
-                Node fromNode = nodesById.getNodeById(fromNodeId);
-                Node toNode = nodesById.getNodeById(toNodeId);
+                Node fromNode = nodesById.get(fromNodeId);
+                Node toNode = nodesById.get(toNodeId);
                 if (fromNode==null || toNode==null) {
                     String problem = "Tried to load nodes " + fromNodeId + 
                             " and " + toNodeId + " for edge " + edgeId + 
@@ -104,9 +121,7 @@ public class BinaryFormat {
             
         } catch (EOFException e) { }
         
-        for (Node n : nodesById.getAllNodes()) {
-            n.sortNeighborLists();
-        }
+        Node.sortNeighborListsAll(nodesById.values());
     }
     
     
@@ -171,6 +186,58 @@ public class BinaryFormat {
         }
         
         alreadyWritten.add(de.edgeId);
+    }
+    
+    /*private void writeTurnRestriction(long turnRestrictionId, String restrictionType, List<WrittenRoadSegment> turnRestriction) {
+        try {
+            turnRestrictionOutput.writeLong(turnRestrictionId);
+            turnRestrictionOutput.writeInt(turnRestriction.size());
+            turnRestrictionOutput.writeBoolean(restrictionType.startsWith("no_"));
+            for (WrittenRoadSegment segment : turnRestriction) {
+                turnRestrictionOutput.writeLong(segment.graphEdgeId);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }*/
+    
+    private HashMap<Long,TurnRestriction> readTurnRestrictions(DataInputStream source) throws IOException {
+        HashMap<Long,TurnRestriction> result = new HashMap();
+        
+        try {
+            
+            while (true) {
+                long turnRestrictionId = source.readLong();
+                boolean typeStartsWithNo = source.readBoolean();
+                int entryCount = source.readInt();
+                List<Long> edgeIds = new ArrayList(entryCount);
+                
+                for (int i=0 ; i<entryCount ; i++) {
+                    edgeIds.add(source.readLong());
+                }
+                
+                TurnRestriction.TurnRestrictionType trt = (typeStartsWithNo?TurnRestriction.TurnRestrictionType.NOT_ALLOWED:TurnRestriction.TurnRestrictionType.ONLY_ALLOWED);
+                result.put(turnRestrictionId, new TurnRestriction(turnRestrictionId, trt, edgeIds));
+            }
+            
+        } catch (EOFException e) { }
+        
+        return result;
+    }
+    
+    public void writeTurnRestrictions(Collection<TurnRestriction> toWrite, DataOutputStream dos) throws IOException {
+        
+        HashSet<Long> writtenEdges = new HashSet();
+        for (TurnRestriction tr : toWrite) {
+            
+            dos.writeLong(tr.getTurnRestrictionId());
+            dos.writeBoolean(tr.getType()==TurnRestriction.TurnRestrictionType.NOT_ALLOWED);
+            dos.writeInt(tr.getDirectedEdgeIds().size());
+            for (Long edgeId : tr.getDirectedEdgeIds()) {
+                dos.writeLong(edgeId);
+            }
+            
+        }
     }
 
 }

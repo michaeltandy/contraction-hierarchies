@@ -1,7 +1,7 @@
 
 package uk.me.mjt.ch;
 
-import java.util.HashMap;
+import java.util.*;
 
 public class MakeTestData {
     
@@ -119,6 +119,36 @@ public class MakeTestData {
         return new MapData(result);
     }
     
+    public static MapData makeTurnRestrictedH() {
+        HashMap<Long,Node> nodes = new HashMap();
+        for (long i=1 ; i<=6 ; i++) {
+            nodes.put(i, new Node(i, 52f, 0f, Barrier.FALSE));
+        }
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(1L), nodes.get(2L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(3L));
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(4L), nodes.get(5L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(5L), nodes.get(6L));
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(5L));
+        
+        List<Long> noRight = new ArrayList();
+        noRight.add(2000003L);
+        noRight.add(3000004L);
+        TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, noRight);
+        HashMap<Long,TurnRestriction> trMap = new HashMap();
+        trMap.put(tr.getTurnRestrictionId(), tr);
+        
+        return new MapData(nodes,trMap);
+    }
+    
+    private static void makeBidirectionalEdgesAndAddToNodes(Node from, Node to ) {
+        int driveTimeMs = 1000;
+        makeEdgeAndAddToNodes(from.nodeId*1000000+to.nodeId, from, to, driveTimeMs, AccessOnly.FALSE);
+        makeEdgeAndAddToNodes(to.nodeId*1000000+from.nodeId, to, from, driveTimeMs, AccessOnly.FALSE);
+    }
+    
     private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
         Preconditions.checkNoneNull(from,to);
         DirectedEdge de = new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly);
@@ -155,6 +185,6 @@ public class MakeTestData {
         Node.sortNeighborListsAll(result.values());
         return result;
     }
-
+    
 }
 

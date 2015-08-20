@@ -15,6 +15,11 @@ public class Util {
             return false;
         }
         
+        if (!a.allTurnRestrictions().equals(b.allTurnRestrictions())) {
+            if (printDiff) System.out.println("Turn restriction sets are different?!" + a.allTurnRestrictions() + " vs " + b.allTurnRestrictions());
+            return false;
+        }
+        
         for (Long key : a.getAllNodeIds()) {
             if (!deepEquals(a.getNodeById(key), b.getNodeById(key), printDiff)) {
                 return false;
