@@ -119,6 +119,13 @@ public class Node implements Comparable<Node> {
         });
     }
     
+    public Set<DirectedEdge> getEdgesFromAndTo() {
+        HashSet<DirectedEdge> result = new HashSet();
+        result.addAll(edgesFrom);
+        result.addAll(edgesTo);
+        return result;
+    }
+    
     public boolean anyEdgesAccessOnly() {
         for (DirectedEdge de : edgesFrom) {
             if (de.accessOnly == AccessOnly.TRUE) {

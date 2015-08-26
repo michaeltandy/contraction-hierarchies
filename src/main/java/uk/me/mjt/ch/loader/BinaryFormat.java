@@ -227,7 +227,6 @@ public class BinaryFormat {
     
     public void writeTurnRestrictions(Collection<TurnRestriction> toWrite, DataOutputStream dos) throws IOException {
         
-        HashSet<Long> writtenEdges = new HashSet();
         for (TurnRestriction tr : toWrite) {
             
             dos.writeLong(tr.getTurnRestrictionId());

@@ -6,7 +6,6 @@ import java.util.*;
 public class MapData {
     private final HashMap<Long,Node> nodesById;
     private final HashMap<Long,TurnRestriction> turnRestrictionsById;
-    private final Multimap<Long,TurnRestriction> turnRestrictionsByEdgeId;
     
     public MapData(HashMap<Long,Node> nodesById) {
         this(nodesById, new HashMap());
@@ -16,17 +15,6 @@ public class MapData {
         Preconditions.checkNoneNull(nodesById, turnRestrictionsById);
         this.nodesById = nodesById;
         this.turnRestrictionsById = turnRestrictionsById;
-        this.turnRestrictionsByEdgeId = indexRestrictionsByEdge();
-    }
-    
-    private Multimap<Long,TurnRestriction> indexRestrictionsByEdge() {
-        Multimap<Long,TurnRestriction> reverseIndex = new Multimap<>();
-        for (TurnRestriction tr : turnRestrictionsById.values()) {
-            for (Long edgeId : tr.getDirectedEdgeIds()) {
-                reverseIndex.add(edgeId, tr);
-            }
-        }
-        return reverseIndex;
     }
     
     public Node getNodeById(long nodeId) {

@@ -18,6 +18,14 @@ public class Multimap<K,V> {
         return Collections.unmodifiableList(result);
     }
     
+    public boolean containsKey(K key) {
+        return !get(key).isEmpty();
+    }
+    
+    public Set<K> keySet() {
+        return Collections.unmodifiableSet(underlyingMap.keySet());
+    }
+    
     private static <A,B> List<B> getOrAddList(A key, Map<A,List<B>> map) {
         if (!map.containsKey(key)) {
             map.put(key, new ArrayList<B>());
