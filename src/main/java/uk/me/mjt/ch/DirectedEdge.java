@@ -73,6 +73,11 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
         return new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly, first, second);
     }
     
+    public void removeFromToAndFromNodes() {
+        this.from.edgesFrom.remove(this);
+        this.to.edgesFrom.remove(this);
+    }
+    
     public String toString() {
         return from.nodeId+"--"+driveTimeMs+"("+contractionDepth+")-->"+to.nodeId;
     }

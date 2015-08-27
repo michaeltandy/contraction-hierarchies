@@ -119,6 +119,16 @@ public class MakeTestData {
         return new MapData(result);
     }
     
+    /**
+     * No right turn 3->2->5
+     * <pre>
+     *   1   4
+     *   |   |
+     *   2---5
+     *   |   |
+     *   3   6
+     * </pre>
+     */
     public static MapData makeTurnRestrictedH() {
         HashMap<Long,Node> nodes = new HashMap();
         for (long i=1 ; i<=6 ; i++) {
@@ -134,8 +144,8 @@ public class MakeTestData {
         makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(5L));
         
         List<Long> noRight = new ArrayList();
-        noRight.add(2000003L);
-        noRight.add(3000004L);
+        noRight.add(3000002L);
+        noRight.add(2000005L);
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, noRight);
         HashMap<Long,TurnRestriction> trMap = new HashMap();
         trMap.put(tr.getTurnRestrictionId(), tr);

@@ -2,10 +2,14 @@
 package uk.me.mjt.ch;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class TurnRestriction {
-    public enum TurnRestrictionType { NOT_ALLOWED, ONLY_ALLOWED }
+    public static enum TurnRestrictionType { NOT_ALLOWED, ONLY_ALLOWED }
+    
+    private static final long INITIAL_NEW_EDGE_ID = 3000000000L;
+    private static final long INITIAL_NEW_NODE_ID = 10000000000L;
     
     private final long turnRestrictionId;
     private final TurnRestrictionType type;
@@ -60,23 +64,12 @@ public class TurnRestriction {
         List<TurnRestrictionCluster> clusters = findClusters(allNodes.getAllNodes(), turnRestrictionsByEdge);
         
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(allNodes.allTurnRestrictions());
-        Node testFrom = allNodes.getNodeById(672630347L);
-        Node testTo = allNodes.getNodeById(175683944L);
-        HashSet<Node> toSet = new HashSet();
-        toSet.add(testTo);
-        DijkstraSolution ds = dijkstrasAlgorithm(testFrom, toSet, turnRestrictionsByStartEdge).get(0);
-        System.out.println("asdfqwer " + ds);
-        System.out.println(GeoJson.solution(ds));
         
-        /*for (Long key : turnRestrictionsByEdge.keySet()) {
-            List<TurnRestriction> tr = turnRestrictionsByEdge.get(key);
-            if (tr.size() > 1) {
-                System.out.println(key + " has " + tr.size() + " e.g. " + tr);
-            }
-        }*/
+        AtomicLong newEdgeIds = new AtomicLong(INITIAL_NEW_EDGE_ID);
+        AtomicLong newNodeIds = new AtomicLong(INITIAL_NEW_NODE_ID);
         
         for (TurnRestrictionCluster trc : clusters) {
-            //adjustGraphForCluster(trc, turnRestrictionsByEdge);
+            adjustGraphForCluster(allNodes, trc, turnRestrictionsByStartEdge, newNodeIds, newEdgeIds);
         }
     }
     
@@ -152,15 +145,88 @@ public class TurnRestriction {
         return cluster;
     }
     
-    private static void adjustGraphForCluster(TurnRestrictionCluster cluster, Multimap<Long,TurnRestriction> turnRestrictionsByEdge) {
+    private static void adjustGraphForCluster(MapData mapData, TurnRestrictionCluster cluster, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, AtomicLong newNodeId, AtomicLong newEdgeId) {
+        HashSet<ShortestPathElement> allShortPathElements = new HashSet();
         
-        System.out.println("=========");
         for (Node n : cluster.nodes) {
-            //List<DijkstraSolution> shortPaths = Dijkstra.dijkstrasAlgorithm(n, cluster.nodes, Integer.MAX_VALUE, Dijkstra.Direction.FORWARDS, turnRestrictionsByEdge);
-            //for (DijkstraSolution ds : shortPaths) {
-            //    System.out.println("{\"type\": \"Feature\",\"properties\": {},\"geometry\":"+GeoJson.solution(ds)+"},");
-            //}
+            List<List<ShortestPathElement>> paths = dijkstrasAlgorithm(n, cluster.nodes, turnRestrictionsByStartEdge);
+            for (List<ShortestPathElement> path : paths)
+                allShortPathElements.addAll(path);
         }
+        
+        HashSet<ShortestPathElement> linksUnaffectedByTurnRestrictions = linksUnaffectedByTurnRestrictions(allShortPathElements);
+        allShortPathElements.removeAll(linksUnaffectedByTurnRestrictions);
+        
+        HashMap<NodeAndState,Node> newNodes = makeNewNodes(allShortPathElements, newNodeId);
+        HashSet<DirectedEdge> newEdges = makeAndLinkNewEdges(allShortPathElements, newNodes, newEdgeId);
+        
+        Node.sortNeighborListsAll(newNodes.values());
+        Node.sortNeighborListsAll(cluster.nodes);
+        
+        mapData.addAll(newNodes.values());
+        
+        Set<DirectedEdge> toRemove = edgesEntirelyWithinCluster(cluster);
+        for (ShortestPathElement spe : linksUnaffectedByTurnRestrictions)
+            toRemove.remove(spe.via);
+        
+        for (DirectedEdge de : toRemove)
+            de.removeFromToAndFromNodes();
+    }
+    
+    private static Set<DirectedEdge> edgesEntirelyWithinCluster(TurnRestrictionCluster cluster) {
+        HashSet<DirectedEdge> withinCluster = new HashSet();
+        for (Node n : cluster.nodes) {
+            for (DirectedEdge de : n.edgesFrom) {
+                if (cluster.nodes.contains(de.to)) {
+                    withinCluster.add(de);
+                }
+            }
+        }
+        return withinCluster;
+    }
+    
+    private static HashSet<ShortestPathElement> linksUnaffectedByTurnRestrictions(HashSet<ShortestPathElement> allShortPathElements) {
+        HashSet<ShortestPathElement> result = new HashSet();
+        for (ShortestPathElement  spe : allShortPathElements) {
+            if (spe.from.activeTurnRestrictions.isEmpty() && spe.to.activeTurnRestrictions.isEmpty()) {
+                result.add(spe);
+            }
+        }
+        return result;
+    }
+    
+    private static HashMap<NodeAndState,Node> makeNewNodes(HashSet<ShortestPathElement> allShortPathElements, AtomicLong newNodeId) {
+        HashSet<NodeAndState> newNodesRequired = new HashSet();
+        
+        for (ShortestPathElement  spe : allShortPathElements) {
+            if (!spe.from.activeTurnRestrictions.isEmpty())
+                newNodesRequired.add(spe.from);
+            if (!spe.to.activeTurnRestrictions.isEmpty())
+                newNodesRequired.add(spe.to);
+        }
+        
+        HashMap<NodeAndState,Node> result = new HashMap();
+        for (NodeAndState n : newNodesRequired) {
+            Node newNode = new Node(newNodeId.incrementAndGet(), n.node.lat, n.node.lon, n.node.barrier);
+            result.put(n, newNode);
+        }
+        return result;
+    }
+    
+    private static HashSet<DirectedEdge> makeAndLinkNewEdges(HashSet<ShortestPathElement> allShortPathElements, HashMap<NodeAndState,Node> newNodes, AtomicLong newEdgeId) {
+        HashSet<DirectedEdge> result = new HashSet();
+        
+        for (ShortestPathElement  spe : allShortPathElements) {
+            Node from = newNodes.containsKey(spe.from)?newNodes.get(spe.from):spe.from.node;
+            Node to = newNodes.containsKey(spe.to)?newNodes.get(spe.to):spe.to.node;
+            
+            DirectedEdge newDe = new DirectedEdge(newEdgeId.incrementAndGet(), from, to, spe.via.driveTimeMs, spe.via.accessOnly);
+            from.edgesFrom.add(newDe);
+            from.edgesTo.add(newDe);
+            result.add(newDe);
+        }
+        
+        return result;
     }
     
     public static String edgesToGeojson(MapData mapData) {
@@ -185,9 +251,9 @@ public class TurnRestriction {
     }
     
         
-    private static List<DijkstraSolution> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
+    private static List<List<ShortestPathElement>> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
         HashMap<NodeAndState,NodeInfo> nodeInfo = new HashMap<>();
-        ArrayList<DijkstraSolution> solutions = new ArrayList<>();
+        ArrayList<List<ShortestPathElement>> solutions = new ArrayList<>();
         HashSet<Node> remainingNodes = new HashSet(endNodes);
         NodeAndState startState = new NodeAndState(startNode, new HashSet());
         
@@ -281,7 +347,6 @@ public class TurnRestriction {
         NodeAndState minTimeFrom = null;
         DirectedEdge minTimeVia = null;
         DistanceOrder distanceOrder = null;
-        DijkstraSolution solution = null;
     }
     
     private static class NodeAndState {
@@ -343,26 +408,57 @@ public class TurnRestriction {
         return new NodeAndState(toEdge.to, turnRestrictionsAfter);
     }
     
-    private static DijkstraSolution extractShortest(final NodeAndState endNode, HashMap<NodeAndState,NodeInfo> nodeInfo) {
-        NodeInfo endNodeInfo = nodeInfo.get(endNode);
-        if (endNodeInfo.solution != null)
-            return endNodeInfo.solution;
+    private static List<ShortestPathElement> extractShortest(final NodeAndState endNode, HashMap<NodeAndState,NodeInfo> nodeInfo) {
+        List<ShortestPathElement> route = new LinkedList();
         
-        int totalDriveTime = endNodeInfo.minDriveTime;
-        List<Node> nodes = new LinkedList();
-        List<DirectedEdge> edges = new LinkedList();
-        
+        NodeAndState lastNode = null;
         NodeAndState thisNode = endNode;
         while (thisNode != null) {
+            NodeInfo lastNodeInfo = nodeInfo.get(lastNode);
             NodeInfo thisNodeInfo = nodeInfo.get(thisNode);
-            nodes.add(0, thisNode.node);
-            if (thisNodeInfo.minTimeVia != null)
-                edges.add(0,thisNodeInfo.minTimeVia);
+            if (lastNode != null)
+                route.add(0,new ShortestPathElement(thisNode, lastNode, lastNodeInfo.minTimeVia));
+            
+            lastNode = thisNode;
             thisNode = thisNodeInfo.minTimeFrom;
         }
         
-        endNodeInfo.solution = new DijkstraSolution(totalDriveTime, nodes, edges);
-        return endNodeInfo.solution;
+        return route;
+    }
+    
+    private static class ShortestPathElement {
+        final NodeAndState from;
+        final NodeAndState to;
+        final DirectedEdge via;
+
+        public ShortestPathElement(NodeAndState from, NodeAndState to, DirectedEdge via) {
+            Preconditions.checkNoneNull(from,to,via);
+            this.from = from;
+            this.to = to;
+            this.via = via;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 37 * hash + Objects.hashCode(this.from);
+            hash = 37 * hash + Objects.hashCode(this.to);
+            hash = 37 * hash + Objects.hashCode(this.via);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            final ShortestPathElement other = (ShortestPathElement) obj;
+            return  Objects.equals(this.from, other.from)
+                    && Objects.equals(this.to, other.to)
+                    && Objects.equals(this.via, other.via);
+        }
+        
+        
     }
     
 }
