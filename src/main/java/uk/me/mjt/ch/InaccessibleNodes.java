@@ -21,6 +21,13 @@ public class InaccessibleNodes {
         allNodes.removeAll(toRemove);
         
         System.out.println("After removal, " + allNodes.getNodeCount() + " nodes.");
+        
+        Set<Node> stillToRemove = findNodesNotBidirectionallyAccessible(allNodes,startNode);
+        if (!stillToRemove.isEmpty()) {
+            System.out.println("Removed these nodes: " + toRemove);
+            System.out.println("But that rendered these nodes inaccessible: " + stillToRemove);
+            throw new RuntimeException("Removing inaccessible nodes rendered previously-accessible nodes inaccessible?!?!");
+        }
     }
     
     public static Set<Node> findNodesNotBidirectionallyAccessible(MapData allNodes, Node startNode) {

@@ -153,6 +153,42 @@ public class MakeTestData {
         return new MapData(nodes,trMap);
     }
     
+    /**
+     * No right turn 3->2->5->6
+     * <pre>
+     *   1---4
+     *   |   |
+     *   2---5
+     *   |   |
+     *   3   6
+     * </pre>
+     */
+    public static MapData makeTurnRestrictedA() {
+        HashMap<Long,Node> nodes = new HashMap();
+        for (long i=1 ; i<=6 ; i++) {
+            nodes.put(i, new Node(i, 52f, 0f, Barrier.FALSE));
+        }
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(1L), nodes.get(2L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(3L));
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(4L), nodes.get(5L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(5L), nodes.get(6L));
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(5L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(1L), nodes.get(4L));
+        
+        List<Long> noRight = new ArrayList();
+        noRight.add(3000002L);
+        noRight.add(2000005L);
+        noRight.add(5000006L);
+        TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, noRight);
+        HashMap<Long,TurnRestriction> trMap = new HashMap();
+        trMap.put(tr.getTurnRestrictionId(), tr);
+        
+        return new MapData(nodes,trMap);
+    }
+    
     private static void makeBidirectionalEdgesAndAddToNodes(Node from, Node to ) {
         int driveTimeMs = 1000;
         makeEdgeAndAddToNodes(from.nodeId*1000000+to.nodeId, from, to, driveTimeMs, AccessOnly.FALSE);

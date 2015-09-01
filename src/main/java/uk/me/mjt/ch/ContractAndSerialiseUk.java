@@ -16,16 +16,34 @@ public class ContractAndSerialiseUk {
             MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-turnrestrictions.dat");
+            allNodes.validate();
             
-            Node hatfield = allNodes.getNodeById(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
-            Node herbalHill = allNodes.getNodeById(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
-            System.out.println(Dijkstra.dijkstrasAlgorithm(hatfield, herbalHill, Dijkstra.Direction.FORWARDS).toString());
+            Node hatfield = allNodes.getNodeById(1480447056L);
+            Node asdf = allNodes.getNodeById(20922002L);
+            System.out.println(Dijkstra.dijkstrasAlgorithm(hatfield, asdf, Dijkstra.Direction.FORWARDS).toString());
+            
+            //System.out.println(TurnRestriction.edgesToGeojson(allNodes));
+            
+            // TODO make sure these interactions happen in the right order.
             
             InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
+            System.out.println("Implementing turn restrictions...");
+            TurnRestriction.adjustGraphToImplementTurnRestrictions(allNodes);
+            InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
+            System.out.println("Implementing barriers...");
             Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
+            InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
+            System.out.println("Implementing access only...");
             AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, hatfield);
+            allNodes.validate();
             
             CheckOsmRouting.checkUncontracted(allNodes);
+            
+            Node from = allNodes.getNodeById(672630347L);
+            Node to = allNodes.getNodeById(927070648L);
+            DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
+            System.out.println(ds.toString());
+            System.out.println(GeoJson.solution(ds));
             
             GraphContractor contractor = new GraphContractor(allNodes);
 

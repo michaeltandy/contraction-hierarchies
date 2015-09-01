@@ -103,6 +103,11 @@ public enum AccessOnly {
         for (Node n : allNodes) {
             if (n.anyEdgesAccessOnly() && !alreadyAssignedToCluster.contains(n)) {
                 AccessOnlyCluster cluster = identifyCluster(n);
+                for (Node cn : cluster.nodes) {
+                    if (alreadyAssignedToCluster.contains(cn)) {
+                        throw new RuntimeException("New cluster starting at " + n + " contains nodes already in a cluster, " + cn);
+                    }
+                }
                 alreadyAssignedToCluster.addAll(cluster.nodes);
                 clusters.add(cluster);
             }
@@ -118,9 +123,15 @@ public enum AccessOnly {
         TreeSet<Node> toVisit = new TreeSet<>();
         toVisit.add(startPoint);
         
+        boolean printCluster = false;
+        
         while (!toVisit.isEmpty()) {
             Node visiting = toVisit.pollFirst();
             cluster.nodes.add(visiting);
+            
+            if (visiting.nodeId == 443312112L) {
+                printCluster = true;
+            }
             
             for (DirectedEdge de : accessOnlyEdgesIn(visiting.edgesFrom,visiting.edgesTo) ) {
                 if (!cluster.nodes.contains(de.to))
@@ -128,6 +139,10 @@ public enum AccessOnly {
                 if (!cluster.nodes.contains(de.from))
                     toVisit.add(de.from);
             }
+        }
+        
+        if (printCluster) {
+            System.out.println("From " + startPoint + "\n" + Puml.forNodes(cluster.nodes));
         }
         
         return cluster;

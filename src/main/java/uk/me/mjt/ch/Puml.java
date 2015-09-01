@@ -2,6 +2,7 @@
 package uk.me.mjt.ch;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * Generates UML you can feed into PlantUML http://plantuml.com/ to generate
@@ -10,13 +11,18 @@ import java.util.Collection;
  */
 public class Puml {
     
-    public static String forGraph(Collection<Node> allNodes) {
+    public static String forNodes(Collection<Node> allNodes) {
         StringBuilder sb = new StringBuilder();
         sb.append("@startuml\n");
         
+        HashSet<DirectedEdge> alreadyVisited = new HashSet();
+        
         for (Node n : allNodes) {
-            for (DirectedEdge de : n.edgesFrom) {
-                sb.append(edgeToPuml(de));
+            for (DirectedEdge de : n.getEdgesFromAndTo()) {
+                if (!alreadyVisited.contains(de)) {
+                    sb.append(edgeToPuml(de));
+                    alreadyVisited.add(de);
+                }
             }
         }
         

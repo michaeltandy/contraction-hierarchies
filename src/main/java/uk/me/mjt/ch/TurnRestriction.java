@@ -71,6 +71,8 @@ public class TurnRestriction {
         for (TurnRestrictionCluster trc : clusters) {
             adjustGraphForCluster(allNodes, trc, turnRestrictionsByStartEdge, newNodeIds, newEdgeIds);
         }
+        
+        allNodes.clearAllTurnRestrictions();
     }
     
     private static List<TurnRestrictionCluster> findClusters(Collection<Node> allNodes, Multimap<Long,TurnRestriction> turnRestrictionsByEdge) {
@@ -222,7 +224,7 @@ public class TurnRestriction {
             
             DirectedEdge newDe = new DirectedEdge(newEdgeId.incrementAndGet(), from, to, spe.via.driveTimeMs, spe.via.accessOnly);
             from.edgesFrom.add(newDe);
-            from.edgesTo.add(newDe);
+            to.edgesTo.add(newDe);
             result.add(newDe);
         }
         

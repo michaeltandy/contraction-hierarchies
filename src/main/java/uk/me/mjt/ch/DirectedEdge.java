@@ -75,7 +75,7 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     
     public void removeFromToAndFromNodes() {
         this.from.edgesFrom.remove(this);
-        this.to.edgesFrom.remove(this);
+        this.to.edgesTo.remove(this);
     }
     
     public String toString() {
