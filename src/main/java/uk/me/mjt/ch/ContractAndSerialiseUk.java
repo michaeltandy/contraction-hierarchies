@@ -35,7 +35,6 @@ public class ContractAndSerialiseUk {
             InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
             System.out.println("Implementing access only...");
             AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, hatfield);
-            allNodes.validate();
             
             CheckOsmRouting.checkUncontracted(allNodes);
             

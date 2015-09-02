@@ -35,7 +35,9 @@ public class BinaryFormat {
         HashMap<Long,Node> nodesById = readNodes(new DataInputStream(new BufferedInputStream(nodesIn)));
         loadEdgesGivenNodes(nodesById,new DataInputStream(new BufferedInputStream(waysIn)));
         
-        return new MapData(nodesById, turnRestrictions);
+        MapData md = new MapData(nodesById, turnRestrictions);
+        md.validate();
+        return md;
     }
     
     public void writeWays(Collection<Node> toWrite, String nodeFile, String wayFile) throws IOException {
