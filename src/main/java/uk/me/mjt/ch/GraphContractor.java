@@ -75,7 +75,7 @@ public class GraphContractor {
             
             for (DijkstraSolution ds : routed) {
                 if (ds.nodes.size() == 3 && ds.nodes.get(1)==n) {
-                    shortcuts.add(new DirectedEdge(DirectedEdge.PLACEHOLDER_ID,
+                    shortcuts.add(new DirectedEdge(
                             ds.getFirstNode(),
                             ds.getLastNode(),
                             ds.totalDriveTimeMs,

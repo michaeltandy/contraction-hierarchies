@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class DirectedEdge implements Comparable<DirectedEdge>{
-    public static final long PLACEHOLDER_ID = -123456L;
+    private static final long PLACEHOLDER_ID = Long.MIN_VALUE;
     
     public final long edgeId;
     public final Node from;
@@ -21,16 +21,20 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     private final UnionList<DirectedEdge> uncontractedEdges;
     
     public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly isAccessOnly) {
-        this(edgeId,from,to,driveTimeMs,isAccessOnly,null,null);
+        this(checkId(edgeId),from,to,driveTimeMs,isAccessOnly,null,null);
     }
     
     public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
-        this(edgeId, from, to, driveTimeMs, null, first, second);
+        this(checkId(edgeId), from, to, driveTimeMs, null, first, second);
+    }
+    
+    public DirectedEdge(Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
+        this(PLACEHOLDER_ID, from, to, driveTimeMs, null, first, second);
     }
 
     private DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly, DirectedEdge first, DirectedEdge second) {
         Preconditions.checkNoneNull(from, to);
-        Preconditions.require(edgeId>0||edgeId==PLACEHOLDER_ID, driveTimeMs >= 0);
+        Preconditions.require(driveTimeMs >= 0);
         if (edgeId>0 && first!=null && second!=null) {
             // If this check starts failing, your edge IDs for shortcuts probably start too low.
             Preconditions.require(edgeId>first.edgeId, edgeId>second.edgeId);
@@ -55,6 +59,12 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
         } else {
             throw new IllegalArgumentException("Must have either both or neither child edges set. Instead had " + first + " and " + second);
         }
+    }
+    
+    private static long checkId(long proposedId) {
+        if (proposedId == PLACEHOLDER_ID) 
+            throw new IllegalArgumentException("Attempt to create DirectedEdge with reserved ID, " + PLACEHOLDER_ID);
+        return proposedId;
     }
     
     public boolean isShortcut() {

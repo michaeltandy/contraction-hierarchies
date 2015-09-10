@@ -164,10 +164,6 @@ public class BinaryFormat {
             return;
         }
         
-        if (de.edgeId==DirectedEdge.PLACEHOLDER_ID) {
-            throw new RuntimeException("Attempted to write an edge that hasn't been assigned a unique ID.");
-        }
-        
         writeEdgeRecursively(de.first,alreadyWritten,dos);
         writeEdgeRecursively(de.second,alreadyWritten,dos);
         
