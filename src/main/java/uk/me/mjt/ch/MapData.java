@@ -92,7 +92,7 @@ public class MapData {
             if (node.nodeId != nodeId)
                 throw new InvalidMapDataException("Node IDs don't match - " + nodeId + " vs " + node.nodeId);
             
-            
+            validateNeighborLists(node);
             
             for (DirectedEdge de : node.edgesFrom) {
                 validateSingleEdge(de);
@@ -113,7 +113,7 @@ public class MapData {
         ArrayList<DirectedEdge> toBefore = new ArrayList<>(n.edgesTo);
         n.sortNeighborLists();
         if (!fromBefore.equals(n.edgesFrom) || !toBefore.equals(n.edgesTo)) {
-            throw new InvalidMapDataException("Neigbor lists were unsorted?");
+            throw new InvalidMapDataException("Neigbor lists were unsorted - Node " + n.nodeId);
         }
     }
     
