@@ -150,6 +150,7 @@ public class MakeTestData {
         HashMap<Long,TurnRestriction> trMap = new HashMap();
         trMap.put(tr.getTurnRestrictionId(), tr);
         
+        Node.sortNeighborListsAll(nodes.values());
         return new MapData(nodes,trMap);
     }
     
@@ -186,6 +187,7 @@ public class MakeTestData {
         HashMap<Long,TurnRestriction> trMap = new HashMap();
         trMap.put(tr.getTurnRestrictionId(), tr);
         
+        Node.sortNeighborListsAll(nodes.values());
         return new MapData(nodes,trMap);
     }
     
@@ -219,7 +221,7 @@ public class MakeTestData {
         
         Node previous = null;
         for (long i=1 ; i<=numberOfNodes ; i++) {
-            Node newNode = new Node(i, 52f, 0.1f, Barrier.FALSE);
+            Node newNode = new Node(i, 52f, 0.1f+0.001f*i, Barrier.FALSE);
             result.put(i, newNode);
             if (previous != null) {
                 makeEdgeAndAddToNodes(edgeId++,previous,newNode,1000, AccessOnly.FALSE);

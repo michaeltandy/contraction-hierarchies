@@ -8,9 +8,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TurnRestriction {
     public static enum TurnRestrictionType { NOT_ALLOWED, ONLY_ALLOWED }
     
-    private static final long INITIAL_NEW_EDGE_ID = 3000000000L;
-    private static final long INITIAL_NEW_NODE_ID = 10000000000L;
-    
     private final long turnRestrictionId;
     private final TurnRestrictionType type;
     private final List<Long> directedEdgeIds;
@@ -65,14 +62,14 @@ public class TurnRestriction {
         
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(allNodes.allTurnRestrictions());
         
-        AtomicLong newEdgeIds = new AtomicLong(INITIAL_NEW_EDGE_ID);
-        AtomicLong newNodeIds = new AtomicLong(INITIAL_NEW_NODE_ID);
-        
         for (TurnRestrictionCluster trc : clusters) {
-            adjustGraphForCluster(allNodes, trc, turnRestrictionsByStartEdge, newNodeIds, newEdgeIds);
+            adjustGraphForCluster(allNodes, trc, turnRestrictionsByStartEdge, 
+                    allNodes.getNodeIdCounter(), allNodes.getEdgeIdCounter());
         }
         
         allNodes.clearAllTurnRestrictions();
+        Node.sortNeighborListsAll(allNodes.getAllNodes());
+        allNodes.validate();
     }
     
     private static List<TurnRestrictionCluster> findClusters(Collection<Node> allNodes, Multimap<Long,TurnRestriction> turnRestrictionsByEdge) {

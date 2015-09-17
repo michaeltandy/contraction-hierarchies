@@ -11,18 +11,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public enum Barrier {
     TRUE, FALSE;
     
-    public static final long BARRIER_NODE_ID_PREFIX = 100000000000000000L;
-    public static final long INITIAL_NEW_EDGE_ID = 2000000000L;
-    
     public static void replaceBarriersWithAccessOnlyEdges(MapData allNodes) {
         Preconditions.checkNoneNull(allNodes);
         
         List<Node> barrierNodes = barrierNodesIn(allNodes.getAllNodes());
-        AtomicLong edgeIdCounter = new AtomicLong(INITIAL_NEW_EDGE_ID);
         
         for (Node n : barrierNodes) {
-            replaceBarrierNodeWithAccessOnlyEdge(allNodes, n, edgeIdCounter);
+            replaceBarrierNodeWithAccessOnlyEdge(allNodes, n);
         }
+        allNodes.validate();
     }
     
     private static List<Node> barrierNodesIn(Collection<Node> toFilter) {
@@ -35,7 +32,7 @@ public enum Barrier {
         return barrierNodes;
     }
     
-    private static void replaceBarrierNodeWithAccessOnlyEdge(MapData allNodes, Node n, AtomicLong edgeIdCounter) {
+    private static void replaceBarrierNodeWithAccessOnlyEdge(MapData allNodes, Node n) {
         Preconditions.checkNoneNull(allNodes, n);
         Preconditions.require(n.barrier==Barrier.TRUE);
         
@@ -49,7 +46,7 @@ public enum Barrier {
             // Barrier at the end of a road (e.g. transition from a road to a footpath)
             n.barrier = Barrier.FALSE;
         } else {
-            Node newNode = makeNewNodeLinkedByAccessOnlyEdges(n, edgeIdCounter);
+            Node newNode = makeNewNodeLinkedByAccessOnlyEdges(n, allNodes.getEdgeIdCounter(), allNodes.getNodeIdCounter());
             allNodes.add(newNode);
             
             Node firstNeighbor = neigbors.get(0);
@@ -76,8 +73,8 @@ public enum Barrier {
         }
     }
     
-    private static Node makeNewNodeLinkedByAccessOnlyEdges(Node n, AtomicLong edgeIdCounter) {
-        long newId = n.nodeId+BARRIER_NODE_ID_PREFIX;
+    private static Node makeNewNodeLinkedByAccessOnlyEdges(Node n, AtomicLong edgeIdCounter, AtomicLong nodeIdCounter) {
+        long newId = nodeIdCounter.incrementAndGet();
         Node clone = new Node(newId, n.lat, n.lon, Barrier.FALSE);
         int driveTimeMs = 0;
         makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), n, clone, driveTimeMs, AccessOnly.TRUE);

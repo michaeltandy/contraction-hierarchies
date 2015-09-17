@@ -24,7 +24,7 @@ public class BarrierTest {
         Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
         AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, startNode);
         
-        endNode = allNodes.getNodeById(3L+AccessOnly.ACCESSONLY_END_NODE_ID_PREFIX);
+        endNode = allNodes.getNodeById(9L); // REVISIT explain why it's 9.
         DijkstraSolution replacedAndStratified = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         
         assertEquals(2000,replacedAndStratified.totalDriveTimeMs);

@@ -8,10 +8,6 @@ import uk.me.mjt.ch.Dijkstra.Direction;
 public enum AccessOnly {
     TRUE, FALSE;
     
-    public static final long ACCESSONLY_START_NODE_ID_PREFIX = 400000000000000000L;
-    public static final long ACCESSONLY_END_NODE_ID_PREFIX = 200000000000000000L;
-    public static final long INITIAL_NEW_EDGE_ID = 1000000000L;
-    
     public static void stratifyMarkedAndImplicitAccessOnlyClusters(MapData allNodes, Node startPoint) {
         markImplicitlyAccessOnlyEdges(allNodes, startPoint);
         stratifyMarkedAccessOnlyClusters(allNodes);
@@ -49,6 +45,7 @@ public enum AccessOnly {
                 de.accessOnly = AccessOnly.TRUE;
             }
         }
+        allNodes.validate();
     }
     
     private static HashSet<DirectedEdge> accessibleEdgesFrom(Node startPoint, Direction direction, AccessOnly accessOnly) {
@@ -87,10 +84,9 @@ public enum AccessOnly {
     
     public static void stratifyMarkedAccessOnlyClusters(MapData allNodes) {
         List<AccessOnlyCluster> clusters = findAccessOnlyClusters(allNodes.getAllNodes());
-        AtomicLong edgeIdCounter = new AtomicLong(INITIAL_NEW_EDGE_ID);
         
         for (AccessOnlyCluster cluster : clusters) {
-            stratifyCluster(allNodes, cluster, edgeIdCounter);
+            stratifyCluster(allNodes, cluster);
         }
     }
     
@@ -166,14 +162,14 @@ public enum AccessOnly {
         return filtered;
     }
     
-    private static void stratifyCluster(MapData allNodes, AccessOnlyCluster cluster, AtomicLong edgeIdCounter) {
-        HashMap<Long,Node> startStrata = cloneNodesAndConnectionsAddingPrefix(cluster.nodes, ACCESSONLY_START_NODE_ID_PREFIX, edgeIdCounter);
-        HashMap<Long,Node> endStrata = cloneNodesAndConnectionsAddingPrefix(cluster.nodes, ACCESSONLY_END_NODE_ID_PREFIX, edgeIdCounter);
+    private static void stratifyCluster(MapData allNodes, AccessOnlyCluster cluster) {
+        HashMap<Long,Node> startStrata = cloneNodesAndConnectionsRenumbering(cluster.nodes, allNodes.getNodeIdCounter(), allNodes.getEdgeIdCounter());
+        HashMap<Long,Node> endStrata = cloneNodesAndConnectionsRenumbering(cluster.nodes, allNodes.getNodeIdCounter(), allNodes.getEdgeIdCounter());
         
         allNodes.addAll(startStrata.values());
         allNodes.addAll(endStrata.values());
         
-        linkBordersAndStratas(cluster, startStrata, endStrata, edgeIdCounter);
+        linkBordersAndStratas(cluster, startStrata, endStrata, allNodes.getEdgeIdCounter());
         removeAccessOnlyEdgesThatHaveBeenReplaced(cluster);
         removeAccessOnlyNodesThatHaveBeenReplaced(allNodes, cluster);
         
@@ -182,33 +178,33 @@ public enum AccessOnly {
         Node.sortNeighborListsAll(cluster.nodes);
     }
     
-    static HashMap<Long,Node> cloneNodesAndConnectionsAddingPrefix(Collection<Node> toClone, long nodeIdPrefix, AtomicLong edgeIdCounter) {
-        HashMap<Long,Node> clones = new HashMap<>();
+    static HashMap<Long,Node> cloneNodesAndConnectionsRenumbering(Collection<Node> toClone, AtomicLong nodeIdCounter, AtomicLong edgeIdCounter) {
+        HashMap<Long,Node> clonesByOldId = new HashMap<>();
         
         for (Node n : toClone) {
-            long newId = n.nodeId+nodeIdPrefix;
+            long newId = nodeIdCounter.incrementAndGet();
             Node clone = new Node(newId, n.lat, n.lon, Barrier.FALSE);
-            clones.put(newId, clone);
+            clonesByOldId.put(n.nodeId, clone);
         }
         
         for (Node n : toClone) {
             for (DirectedEdge de : n.edgesFrom ) {
                 if (toClone.contains(de.to)) {
-                    long fromId = de.from.nodeId+nodeIdPrefix;
-                    long toId = de.to.nodeId+nodeIdPrefix;
-                    makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), clones.get(fromId), clones.get(toId), de.driveTimeMs);
+                    Node fromReplacement = clonesByOldId.get(de.from.nodeId);
+                    Node toReplacement = clonesByOldId.get(de.to.nodeId);
+                    makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), fromReplacement, toReplacement, de.driveTimeMs);
                 }
             }
         }
         
-        Node.sortNeighborListsAll(clones.values());
-        return clones;
+        Node.sortNeighborListsAll(clonesByOldId.values());
+        return clonesByOldId;
     }
     
     private static void linkBordersAndStratas(AccessOnlyCluster cluster, HashMap<Long,Node> startStrata, HashMap<Long,Node> endStrata, AtomicLong edgeIdCounter) {
         for (Node n : cluster.nodes) {
-            Node startStrataNode = startStrata.get(n.nodeId+ACCESSONLY_START_NODE_ID_PREFIX);
-            Node endStrataNode = endStrata.get(n.nodeId+ACCESSONLY_END_NODE_ID_PREFIX);
+            Node startStrataNode = startStrata.get(n.nodeId);
+            Node endStrataNode = endStrata.get(n.nodeId);
             if (n.allEdgesAccessOnly()) { // Internal to the cluster
                 makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), startStrataNode, endStrataNode, 0);
             } else { // Border to the cluster

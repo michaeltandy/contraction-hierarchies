@@ -2,7 +2,6 @@ package uk.me.mjt.ch;
 
 import uk.me.mjt.ch.Dijkstra.Direction;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GraphContractor {
     private final MapData allNodes;
-    private long maxEdgeId;
     
     private final AtomicInteger findShortcutsCalls = new AtomicInteger();
     private long nodePreContractChecks = 0;
@@ -26,7 +24,6 @@ public class GraphContractor {
     
     public GraphContractor(MapData allNodes) {
         this.allNodes = allNodes;
-        this.maxEdgeId = 5000000000L;
     }
 
     private int getEdgeRemovedCount(Node n) {
@@ -41,7 +38,7 @@ public class GraphContractor {
 
     public void contractNode(Node n, int order, ArrayList<DirectedEdge> shortcuts) {
         for (DirectedEdge s : shortcuts) {
-            DirectedEdge newShortcut = s.cloneWithEdgeId(maxEdgeId++);
+            DirectedEdge newShortcut = s.cloneWithEdgeId(allNodes.getEdgeIdCounter().incrementAndGet());
             newShortcut.from.edgesFrom.add(newShortcut);
             newShortcut.to.edgesTo.add(newShortcut);
         }

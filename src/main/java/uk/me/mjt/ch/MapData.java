@@ -2,10 +2,13 @@
 package uk.me.mjt.ch;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MapData {
     private final HashMap<Long,Node> nodesById;
     private final HashMap<Long,TurnRestriction> turnRestrictionsById;
+    private final AtomicLong maxEdgeId = new AtomicLong();
+    private final AtomicLong maxNodeId = new AtomicLong();
     
     public MapData(HashMap<Long,Node> nodesById) {
         this(nodesById, new HashMap());
@@ -15,6 +18,28 @@ public class MapData {
         Preconditions.checkNoneNull(nodesById, turnRestrictionsById);
         this.nodesById = nodesById;
         this.turnRestrictionsById = turnRestrictionsById;
+        setMaxNodeAndEdgeId();
+    }
+    
+    private void setMaxNodeAndEdgeId() {
+        for (Node n : nodesById.values()) {
+            if (n.nodeId > maxNodeId.get()) {
+                maxNodeId.set(n.nodeId);
+            }
+            for (DirectedEdge de : n.edgesFrom) {
+                if (de.edgeId > maxEdgeId.get()) {
+                    maxEdgeId.set(de.edgeId);
+                }
+            }
+        }
+    }
+    
+    public AtomicLong getEdgeIdCounter() {
+        return maxEdgeId;
+    }
+    
+    public AtomicLong getNodeIdCounter() {
+        return maxNodeId;
     }
     
     public Node getNodeById(long nodeId) {
@@ -92,6 +117,10 @@ public class MapData {
             if (node.nodeId != nodeId)
                 throw new InvalidMapDataException("Node IDs don't match - " + nodeId + " vs " + node.nodeId);
             
+            if (nodeId > maxNodeId.get()) {
+                throw new InvalidMapDataException("Node ID exceeds maxNodeId - " + maxNodeId.get() + " vs " + node);
+            }
+            
             validateNeighborLists(node);
             
             for (DirectedEdge de : node.edgesFrom) {
@@ -99,7 +128,8 @@ public class MapData {
                 if (uniqueEdges.containsKey(de.edgeId)) {
                     DirectedEdge prevWithThisId = uniqueEdges.get(de.edgeId);
                     if (de != prevWithThisId) {
-                        throw new InvalidMapDataException("Nonunique edge ID - " + de.edgeId);
+                        throw new InvalidMapDataException("Nonunique edge ID - " + de.edgeId +
+                                " " + de.toDetailedString() + " vs " + prevWithThisId.toDetailedString());
                     }
                 } else {
                     uniqueEdges.put(de.edgeId, de);
@@ -118,6 +148,9 @@ public class MapData {
     }
     
     private void validateSingleEdge(DirectedEdge de) {
+        if (de.edgeId > maxEdgeId.get())
+            throw new InvalidMapDataException("DirectedEdge ID exceeds maxEdgeId - " + maxEdgeId.get() + " vs " + de.toDetailedString());
+        
         Node from = nodesById.get(de.from.nodeId);
         Node to = nodesById.get(de.to.nodeId);
         if (from != de.from)

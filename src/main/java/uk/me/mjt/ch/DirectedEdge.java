@@ -87,11 +87,18 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
         this.from.edgesFrom.remove(this);
         this.to.edgesTo.remove(this);
     }
-    
+
+    @Override
     public String toString() {
         return from.nodeId+"--"+driveTimeMs+"("+contractionDepth+")-->"+to.nodeId;
     }
-
+    
+    public String toDetailedString() {
+        return "DirectedEdge{" + "edgeId=" + edgeId + ", from=" + from + ", to=" + to + ", driveTimeMs=" +
+                driveTimeMs + ", accessOnly=" + accessOnly + ", first=" + first + ", second=" + second + 
+                ", contractionDepth=" + contractionDepth + ", uncontractedEdges=" + uncontractedEdges + '}';
+    }
+    
     @Override
     public int compareTo(DirectedEdge o) {
         if (o==null) return -1;
