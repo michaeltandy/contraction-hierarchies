@@ -2,6 +2,7 @@
 package uk.me.mjt.ch;
 
 import java.util.HashMap;
+import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -22,9 +23,13 @@ public class BarrierTest {
         assertEquals(2,ignoringBarrier.edges.size());
         
         Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
+        System.out.println(Puml.forNodes(allNodes.getAllNodes()));
         AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, startNode);
         
-        endNode = allNodes.getNodeById(9L); // REVISIT explain why it's 9.
+        System.out.println(Puml.forNodes(allNodes.getAllNodes()));
+        List<Node> endCandidates = allNodes.getNodeByIdAndSyntheticEquivalents(3L);
+        endNode = endCandidates.get(1); // REVISIT explain index 1.
+        
         DijkstraSolution replacedAndStratified = Dijkstra.dijkstrasAlgorithm(startNode, endNode, Dijkstra.Direction.FORWARDS);
         
         assertEquals(2000,replacedAndStratified.totalDriveTimeMs);

@@ -47,7 +47,7 @@ public enum Barrier {
             n.barrier = Barrier.FALSE;
         } else {
             Node newNode = makeNewNodeLinkedByAccessOnlyEdges(n, allNodes.getEdgeIdCounter(), allNodes.getNodeIdCounter());
-            allNodes.add(newNode);
+            allNodes.addSynthetic(n.nodeId, newNode);
             
             Node firstNeighbor = neigbors.get(0);
             

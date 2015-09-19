@@ -162,7 +162,9 @@ public class TurnRestriction {
         Node.sortNeighborListsAll(newNodes.values());
         Node.sortNeighborListsAll(cluster.nodes);
         
-        mapData.addAll(newNodes.values());
+        for(Map.Entry<NodeAndState,Node> e : newNodes.entrySet()) {
+            mapData.addSynthetic(e.getKey().node.nodeId, e.getValue());
+        }
         
         Set<DirectedEdge> toRemove = edgesEntirelyWithinCluster(cluster);
         for (ShortestPathElement spe : linksUnaffectedByTurnRestrictions)

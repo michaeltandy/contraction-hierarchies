@@ -9,6 +9,7 @@ public class MapData {
     private final HashMap<Long,TurnRestriction> turnRestrictionsById;
     private final AtomicLong maxEdgeId = new AtomicLong();
     private final AtomicLong maxNodeId = new AtomicLong();
+    private final Multimap<Long,Node> syntheticNodesByIdOfEquivalent = new Multimap<>();
     
     public MapData(HashMap<Long,Node> nodesById) {
         this(nodesById, new HashMap());
@@ -46,6 +47,12 @@ public class MapData {
         return nodesById.get(nodeId);
     }
     
+    public List<Node> getNodeByIdAndSyntheticEquivalents(long nodeId) {
+        ArrayList<Node> nodes = new ArrayList<>(syntheticNodesByIdOfEquivalent.get(nodeId));
+        nodes.add(nodesById.get(nodeId));
+        return nodes;
+    }
+    
     public int getNodeCount() {
         return nodesById.size();
     }
@@ -64,13 +71,26 @@ public class MapData {
             throw new RuntimeException("Map data already contains node with ID " + toAdd.nodeId);
         }
         
-        
         nodesById.put(toAdd.nodeId, toAdd);
     }
     
     public void addAll(Collection<Node> toAdd) {
         for (Node n : toAdd) {
             add(n);
+        }
+    }
+    
+    public void addSynthetic(long idOfNodeReplaced, Node toAdd) {
+        for (Node existing : getNodeByIdAndSyntheticEquivalents(idOfNodeReplaced)) {
+            Preconditions.require(toAdd.lat==existing.lat, toAdd.lon==existing.lon);
+        }
+        add(toAdd);
+        syntheticNodesByIdOfEquivalent.add(idOfNodeReplaced, toAdd);
+    }
+    
+    public void addAllSynthetic(Map<Long,Node> toAdd) {
+        for (Map.Entry<Long,Node> e : toAdd.entrySet()) {
+            addSynthetic(e.getKey(), e.getValue());
         }
     }
     
@@ -92,6 +112,7 @@ public class MapData {
         }
 
         nodesById.remove(remove.nodeId);
+        syntheticNodesByIdOfEquivalent.removeValue(remove);
     }
     
     public void removeAll(Collection<Node> nodes) {

@@ -166,8 +166,8 @@ public enum AccessOnly {
         HashMap<Long,Node> startStrata = cloneNodesAndConnectionsRenumbering(cluster.nodes, allNodes.getNodeIdCounter(), allNodes.getEdgeIdCounter());
         HashMap<Long,Node> endStrata = cloneNodesAndConnectionsRenumbering(cluster.nodes, allNodes.getNodeIdCounter(), allNodes.getEdgeIdCounter());
         
-        allNodes.addAll(startStrata.values());
-        allNodes.addAll(endStrata.values());
+        allNodes.addAllSynthetic(startStrata);
+        allNodes.addAllSynthetic(endStrata);
         
         linkBordersAndStratas(cluster, startStrata, endStrata, allNodes.getEdgeIdCounter());
         removeAccessOnlyEdgesThatHaveBeenReplaced(cluster);
