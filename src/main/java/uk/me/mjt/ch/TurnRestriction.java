@@ -62,9 +62,14 @@ public class TurnRestriction {
         
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(allNodes.allTurnRestrictions());
         
+        System.out.println("Found " + clusters.size() + " turn restriction clusters.");
+        int i=0;
         for (TurnRestrictionCluster trc : clusters) {
             adjustGraphForCluster(allNodes, trc, turnRestrictionsByStartEdge, 
                     allNodes.getNodeIdCounter(), allNodes.getEdgeIdCounter());
+            if (i++ % 100 == 0) {
+                System.out.println("Processing cluster " + i);
+            }
         }
         
         allNodes.clearAllTurnRestrictions();
@@ -146,9 +151,10 @@ public class TurnRestriction {
     
     private static void adjustGraphForCluster(MapData mapData, TurnRestrictionCluster cluster, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, AtomicLong newNodeId, AtomicLong newEdgeId) {
         HashSet<ShortestPathElement> allShortPathElements = new HashSet();
+        int driveTimeLimitMs = chooseDriveTimeLimit(cluster);
         
         for (Node n : cluster.nodes) {
-            List<List<ShortestPathElement>> paths = dijkstrasAlgorithm(n, cluster.nodes, turnRestrictionsByStartEdge);
+            List<List<ShortestPathElement>> paths = dijkstrasAlgorithm(n, cluster.nodes, turnRestrictionsByStartEdge, driveTimeLimitMs);
             for (List<ShortestPathElement> path : paths)
                 allShortPathElements.addAll(path);
         }
@@ -172,6 +178,14 @@ public class TurnRestriction {
         
         for (DirectedEdge de : toRemove)
             de.removeFromToAndFromNodes();
+    }
+    
+    private static int chooseDriveTimeLimit(TurnRestrictionCluster cluster) {
+        int driveTimeLimit = 0;
+        for (DirectedEdge de : edgesEntirelyWithinCluster(cluster)) {
+            driveTimeLimit += de.driveTimeMs;
+        }
+        return 4*driveTimeLimit;
     }
     
     private static Set<DirectedEdge> edgesEntirelyWithinCluster(TurnRestrictionCluster cluster) {
@@ -252,7 +266,7 @@ public class TurnRestriction {
     }
     
         
-    private static List<List<ShortestPathElement>> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
+    private static List<List<ShortestPathElement>> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, int driveTimeLimitMs) {
         HashMap<NodeAndState,NodeInfo> nodeInfo = new HashMap<>();
         ArrayList<List<ShortestPathElement>> solutions = new ArrayList<>();
         HashSet<Node> remainingNodes = new HashSet(endNodes);
@@ -278,6 +292,12 @@ public class TurnRestriction {
                 remainingNodes.remove(shortestTimeNode.node);
                 if (remainingNodes.isEmpty())
                     return solutions;
+            }
+            
+            if (thisNodeInfo.minDriveTime > driveTimeLimitMs) {
+                System.out.println("Hit drive time limit without visiting all nodes for turn restrictions around " + startNode + 
+                        " which probably just means ");
+                return solutions;
             }
             
             thisNodeInfo.visited = true;

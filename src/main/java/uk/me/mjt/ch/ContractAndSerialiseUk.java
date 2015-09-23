@@ -54,7 +54,7 @@ public class ContractAndSerialiseUk {
             
             CheckOsmRouting.checkContracted(allNodes);
             
-            bf.writeWays(allNodes.getAllNodes(), 
+            bf.write(allNodes,
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             

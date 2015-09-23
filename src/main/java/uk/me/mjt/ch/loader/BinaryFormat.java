@@ -40,14 +40,24 @@ public class BinaryFormat {
         return md;
     }
     
-    public void writeWays(Collection<Node> toWrite, String nodeFile, String wayFile) throws IOException {
+    public void write(MapData toWrite, String nodeFile, String wayFile) throws IOException {
+        write(toWrite, nodeFile, wayFile, null);
+    }
+    
+    public void write(MapData toWrite, String nodeFile, String wayFile, String restrictionFile) throws IOException {
         DataOutputStream waysOut = outStream(wayFile);
-        writeEdges(toWrite,waysOut);
+        writeEdges(toWrite.getAllNodes(),waysOut);
         waysOut.close();
         
         DataOutputStream nodesOut = outStream(nodeFile);
-        writeNodesWithoutEdges(toWrite,nodesOut);
+        writeNodesWithoutEdges(toWrite.getAllNodes(),nodesOut);
         nodesOut.close();
+        
+        if (restrictionFile != null) {
+            DataOutputStream restrictionsOut = outStream(restrictionFile);
+            writeTurnRestrictions(toWrite.allTurnRestrictions(), nodesOut);
+            restrictionsOut.close();
+        }
     }
     
     private static DataOutputStream outStream(String filename) throws FileNotFoundException {
