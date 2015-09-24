@@ -20,6 +20,7 @@ public class MapData {
         this.nodesById = nodesById;
         this.turnRestrictionsById = turnRestrictionsById;
         setMaxNodeAndEdgeId();
+        indexSyntheticEquivalents();
     }
     
     private void setMaxNodeAndEdgeId() {
@@ -31,6 +32,14 @@ public class MapData {
                 if (de.edgeId > maxEdgeId.get()) {
                     maxEdgeId.set(de.edgeId);
                 }
+            }
+        }
+    }
+    
+    private void indexSyntheticEquivalents() {
+        for (Node n : nodesById.values()) {
+            if (n.isSynthetic()) {
+                syntheticNodesByIdOfEquivalent.add(n.sourceDataNodeId, n);
             }
         }
     }

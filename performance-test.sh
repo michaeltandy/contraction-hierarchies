@@ -19,9 +19,9 @@ date >> /mnt/runtimes.txt
 mkdir /mnt/ch
 cd /mnt/ch
 
-aws --region=us-west-1 s3 cp s3://ch-test-mjt/great-britain-new-contracted-accessonly-v2.tar.gz .
-tar -xvf great-britain-new-contracted-accessonly-v2.tar.gz
-md5sum great-britain-new-*
+aws --region=us-west-1 s3 cp s3://ch-test-mjt/great-britain-contracted-accessonly-gates-turnrestrictions-2.tar.gz .
+tar -xvf great-britain-contracted-accessonly-gates-turnrestrictions-2.tar.gz
+md5sum great-britain-*
 
 git clone https://github.com/michaeltandy/contraction-hierarchies.git
 
