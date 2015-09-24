@@ -168,9 +168,7 @@ public class TurnRestriction {
         Node.sortNeighborListsAll(newNodes.values());
         Node.sortNeighborListsAll(cluster.nodes);
         
-        for(Map.Entry<NodeAndState,Node> e : newNodes.entrySet()) {
-            mapData.addSynthetic(e.getKey().node.nodeId, e.getValue());
-        }
+        mapData.addAll(newNodes.values());
         
         Set<DirectedEdge> toRemove = edgesEntirelyWithinCluster(cluster);
         for (ShortestPathElement spe : linksUnaffectedByTurnRestrictions)
@@ -222,7 +220,7 @@ public class TurnRestriction {
         
         HashMap<NodeAndState,Node> result = new HashMap();
         for (NodeAndState n : newNodesRequired) {
-            Node newNode = new Node(newNodeId.incrementAndGet(), n.node.lat, n.node.lon, n.node.barrier);
+            Node newNode = new Node(newNodeId.incrementAndGet(), n.node);
             result.put(n, newNode);
         }
         return result;
@@ -296,7 +294,7 @@ public class TurnRestriction {
             
             if (thisNodeInfo.minDriveTime > driveTimeLimitMs) {
                 System.out.println("Hit drive time limit without visiting all nodes for turn restrictions around " + startNode + 
-                        " which probably just means ");
+                        " which probably just means this is an exit-only node.");
                 return solutions;
             }
             

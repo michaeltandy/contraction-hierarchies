@@ -46,6 +46,7 @@ public class Util {
     private static boolean shallowEquals(Node a, Node b) {
         return ( a!=null && b!=null
                 && a.nodeId == b.nodeId
+                && a.sourceDataNodeId == b.sourceDataNodeId
                 && a.lat == b.lat
                 && a.lon == b.lon
                 && a.contractionAllowed == b.contractionAllowed
@@ -57,7 +58,8 @@ public class Util {
     
     private static void printShallowDiff(Node a, Node b) {
         System.out.println("Null check: " + (a!=null) +","+(b!=null));
-        System.out.println("Node IDs: " + a.nodeId +","+b.nodeId);
+        System.out.println("Node IDs: " + a.sourceDataNodeId +","+b.sourceDataNodeId);
+        System.out.println("Source data node IDs: " + a.nodeId +","+b.nodeId);
         System.out.println("Lats: " + a.lat +","+ b.lat);
         System.out.println("Lons: " + a.lon +","+ b.lon);
         System.out.println("Contraction Allowed: " + a.contractionAllowed +","+ b.contractionAllowed);

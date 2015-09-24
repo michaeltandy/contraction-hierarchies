@@ -5,8 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import static org.junit.Assert.*;
+import uk.me.mjt.ch.Barrier;
 import uk.me.mjt.ch.MakeTestData;
 import uk.me.mjt.ch.MapData;
+import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Util;
 
 public class BinaryFormatTest {
@@ -36,6 +38,13 @@ public class BinaryFormatTest {
     @org.junit.Test
     public void testTurnRestricted() throws Exception {
         MapData testData = MakeTestData.makeTurnRestrictedH();
+        writeAndReadBack(testData);
+    }
+    
+    @org.junit.Test
+    public void testSynthetic() throws Exception {
+        MapData testData = MakeTestData.makeSimpleThreeEntry();
+        testData.add(new Node(5, testData.getNodeById(1)));
         writeAndReadBack(testData);
     }
     

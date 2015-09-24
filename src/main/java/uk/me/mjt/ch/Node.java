@@ -6,6 +6,7 @@ public class Node implements Comparable<Node> {
     public static final long UNCONTRACTED = Long.MAX_VALUE;
     
     public final long nodeId;
+    public final long sourceDataNodeId;
     public final ArrayList<DirectedEdge> edgesFrom = new ArrayList<DirectedEdge>();
     public final ArrayList<DirectedEdge> edgesTo = new ArrayList<DirectedEdge>();
     public final float lat;
@@ -16,10 +17,19 @@ public class Node implements Comparable<Node> {
     public long contractionOrder = UNCONTRACTED;
     
     public Node(long nodeId, float lat, float lon, Barrier barrier) {
+        this(nodeId, nodeId, lat, lon, barrier);
+    }
+    
+    public Node(long nodeId, Node copyFrom) {
+        this(nodeId, copyFrom.sourceDataNodeId, copyFrom.lat, copyFrom.lon, copyFrom.barrier);
+    }
+    
+    public Node(long nodeId, long sourceDataNodeId, float lat, float lon, Barrier barrier) {
         this.nodeId = nodeId;
         this.lat = lat;
         this.lon = lon;
         this.barrier = barrier;
+        this.sourceDataNodeId = sourceDataNodeId;
     }
 
     int getCountOutgoingUncontractedEdges() {
@@ -42,6 +52,10 @@ public class Node implements Comparable<Node> {
     
     public boolean isContracted() {
         return contractionOrder!=UNCONTRACTED;
+    }
+    
+    public boolean isSynthetic() {
+        return (nodeId!=sourceDataNodeId);
     }
     
     public List<Node> getNeighbors() {

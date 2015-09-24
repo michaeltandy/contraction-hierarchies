@@ -48,9 +48,12 @@ public class MapData {
     }
     
     public List<Node> getNodeByIdAndSyntheticEquivalents(long nodeId) {
-        ArrayList<Node> nodes = new ArrayList<>(syntheticNodesByIdOfEquivalent.get(nodeId));
-        nodes.add(nodesById.get(nodeId));
-        return nodes;
+        ArrayList<Node> result = new ArrayList<>();
+        if (nodesById.containsKey(nodeId)) {
+            result.add(nodesById.get(nodeId));
+        }
+        result.addAll(syntheticNodesByIdOfEquivalent.get(nodeId));
+        return result;
     }
     
     public int getNodeCount() {
@@ -72,25 +75,14 @@ public class MapData {
         }
         
         nodesById.put(toAdd.nodeId, toAdd);
+        if (toAdd.isSynthetic()) {
+            syntheticNodesByIdOfEquivalent.add(toAdd.sourceDataNodeId, toAdd);
+        }
     }
     
     public void addAll(Collection<Node> toAdd) {
         for (Node n : toAdd) {
             add(n);
-        }
-    }
-    
-    public void addSynthetic(long idOfNodeReplaced, Node toAdd) {
-        for (Node existing : getNodeByIdAndSyntheticEquivalents(idOfNodeReplaced)) {
-            Preconditions.require(toAdd.lat==existing.lat, toAdd.lon==existing.lon);
-        }
-        add(toAdd);
-        syntheticNodesByIdOfEquivalent.add(idOfNodeReplaced, toAdd);
-    }
-    
-    public void addAllSynthetic(Map<Long,Node> toAdd) {
-        for (Map.Entry<Long,Node> e : toAdd.entrySet()) {
-            addSynthetic(e.getKey(), e.getValue());
         }
     }
     
@@ -112,7 +104,8 @@ public class MapData {
         }
 
         nodesById.remove(remove.nodeId);
-        syntheticNodesByIdOfEquivalent.removeValue(remove);
+        if (remove.isSynthetic())
+            syntheticNodesByIdOfEquivalent.removeValueForKey(remove.sourceDataNodeId, remove);
     }
     
     public void removeAll(Collection<Node> nodes) {

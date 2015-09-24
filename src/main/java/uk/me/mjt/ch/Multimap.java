@@ -33,10 +33,9 @@ public class Multimap<K,V> {
         return map.get(key);
     }
     
-    public void removeValue(V toRemove) {
-        for (List<V> list : underlyingMap.values()) {
-            list.remove(toRemove);
-        }
+    public void removeValueForKey(K key, V toRemove) {
+        if (underlyingMap.containsKey(key))
+            underlyingMap.get(key).remove(toRemove);
     }
 
 }

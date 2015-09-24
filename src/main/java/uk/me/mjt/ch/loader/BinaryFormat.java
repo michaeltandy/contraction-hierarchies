@@ -11,6 +11,9 @@ import uk.me.mjt.ch.Preconditions;
 import uk.me.mjt.ch.TurnRestriction;
 
 public class BinaryFormat {
+    private static final long MAX_FILE_VERSION_SUPPORTED = 5;
+    private static final long MIN_FILE_VERSION_SUPPORTED = 5;
+    private static final long FILE_VERSION_WRITTEN = MAX_FILE_VERSION_SUPPORTED;
     
     public MapData read(String nodeFile, String wayFile) throws IOException {
         FileInputStream nodesIn = new FileInputStream(nodeFile);
@@ -55,7 +58,7 @@ public class BinaryFormat {
         
         if (restrictionFile != null) {
             DataOutputStream restrictionsOut = outStream(restrictionFile);
-            writeTurnRestrictions(toWrite.allTurnRestrictions(), nodesOut);
+            writeTurnRestrictions(toWrite.allTurnRestrictions(), restrictionsOut);
             restrictionsOut.close();
         }
     }
@@ -66,11 +69,14 @@ public class BinaryFormat {
     
     private HashMap<Long,Node> readNodes(DataInputStream source) throws IOException {
         HashMap<Long,Node> nodesById = new HashMap(1000);
+        long fileFormatVersion = source.readLong();
+        Preconditions.require(fileFormatVersion>=MIN_FILE_VERSION_SUPPORTED, fileFormatVersion<=MAX_FILE_VERSION_SUPPORTED);
         
         try {
             
             while(true) {
                 long nodeId = source.readLong();
+                long sourceDataNodeId = source.readLong();
                 long contrctionOrder = source.readLong();
                 int properties = source.readByte();
                 boolean isBorderNode = (properties&0x01)!=0;
@@ -78,7 +84,7 @@ public class BinaryFormat {
                 double lat = source.readDouble();
                 double lon = source.readDouble();
                 
-                Node n = new Node(nodeId,(float)lat,(float)lon,(isBarrier?Barrier.TRUE:Barrier.FALSE));
+                Node n = new Node(nodeId,sourceDataNodeId,(float)lat,(float)lon,(isBarrier?Barrier.TRUE:Barrier.FALSE));
                 n.contractionAllowed = !isBorderNode;
                 n.contractionOrder=contrctionOrder;
                 
@@ -92,11 +98,14 @@ public class BinaryFormat {
     
     private void loadEdgesGivenNodes(HashMap<Long,Node> nodesById, DataInputStream source) throws IOException {
         HashMap<Long,DirectedEdge> edgesById = new HashMap(1000);
+        long fileFormatVersion = source.readLong();
+        Preconditions.require(fileFormatVersion>=MIN_FILE_VERSION_SUPPORTED, fileFormatVersion<=MAX_FILE_VERSION_SUPPORTED);
         
         try {
             
             while(true) {
                 long edgeId = source.readLong();
+                long temp = source.readLong(); // REVISIT start using this
                 long fromNodeId = source.readLong();
                 long toNodeId = source.readLong();
                 int driveTimeMs = source.readInt();
@@ -138,9 +147,11 @@ public class BinaryFormat {
     
     
     public void writeNodesWithoutEdges(Collection<Node> toWrite, DataOutputStream dest) throws IOException {
+        dest.writeLong(FILE_VERSION_WRITTEN);
         
         for (Node n : toWrite) {
             dest.writeLong(n.nodeId);
+            dest.writeLong(n.sourceDataNodeId);
             dest.writeLong(n.contractionOrder);
             int properties = (!n.contractionAllowed?0x01:0x00) | (n.barrier==Barrier.TRUE?0x02:0x00);
             dest.writeByte(properties);
@@ -150,7 +161,7 @@ public class BinaryFormat {
     }
     
     public void writeEdges(Collection<Node> toWrite, DataOutputStream dos) throws IOException {
-        
+        dos.writeLong(FILE_VERSION_WRITTEN);
         //dos.writeLong(calculateTotalEdgeCount(toWrite));
         
         HashSet<Long> writtenEdges = new HashSet();
@@ -178,6 +189,7 @@ public class BinaryFormat {
         writeEdgeRecursively(de.second,alreadyWritten,dos);
         
         dos.writeLong(de.edgeId);
+        dos.writeLong(de.edgeId); // REVISIT start using this
         dos.writeLong(de.from.nodeId);
         dos.writeLong(de.to.nodeId);
         dos.writeInt(de.driveTimeMs);
@@ -212,6 +224,9 @@ public class BinaryFormat {
     private HashMap<Long,TurnRestriction> readTurnRestrictions(DataInputStream source) throws IOException {
         HashMap<Long,TurnRestriction> result = new HashMap();
         
+        long fileFormatVersion = source.readLong();
+        Preconditions.require(fileFormatVersion>=MIN_FILE_VERSION_SUPPORTED, fileFormatVersion<=MAX_FILE_VERSION_SUPPORTED);
+        
         try {
             
             while (true) {
@@ -234,6 +249,7 @@ public class BinaryFormat {
     }
     
     public void writeTurnRestrictions(Collection<TurnRestriction> toWrite, DataOutputStream dos) throws IOException {
+        dos.writeLong(FILE_VERSION_WRITTEN);
         
         for (TurnRestriction tr : toWrite) {
             

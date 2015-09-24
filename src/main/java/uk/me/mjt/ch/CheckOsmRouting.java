@@ -3,13 +3,14 @@ package uk.me.mjt.ch;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class CheckOsmRouting {
     private static final RoutingTestCase hatfieldToHerbal = new RoutingTestCase(253199386L,18670884L,2347854,   253199386L,247514L,195441L,868249730L, 18670884L);
     private static final RoutingTestCase tiberiusToLivia = new RoutingTestCase(1224756026L,1224756028L,33305,   1224756026L,1224757149L,1224756484L,1224756195L,1224757082L,1224757091L,1224756028L);
     private static final RoutingTestCase avoidMizenWay = new RoutingTestCase(1651312172L,13853101L,125124,      1651312172L,1651312118L,749962849L,13853101L);
-    private static final RoutingTestCase expectedIntoMizenWay = new RoutingTestCase(1651312172L,200000001647192344L,42253, 1651312172L,200000000974087053L,200000001647192344L);
+    private static final RoutingTestCase expectedIntoMizenWay = new RoutingTestCase(1651312172L,1647192344L,42253, 1651312172L);
     private static final RoutingTestCase sunlightGardensAvoidGate = new RoutingTestCase(1581223475L,158758984L,155196,     1581223475L,158760624L,158760472L,158758984L);
     private static final RoutingTestCase lemsfordRoadNoRightOrUturn = new RoutingTestCase(672630347L,927070648L,31950,     672630347L,30983954L,243206609L,32953194L,927070648L);
     
@@ -23,24 +24,35 @@ public class CheckOsmRouting {
         }};
     
     public static void checkUncontracted(MapData allNodes) {
-        allNodes.validate();
-        for (RoutingTestCase tc : testCases) {
-            Node from = allNodes.getNodeById(tc.fromNode);
-            Node to = allNodes.getNodeById(tc.toNode);
-            
-            DijkstraSolution computed = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
-            compare(tc, computed);
-        }
+        check(allNodes,false);
     }
-    
     public static void checkContracted(MapData allNodes) {
+        check(allNodes,true);
+    }
+        
+    private static void check(MapData allNodes, boolean contracted) {
         allNodes.validate();
         for (RoutingTestCase tc : testCases) {
-            Node from = allNodes.getNodeById(tc.fromNode);
-            Node to = allNodes.getNodeById(tc.toNode);
+            boolean foundNonNull = false;
             
-            DijkstraSolution computed = ContractedDijkstra.contractedGraphDijkstra(allNodes, from, to);
-            compare(tc, computed);
+            for (Node from : allNodes.getNodeByIdAndSyntheticEquivalents(tc.fromNode)) {
+                for (Node to : allNodes.getNodeByIdAndSyntheticEquivalents(tc.toNode)) {
+                    DijkstraSolution computed;
+                    if (contracted)
+                        computed = ContractedDijkstra.contractedGraphDijkstra(allNodes, from, to);
+                    else
+                        computed = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
+                    
+                    if (computed != null) {
+                        foundNonNull = true;
+                        compare(tc, computed);
+                    }
+                }
+            }
+            
+            if (!foundNonNull) {
+                compare(tc,null);
+            }
         }
     }
     

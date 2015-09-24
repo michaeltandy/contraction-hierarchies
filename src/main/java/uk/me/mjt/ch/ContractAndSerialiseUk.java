@@ -18,14 +18,11 @@ public class ContractAndSerialiseUk {
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-turnrestrictions.dat");
             allNodes.validate();
             
-            Node hatfield = allNodes.getNodeById(1480447056L);
-            Node asdf = allNodes.getNodeById(20922002L);
+            Node hatfield = allNodes.getNodeById(253199386L);
+            Node asdf = allNodes.getNodeById(672630347L);
             System.out.println(Dijkstra.dijkstrasAlgorithm(hatfield, asdf, Dijkstra.Direction.FORWARDS).toString());
             
-            //System.out.println(TurnRestriction.edgesToGeojson(allNodes));
-            
             // TODO make sure these interactions happen in the right order.
-            
             InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
             System.out.println("Implementing turn restrictions...");
             TurnRestriction.adjustGraphToImplementTurnRestrictions(allNodes);
