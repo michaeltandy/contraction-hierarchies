@@ -7,11 +7,16 @@ import java.util.List;
 import uk.me.mjt.ch.Dijkstra.Direction;
 
 public abstract class PartialSolution {
+    private static final long START_NODE_TO_START_NODE_PATH = Long.MIN_VALUE;
     
     private final Node nodeOfInterest;
     private final List<DijkstraSolution> individualNodeSolutions;
     private final Dijkstra.Direction direction;
-    private final long[] compactFormat;
+    
+    private final long[] nodeIds;
+    private final long[] contractionOrders;
+    private final int[] totalDriveTimes;
+    private final long[] viaEdges;
     
     private PartialSolution(Node nodeOfInterest, List<DijkstraSolution> individualNodeSolutions, Dijkstra.Direction direction) {
         Preconditions.checkNoneNull(nodeOfInterest,individualNodeSolutions,direction);
@@ -19,7 +24,12 @@ public abstract class PartialSolution {
         this.individualNodeSolutions = individualNodeSolutions;
         this.direction = direction;
         sortByContractionOrder();
-        compactFormat = new long[individualNodeSolutions.size()*4];
+        
+        nodeIds = new long[individualNodeSolutions.size()];
+        contractionOrders = new long[individualNodeSolutions.size()];
+        totalDriveTimes = new int[individualNodeSolutions.size()];
+        viaEdges = new long[individualNodeSolutions.size()];
+        
         makeCompactFormat();
     }
 
@@ -53,24 +63,33 @@ public abstract class PartialSolution {
         for (int i=0 ; i<individualNodeSolutions.size() ; i++) {
             DijkstraSolution ds = individualNodeSolutions.get(i);
             Node n = ds.getLastNode();
-            compactFormat[4*i]=n.nodeId;
-            compactFormat[4*i+1]=n.contractionOrder;
-            compactFormat[4*i+2]=ds.totalDriveTimeMs;
+            nodeIds[i] = n.nodeId;
+            contractionOrders[i] = n.contractionOrder;
+            totalDriveTimes[i] = ds.totalDriveTimeMs;
             
             List<DirectedEdge> directedEdges = ds.getDeltaEdges();
 
             if (directedEdges.size() == 1) {
-                compactFormat[4*i+3] = directedEdges.get(0).from.nodeId; // REVISIT is this the same for both directions?
+                DirectedEdge de = directedEdges.get(0);
+                viaEdges[i] = de.edgeId;
             } else if (ds.getFirstNode().equals(ds.getLastNode()) && directedEdges.isEmpty()) {
-                compactFormat[4*i+3] = -1;
+                viaEdges[i] = START_NODE_TO_START_NODE_PATH;
             } else {
                 throw new RuntimeException("Delta edge length isn't 1?");
             }
         }
     }
-    
-    public long[] getCompactFormat() {
-        return compactFormat;
+
+    public long[] getNodeIds() {
+        return nodeIds;
+    }
+
+    public long[] getContractionOrders() {
+        return contractionOrders;
+    }
+
+    public int[] getTotalDriveTimes() {
+        return totalDriveTimes;
     }
     
     Node getNodeOfInterest() {

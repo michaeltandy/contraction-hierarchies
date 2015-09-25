@@ -54,8 +54,10 @@ public class ContractedDijkstra {
     }
     
     public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
-        long[] upArr = upwardSolution.getCompactFormat();
-        long[] downArr = downwardSolution.getCompactFormat();
+        long[] upCO = upwardSolution.getContractionOrders();
+        long[] downCO = downwardSolution.getContractionOrders();
+        int[] upDriveTimes = upwardSolution.getTotalDriveTimes();
+        int[] downDriveTimes = downwardSolution.getTotalDriveTimes();
         
         int upIdx = 0;
         int downIdx = 0;
@@ -64,13 +66,13 @@ public class ContractedDijkstra {
         int shortestUpIdx = -1;
         int shortestDownIdx = -1;
         
-        while (upIdx<upArr.length/4 && downIdx<downArr.length/4) {
-            long upContractionOrder = upArr[upIdx*4+1];
-            long downContractionOrder = downArr[downIdx*4+1];
+        while (upIdx<upCO.length && downIdx<downCO.length) {
+            long upContractionOrder = upCO[upIdx];
+            long downContractionOrder = downCO[downIdx];
             
             if (upContractionOrder==downContractionOrder) {
-                int upTotalDriveTime = (int)upArr[upIdx*4+2];
-                int downTotalDriveTime = (int)downArr[downIdx*4+2];
+                int upTotalDriveTime = upDriveTimes[upIdx];
+                int downTotalDriveTime = downDriveTimes[downIdx];
                 if (upTotalDriveTime + downTotalDriveTime < shortestSolutionDriveTime) {
                     shortestSolutionDriveTime = upTotalDriveTime + downTotalDriveTime;
                     shortestUpIdx = upIdx;
