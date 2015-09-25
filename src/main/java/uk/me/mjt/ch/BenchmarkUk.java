@@ -93,12 +93,7 @@ public class BenchmarkUk {
     public void benchmarkCachedPathing(int repetitions) {
         System.out.println("Benchmarking cached pathing. Warming up & populating cache...");
         List<Node> testLocations = allNodes.chooseRandomNodes(4000);
-        SimpleCache cache = new SimpleCache();
-        
-        for (Node node : testLocations) {
-            CachedContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node, cache);
-            CachedContractedDijkstra.contractedGraphDijkstra(allNodes, node, hatfield, cache);
-        }
+        SimpleCache cache = populateTestCache(testLocations);
         
         System.out.println("Warming up complete, benchmarking...");
         long startTime = System.currentTimeMillis();
@@ -112,7 +107,15 @@ public class BenchmarkUk {
         
         System.out.println(repetitions+" repetitions cached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
     }
-    
+
+    private SimpleCache populateTestCache(List<Node> testLocations) {
+        SimpleCache cache = new SimpleCache();
+        for (Node node : testLocations) {
+            CachedContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node, cache);
+            CachedContractedDijkstra.contractedGraphDijkstra(allNodes, node, hatfield, cache);
+        }
+        return cache;
+    }
     
     
     public static void main(String[] args) {
