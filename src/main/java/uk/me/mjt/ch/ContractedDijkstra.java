@@ -17,7 +17,7 @@ public class ContractedDijkstra {
         Future<UpwardSolution> fUpwardSolution = futureUpwardSolution(allNodes, startNode, es);
         Future<DownwardSolution> fDownwardSolution = futureDownwardSolution(allNodes, endNode, es);
         
-        return mergeUpwardAndDownwardSolutions(getFutureQuietly(fUpwardSolution), getFutureQuietly(fDownwardSolution));
+        return mergeUpwardAndDownwardSolutions(allNodes, getFutureQuietly(fUpwardSolution), getFutureQuietly(fDownwardSolution));
     }
     
     private static <E> E getFutureQuietly(Future<E> f) {
@@ -50,10 +50,10 @@ public class ContractedDijkstra {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);
         UpwardSolution upwardSolution = calculateUpwardSolution(allNodes, startNode);
         DownwardSolution downwardSolution = calculateDownwardSolution(allNodes, endNode);
-        return mergeUpwardAndDownwardSolutions(upwardSolution, downwardSolution);
+        return mergeUpwardAndDownwardSolutions(allNodes, upwardSolution, downwardSolution);
     }
     
-    public static DijkstraSolution mergeUpwardAndDownwardSolutions(UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
+    public static DijkstraSolution mergeUpwardAndDownwardSolutions(MapData allNodes, UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
         long[] upCO = upwardSolution.getContractionOrders();
         long[] downCO = downwardSolution.getContractionOrders();
         int[] upDriveTimes = upwardSolution.getTotalDriveTimes();
@@ -91,8 +91,8 @@ public class ContractedDijkstra {
             return null;
         }
         
-        DijkstraSolution shortestSolutionUp = upwardSolution.getIndividualNodeSolutions().get(shortestUpIdx);
-        DijkstraSolution shortestSolutionDown = downwardSolution.getIndividualNodeSolutions().get(shortestDownIdx);
+        DijkstraSolution shortestSolutionUp = upwardSolution.getDijkstraSolution(allNodes, shortestUpIdx);
+        DijkstraSolution shortestSolutionDown = downwardSolution.getDijkstraSolution(allNodes, shortestDownIdx);
         return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
     }
 

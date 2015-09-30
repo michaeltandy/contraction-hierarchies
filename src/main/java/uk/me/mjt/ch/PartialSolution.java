@@ -1,43 +1,60 @@
 
 package uk.me.mjt.ch;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import uk.me.mjt.ch.Dijkstra.Direction;
+import java.util.*;
 
 public abstract class PartialSolution {
     private static final long START_NODE_TO_START_NODE_PATH = Long.MIN_VALUE;
     
     private final Node nodeOfInterest;
-    private final List<DijkstraSolution> individualNodeSolutions;
-    private final Dijkstra.Direction direction;
     
     private final long[] nodeIds;
     private final long[] contractionOrders;
     private final int[] totalDriveTimes;
     private final long[] viaEdges;
     
-    private PartialSolution(Node nodeOfInterest, List<DijkstraSolution> individualNodeSolutions, Dijkstra.Direction direction) {
-        Preconditions.checkNoneNull(nodeOfInterest,individualNodeSolutions,direction);
+    private PartialSolution(Node nodeOfInterest, List<DijkstraSolution> individualNodeSolutions) {
+        Preconditions.checkNoneNull(nodeOfInterest,individualNodeSolutions);
         this.nodeOfInterest = nodeOfInterest;
-        this.individualNodeSolutions = individualNodeSolutions;
-        this.direction = direction;
-        sortByContractionOrder();
         
         nodeIds = new long[individualNodeSolutions.size()];
         contractionOrders = new long[individualNodeSolutions.size()];
         totalDriveTimes = new int[individualNodeSolutions.size()];
         viaEdges = new long[individualNodeSolutions.size()];
         
-        makeCompactFormat();
+        sortByContractionOrder(individualNodeSolutions);
+        makeCompactFormat(individualNodeSolutions);
     }
 
-    public List<DijkstraSolution> getIndividualNodeSolutions() {
-        return individualNodeSolutions;
+    public DijkstraSolution getDijkstraSolution(MapData md, int index) {
+        LinkedList<DirectedEdge> edges = new LinkedList();
+        LinkedList<Node> nodes = new LinkedList();
+        
+        int currentIdx = index;
+        while (currentIdx >= 0) {
+            long nodeId = nodeIds[currentIdx];
+            Node thisNode = md.getNodeById(nodeId);
+            nodes.addFirst(thisNode);
+            long viaEdgeId = viaEdges[currentIdx];
+            if (viaEdgeId != START_NODE_TO_START_NODE_PATH) {
+                DirectedEdge viaEdge = null;
+                for (DirectedEdge de : thisNode.getEdgesFromAndTo()) {
+                    if (de.edgeId == viaEdgeId)
+                        viaEdge = de;
+                }
+                edges.addFirst(viaEdge);
+                Node fromNode = (viaEdge.to==thisNode?viaEdge.from:viaEdge.to);
+                currentIdx = Arrays.binarySearch(contractionOrders, fromNode.contractionOrder);
+            } else {
+                currentIdx = -1;
+            }
+        }
+        
+        DijkstraSolution result = new DijkstraSolution(totalDriveTimes[index], nodes, edges);
+        return result;
     }
     
-    private void sortByContractionOrder() {
+    private void sortByContractionOrder(List<DijkstraSolution> individualNodeSolutions) {
         Collections.sort(individualNodeSolutions, new Comparator<DijkstraSolution>() {
             @Override
             public int compare(DijkstraSolution a, DijkstraSolution b) {
@@ -59,7 +76,7 @@ public abstract class PartialSolution {
      *  2. Uses contiguous memory, which should allow efficient use of main memory bandwidth.
      *  3. Small enough to fit into L2 cache - or maybe even L1 cache!
      */
-    private void makeCompactFormat() {
+    private void makeCompactFormat(List<DijkstraSolution> individualNodeSolutions) {
         for (int i=0 ; i<individualNodeSolutions.size() ; i++) {
             DijkstraSolution ds = individualNodeSolutions.get(i);
             Node n = ds.getLastNode();
@@ -96,13 +113,9 @@ public abstract class PartialSolution {
         return nodeOfInterest;
     }
     
-    public String toString() {
-        return individualNodeSolutions.toString();
-    }
-    
     public static class UpwardSolution extends PartialSolution {
         public UpwardSolution(Node nodeOfInterest, List<DijkstraSolution> ds) {
-            super(nodeOfInterest,ds,Dijkstra.Direction.FORWARDS);
+            super(nodeOfInterest,ds);
         }
         
         public Node getStartNode() {
@@ -112,7 +125,7 @@ public abstract class PartialSolution {
     
     public static class DownwardSolution extends PartialSolution {
         public DownwardSolution(Node nodeOfInterest, List<DijkstraSolution> ds) {
-            super(nodeOfInterest,ds,Dijkstra.Direction.BACKWARDS);
+            super(nodeOfInterest,ds);
         }
         
         public Node getEndNode() {

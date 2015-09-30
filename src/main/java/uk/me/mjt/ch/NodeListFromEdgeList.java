@@ -12,6 +12,12 @@ public class NodeListFromEdgeList extends AbstractList<Node> {
         Preconditions.checkNoneNull(de);
         Preconditions.require(de.size()>0);
         
+        if (de.size() > 1) {
+            if (de.get(0).to != de.get(1).from) {
+                throw new RuntimeException("This class only supports forward edge lists at the moment, sorry.");
+            }
+        }
+        
         this.de = de;
     }
     

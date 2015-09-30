@@ -29,7 +29,7 @@ public class CachedContractedDijkstra {
     public static DijkstraSolution contractedGraphDijkstra(MapData allNodes, Node startNode, Node endNode, PartialSolutionCache cache) {
         UpAndDownPair startNodePair = getOrCalculateUpDownPair(allNodes, startNode, cache);
         UpAndDownPair endNodePair = getOrCalculateUpDownPair(allNodes, endNode, cache);
-        return ContractedDijkstra.mergeUpwardAndDownwardSolutions(startNodePair.up, endNodePair.down);
+        return ContractedDijkstra.mergeUpwardAndDownwardSolutions(allNodes, startNodePair.up, endNodePair.down);
     }
 
 }
