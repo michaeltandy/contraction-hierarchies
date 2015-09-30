@@ -2,3 +2,19 @@ language: java
 jdk:
 - openjdk7
 - oraclejdk8
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "nHm8w9ToA6647ezJd0/ifXRQmNOtPYldSRpjxBRtYIYvsHDK6qdDu9yHKFr3d4koBBT5l23dbWgYebVoIVC4wpI6izU+lCk90364DvSU22gTmgTavW3DHqGAoDrVRMD9vGNV3z4eG6lvQ6pehbG26UvQumkk4Q/DxuOyQGyY6c8="
+
+addons:
+  coverity_scan:
+    project:
+      name: "michaeltandy/contraction-hierarchies"
+      description: "Build submitted via Travis CI"
+    notification_email: coverity_results@mjt.me.uk
+    build_command_prepend: "mvn clean"
+    build_command:   "mvn -DskipTests=true compile"
+    branch_pattern: master
