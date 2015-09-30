@@ -163,7 +163,10 @@ public class TurnRestriction {
         allShortPathElements.removeAll(linksUnaffectedByTurnRestrictions);
         
         HashMap<NodeAndState,Node> newNodes = makeNewNodes(allShortPathElements, newNodeId);
-        HashSet<DirectedEdge> newEdges = makeAndLinkNewEdges(allShortPathElements, newNodes, newEdgeId);
+        HashSet<DirectedEdge> newInternalEdges = makeAndLinkNewInternalEdges(allShortPathElements, newNodes, newEdgeId);
+        
+        Set<DirectedEdge> borderEdges = outgoingBorderEdges(cluster);
+        HashSet<DirectedEdge> newBorderEdges = makeAndLinkOutBorderEdges(borderEdges, newNodes, newEdgeId);
         
         Node.sortNeighborListsAll(newNodes.values());
         Node.sortNeighborListsAll(cluster.nodes);
@@ -198,6 +201,18 @@ public class TurnRestriction {
         return withinCluster;
     }
     
+    private static Set<DirectedEdge> outgoingBorderEdges(TurnRestrictionCluster cluster) {
+        HashSet<DirectedEdge> result = new HashSet();
+        for (Node n : cluster.nodes) {
+            for (DirectedEdge de : n.getEdgesFromAndTo()) {
+                if (cluster.nodes.contains(de.from) && !cluster.nodes.contains(de.to)) {
+                    result.add(de);
+                }
+            }
+        }
+        return result;
+    }
+    
     private static HashSet<ShortestPathElement> linksUnaffectedByTurnRestrictions(HashSet<ShortestPathElement> allShortPathElements) {
         HashSet<ShortestPathElement> result = new HashSet();
         for (ShortestPathElement  spe : allShortPathElements) {
@@ -226,23 +241,41 @@ public class TurnRestriction {
         return result;
     }
     
-    private static HashSet<DirectedEdge> makeAndLinkNewEdges(HashSet<ShortestPathElement> allShortPathElements, HashMap<NodeAndState,Node> newNodes, AtomicLong newEdgeId) {
+    private static HashSet<DirectedEdge> makeAndLinkNewInternalEdges(HashSet<ShortestPathElement> allShortPathElements, HashMap<NodeAndState,Node> newNodes, AtomicLong newEdgeId) {
         HashSet<DirectedEdge> result = new HashSet();
         
         for (ShortestPathElement  spe : allShortPathElements) {
             Node from = newNodes.containsKey(spe.from)?newNodes.get(spe.from):spe.from.node;
             Node to = newNodes.containsKey(spe.to)?newNodes.get(spe.to):spe.to.node;
             
-            DirectedEdge newDe = new DirectedEdge(newEdgeId.incrementAndGet(), from, to, spe.via.driveTimeMs, spe.via.accessOnly);
-            from.edgesFrom.add(newDe);
-            to.edgesTo.add(newDe);
-            result.add(newDe);
+            result.add(cloneEdgeChangingNodes(spe.via, newEdgeId, from, to));
         }
         
         return result;
     }
     
-    public static String edgesToGeojson(MapData mapData) {
+    private static HashSet<DirectedEdge> makeAndLinkOutBorderEdges(Set<DirectedEdge> borderEdges, HashMap<NodeAndState,Node> newNodes, AtomicLong newEdgeId) {
+        HashSet<DirectedEdge> result = new HashSet();
+        
+        for (Map.Entry<NodeAndState,Node> spe : newNodes.entrySet()) {
+            for (DirectedEdge de : borderEdges) {
+                if (de.from==spe.getKey().node) {
+                    result.add(cloneEdgeChangingNodes(de, newEdgeId, spe.getValue(), de.to));
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    private static DirectedEdge cloneEdgeChangingNodes(DirectedEdge de, AtomicLong newEdgeId, Node from, Node to) {
+        DirectedEdge newDe = new DirectedEdge(newEdgeId.incrementAndGet(), from, to, de.driveTimeMs, de.accessOnly);
+        from.edgesFrom.add(newDe);
+        to.edgesTo.add(newDe);
+        return newDe;
+    }
+    
+    /*public static String edgesToGeojson(MapData mapData) {
         Collection<Node> allNodes = mapData.getAllNodes();
         Multimap<Long,TurnRestriction> turnRestrictionsByEdge = indexRestrictionsByEdge(mapData.allTurnRestrictions());
         StringBuilder sb = new StringBuilder();
@@ -261,7 +294,7 @@ public class TurnRestriction {
         sb.append("]}");
         
         return sb.toString();
-    }
+    }*/
     
         
     private static List<List<ShortestPathElement>> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, int driveTimeLimitMs) {
@@ -393,6 +426,10 @@ public class TurnRestriction {
             final NodeAndState other = (NodeAndState) obj;
             return (Objects.equals(this.node, other.node) && Objects.equals(this.activeTurnRestrictions, other.activeTurnRestrictions));
         }
+        
+        public String toString() {
+            return node + " with " + activeTurnRestrictions;
+        }
     }
     
     private static NodeAndState updateTurnRestrictionsIfLegal(DirectedEdge fromEdge, NodeAndState fromNode, DirectedEdge toEdge, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
@@ -477,7 +514,9 @@ public class TurnRestriction {
                     && Objects.equals(this.via, other.via);
         }
         
-        
+        public String toString() {
+            return "Via:" + via + " restrictions " + from.activeTurnRestrictions + " to " + to.activeTurnRestrictions;
+        }
     }
     
 }

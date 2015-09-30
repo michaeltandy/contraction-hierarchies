@@ -191,10 +191,65 @@ public class MakeTestData {
         return new MapData(nodes,trMap);
     }
     
+    /**
+     * No turn 2->3->6
+     * <pre>
+     * 1
+     * ↓
+     * 2←→5
+     * ↓  ↕
+     * 3←→6
+     * ↓
+     * 4
+     * </pre>
+     */
+    public static MapData makeTurnRestrictedThorn() {
+        HashMap<Long,Node> nodes = new HashMap();
+        for (long i=1 ; i<=6 ; i++) {
+            nodes.put(i, new Node(i, 52f, 0f, Barrier.FALSE));
+        }
+        
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(1L), nodes.get(2L));
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(3L));
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(3L), nodes.get(4L));
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(5L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(5L), nodes.get(6L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(3L), nodes.get(6L));
+        
+        List<Long> restriction = new ArrayList();
+        restriction.add(edgeBetween(nodes.get(2L), nodes.get(3L)).edgeId);
+        restriction.add(edgeBetween(nodes.get(3L), nodes.get(6L)).edgeId);
+        
+        TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, restriction);
+        HashMap<Long,TurnRestriction> trMap = new HashMap();
+        trMap.put(tr.getTurnRestrictionId(), tr);
+        
+        Node.sortNeighborListsAll(nodes.values());
+        return new MapData(nodes,trMap);
+    }
+    
+    private static DirectedEdge edgeBetween(Node from, Node to) {
+        DirectedEdge result = null;
+        for (DirectedEdge de : from.edgesFrom) {
+            if (de.from==from && de.to==to) {
+                if (result == null)
+                    result = de;
+                else
+                    throw new RuntimeException("More than one edge between " + from + " and " + to);
+            }
+        }
+        return result;
+    }
+    
     private static void makeBidirectionalEdgesAndAddToNodes(Node from, Node to ) {
+        makeUnidirectionalEdgesAndAddToNodes(from,to);
+        makeUnidirectionalEdgesAndAddToNodes(to,from);
+    }
+    
+    private static void makeUnidirectionalEdgesAndAddToNodes(Node from, Node to ) {
         int driveTimeMs = 1000;
         makeEdgeAndAddToNodes(from.nodeId*1000000+to.nodeId, from, to, driveTimeMs, AccessOnly.FALSE);
-        makeEdgeAndAddToNodes(to.nodeId*1000000+from.nodeId, to, from, driveTimeMs, AccessOnly.FALSE);
     }
     
     private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
