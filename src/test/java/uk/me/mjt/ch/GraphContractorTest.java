@@ -31,6 +31,24 @@ public class GraphContractorTest {
         assertEquals(9, contracted.nodes.size());
         
     }
+    
+    @Test
+    public void testAllToAll() {
+        MapData graph = MakeTestData.makeLadder(2,10);
+        
+        GraphContractor instance = new GraphContractor(graph);
+        instance.initialiseContractionOrder();
+        instance.contractAll();
+        
+        for (Node startNode : graph.getAllNodes()) {
+            for (Node endNode : graph.getAllNodes()) {
+                DijkstraSolution contracted = ContractedDijkstra.contractedGraphDijkstra(graph, startNode, endNode);
+                assertNotNull(contracted);
+                assertTrue(contracted.totalDriveTimeMs >= 0);
+                assertTrue(contracted.totalDriveTimeMs <= 10000);
+            }
+        }
+    }
 
     
 

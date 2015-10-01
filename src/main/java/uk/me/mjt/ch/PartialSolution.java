@@ -31,27 +31,44 @@ public abstract class PartialSolution {
         LinkedList<Node> nodes = new LinkedList();
         
         int currentIdx = index;
+        Node thisNode = md.getNodeById(nodeIds[currentIdx]);
+        final boolean from = searchInFromDirection(thisNode, viaEdges[currentIdx]);
+        
         while (currentIdx >= 0) {
-            long nodeId = nodeIds[currentIdx];
-            Node thisNode = md.getNodeById(nodeId);
             nodes.addFirst(thisNode);
             long viaEdgeId = viaEdges[currentIdx];
             if (viaEdgeId != START_NODE_TO_START_NODE_PATH) {
-                DirectedEdge viaEdge = null;
-                for (DirectedEdge de : thisNode.getEdgesFromAndTo()) {
-                    if (de.edgeId == viaEdgeId)
-                        viaEdge = de;
-                }
+                DirectedEdge viaEdge = findEdgeWithId(thisNode, viaEdgeId, from);
                 edges.addFirst(viaEdge);
-                Node fromNode = (viaEdge.to==thisNode?viaEdge.from:viaEdge.to);
-                currentIdx = Arrays.binarySearch(contractionOrders, fromNode.contractionOrder);
+                thisNode = (from?viaEdge.to:viaEdge.from);
+                currentIdx = Arrays.binarySearch(contractionOrders, thisNode.contractionOrder);
             } else {
-                currentIdx = -1;
+                break;
             }
         }
         
         DijkstraSolution result = new DijkstraSolution(totalDriveTimes[index], nodes, edges);
         return result;
+    }
+    
+    private boolean searchInFromDirection(Node node, long edgeId) {
+        if (findEdgeWithId(node, edgeId, true) != null) {
+            return true;
+        } else if (findEdgeWithId(node, edgeId, false) != null) {
+            return false;
+        } else if (edgeId == START_NODE_TO_START_NODE_PATH) {
+            return true; // Doesn't matter.
+        } else {
+            throw new RuntimeException("Couldn't find requested edge, which shouldn't happen?");
+        }
+    }
+    
+    private DirectedEdge findEdgeWithId(Node node, long edgeId, boolean from) {
+        for (DirectedEdge de : (from?node.edgesFrom:node.edgesTo)) {
+            if (de.edgeId==edgeId)
+                return de;
+        }
+        return null;
     }
     
     private void sortByContractionOrder(List<DijkstraSolution> individualNodeSolutions) {
