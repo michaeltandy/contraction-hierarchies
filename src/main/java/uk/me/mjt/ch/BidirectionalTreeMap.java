@@ -144,4 +144,8 @@ public class BidirectionalTreeMap<K extends Comparable<K>,V> {
         
     }
     
+    public String toString() {
+        return forwardMap.toString();
+    }
+    
 }

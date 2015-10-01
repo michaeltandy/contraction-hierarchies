@@ -16,27 +16,35 @@ public class BinaryFormat {
     private static final long FILE_VERSION_WRITTEN = MAX_FILE_VERSION_SUPPORTED;
     
     public MapData read(String nodeFile, String wayFile) throws IOException {
-        FileInputStream nodesIn = new FileInputStream(nodeFile);
-        FileInputStream waysIn = new FileInputStream(wayFile);
-        return read(nodesIn, waysIn, null);
+        try ( FileInputStream nodesIn = new FileInputStream(nodeFile);
+              FileInputStream waysIn = new FileInputStream(wayFile)) {
+            return read(nodesIn, waysIn, null);
+        }
     }
     
     public MapData read(String nodeFile, String wayFile, String turnRestrictionFile) throws IOException {
-        FileInputStream nodesIn = new FileInputStream(nodeFile);
-        FileInputStream waysIn = new FileInputStream(wayFile);
-        FileInputStream restrictionsIn = new FileInputStream(turnRestrictionFile);
-        
-        return read(nodesIn, waysIn, restrictionsIn);
+        try ( FileInputStream nodesIn = new FileInputStream(nodeFile);
+              FileInputStream waysIn = new FileInputStream(wayFile);
+              FileInputStream restrictionsIn = new FileInputStream(turnRestrictionFile)) {
+            return read(nodesIn, waysIn, restrictionsIn);
+        }
     }
     
     public MapData read(InputStream nodesIn, InputStream waysIn, InputStream restrictionsIn) throws IOException {
-        HashMap<Long,TurnRestriction> turnRestrictions;
+        HashMap<Long,TurnRestriction> turnRestrictions = new HashMap<>();
         if (restrictionsIn != null)
-            turnRestrictions = readTurnRestrictions(new DataInputStream(new BufferedInputStream(restrictionsIn)));
-        else
-            turnRestrictions = new HashMap<>();
-        HashMap<Long,Node> nodesById = readNodes(new DataInputStream(new BufferedInputStream(nodesIn)));
-        loadEdgesGivenNodes(nodesById,new DataInputStream(new BufferedInputStream(waysIn)));
+            try (DataInputStream dis = inStream(restrictionsIn)) {
+                turnRestrictions = readTurnRestrictions(dis);
+            }
+        
+        HashMap<Long,Node> nodesById;
+        try (DataInputStream dis = inStream(nodesIn)) {
+            nodesById = readNodes(dis);
+        }
+        
+        try (DataInputStream dis = inStream(waysIn)) {
+            loadEdgesGivenNodes(nodesById,dis);
+        }
         
         MapData md = new MapData(nodesById, turnRestrictions);
         md.validate();
@@ -48,19 +56,23 @@ public class BinaryFormat {
     }
     
     public void write(MapData toWrite, String nodeFile, String wayFile, String restrictionFile) throws IOException {
-        DataOutputStream waysOut = outStream(wayFile);
-        writeEdges(toWrite.getAllNodes(),waysOut);
-        waysOut.close();
+        try (DataOutputStream waysOut = outStream(wayFile)) {
+            writeEdges(toWrite.getAllNodes(),waysOut);
+        }
         
-        DataOutputStream nodesOut = outStream(nodeFile);
-        writeNodesWithoutEdges(toWrite.getAllNodes(),nodesOut);
-        nodesOut.close();
+        try (DataOutputStream nodesOut = outStream(nodeFile)) {
+            writeNodesWithoutEdges(toWrite.getAllNodes(),nodesOut);
+        }
         
         if (restrictionFile != null) {
-            DataOutputStream restrictionsOut = outStream(restrictionFile);
-            writeTurnRestrictions(toWrite.allTurnRestrictions(), restrictionsOut);
-            restrictionsOut.close();
+            try (DataOutputStream restrictionsOut = outStream(restrictionFile)) {
+                writeTurnRestrictions(toWrite.allTurnRestrictions(), restrictionsOut);
+            }
         }
+    }
+    
+    private static DataInputStream inStream(InputStream inStream) throws FileNotFoundException {
+        return new DataInputStream(new BufferedInputStream(inStream));
     }
     
     private static DataOutputStream outStream(String filename) throws FileNotFoundException {

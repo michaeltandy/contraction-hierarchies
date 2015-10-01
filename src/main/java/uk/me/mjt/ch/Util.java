@@ -57,20 +57,24 @@ public class Util {
     }
     
     private static void printShallowDiff(Node a, Node b) {
-        System.out.println("Null check: " + (a!=null) +","+(b!=null));
-        System.out.println("Node IDs: " + a.sourceDataNodeId +","+b.sourceDataNodeId);
-        System.out.println("Source data node IDs: " + a.nodeId +","+b.nodeId);
-        System.out.println("Lats: " + a.lat +","+ b.lat);
-        System.out.println("Lons: " + a.lon +","+ b.lon);
-        System.out.println("Contraction Allowed: " + a.contractionAllowed +","+ b.contractionAllowed);
-        System.out.println("Edges from: " + a.edgesFrom.size() +","+ b.edgesFrom.size());
-        System.out.println("Edges to: " + a.edgesTo.size() +","+ b.edgesTo.size());
-        System.out.println("Barrier: " + a.barrier +","+ b.barrier);
         
-        System.out.println("Edges from a:" + a.edgesFrom);
-        System.out.println("Edges from b:" + b.edgesFrom);
-        System.out.println("Edges to a:" + a.edgesTo);
-        System.out.println("Edges to b:" + b.edgesTo);
+        if (a!=null && b!=null) {
+            System.out.println("Node IDs: " + a.sourceDataNodeId +","+b.sourceDataNodeId);
+            System.out.println("Source data node IDs: " + a.nodeId +","+b.nodeId);
+            System.out.println("Lats: " + a.lat +","+ b.lat);
+            System.out.println("Lons: " + a.lon +","+ b.lon);
+            System.out.println("Contraction Allowed: " + a.contractionAllowed +","+ b.contractionAllowed);
+            System.out.println("Edges from: " + a.edgesFrom.size() +","+ b.edgesFrom.size());
+            System.out.println("Edges to: " + a.edgesTo.size() +","+ b.edgesTo.size());
+            System.out.println("Barrier: " + a.barrier +","+ b.barrier);
+
+            System.out.println("Edges from a:" + a.edgesFrom);
+            System.out.println("Edges from b:" + b.edgesFrom);
+            System.out.println("Edges to a:" + a.edgesTo);
+            System.out.println("Edges to b:" + b.edgesTo);
+        } else {
+            System.out.println("Null check: " + (a==null?"null":a.nodeId) +","+(b==null?"null":b.nodeId));
+        }
     }
     
     private static boolean compareEdgeArray(ArrayList<DirectedEdge> a, ArrayList<DirectedEdge> b, final boolean printDiff) {

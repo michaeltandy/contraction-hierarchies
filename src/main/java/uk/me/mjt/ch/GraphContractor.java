@@ -171,7 +171,6 @@ public class GraphContractor {
 
     private Node lazyContractNextNode(int contractionProgress, boolean includeUnprofitable) {
         Map.Entry<ContractionOrdering,Node> next = contractionOrder.pollFirstEntry();
-        boolean recentlySorted = false;
         while (next != null) {
             ContractionOrdering oldOrder = next.getKey();
             Node n = next.getValue();
@@ -182,8 +181,7 @@ public class GraphContractor {
             int balanceOfEdgesRemoved = getEdgeRemovedCount(n)-shortcuts.size();
             boolean profitable = balanceOfEdgesRemoved > -30; // OK, so our threshold for 'profitable' has a bit of margin on it.
             
-            if (profitable || (recentlySorted && includeUnprofitable)) {
-                recentlySorted = false;
+            if (profitable || includeUnprofitable) {
                 
                 ContractionOrdering newOrder = new ContractionOrdering(n,balanceOfEdgesRemoved);
                 if (contractionOrder.isEmpty() 
@@ -199,19 +197,12 @@ public class GraphContractor {
                     contractionOrder.put(newOrder, n);
                 }
                 
-            } else if (!recentlySorted) {
-                contractionOrder.put(oldOrder, n);
-                System.out.println("Reinitialising contraction order...");
-                initialiseContractionOrder();
-                recentlySorted = true;
-            } else if (!includeUnprofitable) {
+            } else {
                 System.out.println("Contraction became unprofitable with " + contractionOrder.size() + " nodes remaining.");
                 return null;
             }
+            
             next = contractionOrder.pollFirstEntry();
-            if (recentlySorted && n.equals(next.getValue())) {
-                System.out.println("Same thing's at the top of the contraction order.");
-            }
         }
         return null;
     }
