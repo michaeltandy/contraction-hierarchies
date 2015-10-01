@@ -40,8 +40,13 @@ public abstract class PartialSolution {
             if (viaEdgeId != START_NODE_TO_START_NODE_PATH) {
                 DirectedEdge viaEdge = findEdgeWithId(thisNode, viaEdgeId, from);
                 edges.addFirst(viaEdge);
-                thisNode = (from?viaEdge.to:viaEdge.from);
-                currentIdx = Arrays.binarySearch(contractionOrders, thisNode.contractionOrder);
+                Node nextNode = (from?viaEdge.to:viaEdge.from);
+                if (nextNode.contractionOrder > thisNode.contractionOrder) {
+                    throw new RuntimeException("Unexpectedly following edge from earlier-contracted node towards "
+                            + "later-contracted node? " + thisNode + " vs " + nextNode);
+                }
+                thisNode = nextNode;
+                currentIdx = Arrays.binarySearch(contractionOrders, 0, currentIdx, nextNode.contractionOrder);
             } else {
                 break;
             }

@@ -13,9 +13,6 @@ public class GraphContractorTest {
     public void testContractAll() {
         MapData graph = MakeTestData.makeLadder(2,10);
         
-        System.out.println(GeoJson.allLinks(graph.getAllNodes()));
-        System.out.println("\n\n\n");
-        
         GraphContractor instance = new GraphContractor(graph);
         instance.initialiseContractionOrder();
         instance.contractAll();
