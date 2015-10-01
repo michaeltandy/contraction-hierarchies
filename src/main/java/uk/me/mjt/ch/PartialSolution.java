@@ -23,6 +23,15 @@ public abstract class PartialSolution {
         makeCompactFormat(individualNodeSolutions);
     }
 
+    private PartialSolution(long[] nodeIds, long[] contractionOrders, int[] totalDriveTimes, long[] viaEdges) {
+        Preconditions.checkNoneNull(nodeIds,contractionOrders,totalDriveTimes,viaEdges);
+        Preconditions.require(nodeIds.length==contractionOrders.length, nodeIds.length==totalDriveTimes.length, nodeIds.length==viaEdges.length);
+        this.nodeIds = nodeIds;
+        this.contractionOrders = contractionOrders;
+        this.totalDriveTimes = totalDriveTimes;
+        this.viaEdges = viaEdges;
+    }
+    
     public DijkstraSolution getDijkstraSolution(MapData md, int index) {
         LinkedList<DirectedEdge> edges = new LinkedList();
         LinkedList<Node> nodes = new LinkedList();
@@ -134,16 +143,26 @@ public abstract class PartialSolution {
     public int[] getTotalDriveTimes() {
         return totalDriveTimes;
     }
+
+    public long[] getViaEdges() {
+        return viaEdges;
+    }
     
     public static class UpwardSolution extends PartialSolution {
         public UpwardSolution(List<DijkstraSolution> ds) {
             super(ds);
+        }
+        public UpwardSolution(long[] nodeIds, long[] contractionOrders, int[] totalDriveTimes, long[] viaEdges) {
+            super(nodeIds, contractionOrders, totalDriveTimes, viaEdges);
         }
     }
     
     public static class DownwardSolution extends PartialSolution {
         public DownwardSolution(List<DijkstraSolution> ds) {
             super(ds);
+        }
+        public DownwardSolution(long[] nodeIds, long[] contractionOrders, int[] totalDriveTimes, long[] viaEdges) {
+            super(nodeIds, contractionOrders, totalDriveTimes, viaEdges);
         }
     }
 
