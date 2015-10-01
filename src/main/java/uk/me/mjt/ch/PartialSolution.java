@@ -6,16 +6,13 @@ import java.util.*;
 public abstract class PartialSolution {
     private static final long START_NODE_TO_START_NODE_PATH = Long.MIN_VALUE;
     
-    private final Node nodeOfInterest;
-    
     private final long[] nodeIds;
     private final long[] contractionOrders;
     private final int[] totalDriveTimes;
     private final long[] viaEdges;
     
-    private PartialSolution(Node nodeOfInterest, List<DijkstraSolution> individualNodeSolutions) {
-        Preconditions.checkNoneNull(nodeOfInterest,individualNodeSolutions);
-        this.nodeOfInterest = nodeOfInterest;
+    private PartialSolution(List<DijkstraSolution> individualNodeSolutions) {
+        Preconditions.checkNoneNull(individualNodeSolutions);
         
         nodeIds = new long[individualNodeSolutions.size()];
         contractionOrders = new long[individualNodeSolutions.size()];
@@ -138,27 +135,15 @@ public abstract class PartialSolution {
         return totalDriveTimes;
     }
     
-    Node getNodeOfInterest() {
-        return nodeOfInterest;
-    }
-    
     public static class UpwardSolution extends PartialSolution {
-        public UpwardSolution(Node nodeOfInterest, List<DijkstraSolution> ds) {
-            super(nodeOfInterest,ds);
-        }
-        
-        public Node getStartNode() {
-            return getNodeOfInterest();
+        public UpwardSolution(List<DijkstraSolution> ds) {
+            super(ds);
         }
     }
     
     public static class DownwardSolution extends PartialSolution {
-        public DownwardSolution(Node nodeOfInterest, List<DijkstraSolution> ds) {
-            super(nodeOfInterest,ds);
-        }
-        
-        public Node getEndNode() {
-            return getNodeOfInterest();
+        public DownwardSolution(List<DijkstraSolution> ds) {
+            super(ds);
         }
     }
 
