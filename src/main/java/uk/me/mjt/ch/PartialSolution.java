@@ -57,14 +57,15 @@ public abstract class PartialSolution {
     }
     
     private boolean searchInFromDirection(Node node, long edgeId) {
-        if (findEdgeWithId(node, edgeId, true) != null) {
-            return true;
-        } else if (findEdgeWithId(node, edgeId, false) != null) {
-            return false;
-        } else if (edgeId == START_NODE_TO_START_NODE_PATH) {
+        if (edgeId == START_NODE_TO_START_NODE_PATH)
             return true; // Doesn't matter.
-        } else {
-            throw new RuntimeException("Couldn't find requested edge, which shouldn't happen?");
+        
+        try {
+            findEdgeWithId(node, edgeId, true);
+            return true;
+        } catch (EdgeNotFoundException e) {
+            findEdgeWithId(node, edgeId, false);
+            return false;
         }
     }
     
@@ -73,7 +74,13 @@ public abstract class PartialSolution {
             if (de.edgeId==edgeId)
                 return de;
         }
-        return null;
+        throw new EdgeNotFoundException();
+    }
+    
+    private class EdgeNotFoundException extends RuntimeException {
+        public EdgeNotFoundException() {
+            super("Couldn't find requested edge, which shouldn't happen?");
+        }
     }
     
     private void sortByContractionOrder(List<DijkstraSolution> individualNodeSolutions) {
