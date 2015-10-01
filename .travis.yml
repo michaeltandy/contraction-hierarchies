@@ -1,7 +1,6 @@
 language: java
 jdk:
 - openjdk7
-- oraclejdk8
 
 env:
   global:
@@ -18,3 +17,6 @@ addons:
     build_command_prepend: "mvn clean"
     build_command:   "mvn -DskipTests=true compile"
     branch_pattern: master
+
+
+17,18,17,15, Duration 6.00 secs (0.10 mins)
