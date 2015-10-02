@@ -147,6 +147,30 @@ public abstract class PartialSolution {
     public long[] getViaEdges() {
         return viaEdges;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 71 * hash + Arrays.hashCode(this.nodeIds);
+        hash = 71 * hash + Arrays.hashCode(this.contractionOrders);
+        hash = 71 * hash + Arrays.hashCode(this.totalDriveTimes);
+        hash = 71 * hash + Arrays.hashCode(this.viaEdges);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final PartialSolution other = (PartialSolution) obj;
+        return Arrays.equals(this.nodeIds, other.nodeIds)
+                && Arrays.equals(this.contractionOrders, other.contractionOrders)
+                && Arrays.equals(this.totalDriveTimes, other.totalDriveTimes)
+                && Arrays.equals(this.viaEdges, other.viaEdges);
+    }
+    
+    
     
     public static class UpwardSolution extends PartialSolution {
         public UpwardSolution(List<DijkstraSolution> ds) {

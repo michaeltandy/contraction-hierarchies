@@ -9,7 +9,8 @@ public class BinaryCache implements PartialSolutionCache {
     private static final int MAXIMUM_CAPACITY = 8000;
     private static final float LOAD_FACTOR = 0.75f;
     private static final boolean EXPIRE_ACCESS_ORDER = true;
-    private static final UpDownPairSerializer serializer = new UpDownPairSerializer();
+    //private static final UpDownPairSerializer serializer = new UpDownPairSerializer();
+    private static final UnsafeSerializer serializer = new UnsafeSerializer();
     
     private final Map<Node,byte[]> underlyingCache = Collections.synchronizedMap(new FixedCapacityMap());
     
