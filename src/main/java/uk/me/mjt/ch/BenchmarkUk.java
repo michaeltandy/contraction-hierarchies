@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import uk.me.mjt.ch.cache.BinaryCache;
 import uk.me.mjt.ch.cache.CachedContractedDijkstra;
 import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
@@ -93,7 +94,7 @@ public class BenchmarkUk {
     public void benchmarkCachedPathing(int repetitions) {
         System.out.println("Benchmarking cached pathing. Warming up & populating cache...");
         List<Node> testLocations = allNodes.chooseRandomNodes(4000);
-        SimpleCache cache = populateTestCache(testLocations);
+        BinaryCache cache = populateTestCache(testLocations);
         
         System.out.println("Warming up complete, benchmarking...");
         long startTime = System.currentTimeMillis();
@@ -108,8 +109,8 @@ public class BenchmarkUk {
         System.out.println(repetitions+" repetitions cached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
     }
 
-    private SimpleCache populateTestCache(List<Node> testLocations) {
-        SimpleCache cache = new SimpleCache();
+    private BinaryCache populateTestCache(List<Node> testLocations) {
+        BinaryCache cache = new BinaryCache();
         for (Node node : testLocations) {
             CachedContractedDijkstra.contractedGraphDijkstra(allNodes, hatfield, node, cache);
             CachedContractedDijkstra.contractedGraphDijkstra(allNodes, node, hatfield, cache);
