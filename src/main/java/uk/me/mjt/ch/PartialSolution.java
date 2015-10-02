@@ -1,48 +1,41 @@
 
 package uk.me.mjt.ch;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
 public abstract class PartialSolution {
     private static final long START_NODE_TO_START_NODE_PATH = Long.MIN_VALUE;
     
-    private final long[] nodeIds;
-    private final long[] contractionOrders;
-    private final int[] totalDriveTimes;
-    private final long[] viaEdges;
+    private final int recordCount;
+    private final ByteBuffer bb;
     
     private PartialSolution(List<DijkstraSolution> individualNodeSolutions) {
         Preconditions.checkNoneNull(individualNodeSolutions);
-        
-        nodeIds = new long[individualNodeSolutions.size()];
-        contractionOrders = new long[individualNodeSolutions.size()];
-        totalDriveTimes = new int[individualNodeSolutions.size()];
-        viaEdges = new long[individualNodeSolutions.size()];
-        
         sortByContractionOrder(individualNodeSolutions);
-        makeCompactFormat(individualNodeSolutions);
-    }
-
-    private PartialSolution(long[] nodeIds, long[] contractionOrders, int[] totalDriveTimes, long[] viaEdges) {
-        Preconditions.checkNoneNull(nodeIds,contractionOrders,totalDriveTimes,viaEdges);
-        Preconditions.require(nodeIds.length==contractionOrders.length, nodeIds.length==totalDriveTimes.length, nodeIds.length==viaEdges.length);
-        this.nodeIds = nodeIds;
-        this.contractionOrders = contractionOrders;
-        this.totalDriveTimes = totalDriveTimes;
-        this.viaEdges = viaEdges;
+        
+        recordCount = individualNodeSolutions.size();
+        bb = makeCompactFormat(individualNodeSolutions);
     }
     
+    private PartialSolution(ByteBuffer bb) {
+        Preconditions.checkNoneNull(bb);
+        recordCount = bb.getInt(0);
+        this.bb = bb;
+    }
+
     public DijkstraSolution getDijkstraSolution(MapData md, int index) {
         LinkedList<DirectedEdge> edges = new LinkedList();
         LinkedList<Node> nodes = new LinkedList();
+        ContractionOrderList contractionOrderList = new ContractionOrderList();
         
         int currentIdx = index;
-        Node thisNode = md.getNodeById(nodeIds[currentIdx]);
-        final boolean from = searchInFromDirection(thisNode, viaEdges[currentIdx]);
+        Node thisNode = md.getNodeById(getNodeId(currentIdx));
+        final boolean from = searchInFromDirection(thisNode, getViaEdge(currentIdx));
         
         while (currentIdx >= 0) {
             nodes.addFirst(thisNode);
-            long viaEdgeId = viaEdges[currentIdx];
+            long viaEdgeId = getViaEdge(currentIdx);
             if (viaEdgeId != START_NODE_TO_START_NODE_PATH) {
                 DirectedEdge viaEdge = findEdgeWithId(thisNode, viaEdgeId, from);
                 edges.addFirst(viaEdge);
@@ -52,13 +45,13 @@ public abstract class PartialSolution {
                             + "later-contracted node? " + thisNode + " vs " + nextNode);
                 }
                 thisNode = nextNode;
-                currentIdx = Arrays.binarySearch(contractionOrders, 0, currentIdx, nextNode.contractionOrder);
+                currentIdx = Collections.binarySearch(contractionOrderList, nextNode.contractionOrder);
             } else {
                 break;
             }
         }
         
-        DijkstraSolution result = new DijkstraSolution(totalDriveTimes[index], nodes, edges);
+        DijkstraSolution result = new DijkstraSolution(getTotalDriveTime(index), nodes, edges);
         return result;
     }
     
@@ -89,7 +82,7 @@ public abstract class PartialSolution {
         }
     }
     
-    private void sortByContractionOrder(List<DijkstraSolution> individualNodeSolutions) {
+    private static void sortByContractionOrder(List<DijkstraSolution> individualNodeSolutions) {
         Collections.sort(individualNodeSolutions, new Comparator<DijkstraSolution>() {
             @Override
             public int compare(DijkstraSolution a, DijkstraSolution b) {
@@ -111,73 +104,87 @@ public abstract class PartialSolution {
      *  2. Uses contiguous memory, which should allow efficient use of main memory bandwidth.
      *  3. Small enough to fit into L2 cache - or maybe even L1 cache!
      */
-    private void makeCompactFormat(List<DijkstraSolution> individualNodeSolutions) {
+    private static ByteBuffer makeCompactFormat(List<DijkstraSolution> individualNodeSolutions) {
+        int recordCount = individualNodeSolutions.size();
+        
+        int requiredCapacity = 28*recordCount + 4;
+        ByteBuffer bb = ByteBuffer.allocateDirect(requiredCapacity);
+        
+        bb.putInt(0,recordCount);
+        
+        int contractionOrderOffset = 4;
+        int nodeIdOffset = contractionOrderOffset + 8*recordCount;
+        int totalDriveTimeOffset = nodeIdOffset + 8*recordCount;
+        int viaEdgesOffset = totalDriveTimeOffset + 4*recordCount;
+        
         for (int i=0 ; i<individualNodeSolutions.size() ; i++) {
             DijkstraSolution ds = individualNodeSolutions.get(i);
             Node n = ds.getLastNode();
-            nodeIds[i] = n.nodeId;
-            contractionOrders[i] = n.contractionOrder;
-            totalDriveTimes[i] = ds.totalDriveTimeMs;
+            bb.putLong(nodeIdOffset+8*i, n.nodeId);
+            bb.putLong(contractionOrderOffset+8*i, n.contractionOrder);
+            bb.putInt(totalDriveTimeOffset+4*i, ds.totalDriveTimeMs);
             
             List<DirectedEdge> directedEdges = ds.getDeltaEdges();
 
             if (directedEdges.size() == 1) {
                 DirectedEdge de = directedEdges.get(0);
-                viaEdges[i] = de.edgeId;
+                bb.putLong(viaEdgesOffset+8*i, de.edgeId);
             } else if (ds.getFirstNode().equals(ds.getLastNode()) && directedEdges.isEmpty()) {
-                viaEdges[i] = START_NODE_TO_START_NODE_PATH;
+                bb.putLong(viaEdgesOffset+8*i, START_NODE_TO_START_NODE_PATH);
             } else {
                 throw new RuntimeException("Delta edge length isn't 1?");
             }
         }
+        return bb;
     }
 
-    public long[] getNodeIds() {
-        return nodeIds;
-    }
-
-    public long[] getContractionOrders() {
-        return contractionOrders;
-    }
-
-    public int[] getTotalDriveTimes() {
-        return totalDriveTimes;
-    }
-
-    public long[] getViaEdges() {
-        return viaEdges;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 71 * hash + Arrays.hashCode(this.nodeIds);
-        hash = 71 * hash + Arrays.hashCode(this.contractionOrders);
-        hash = 71 * hash + Arrays.hashCode(this.totalDriveTimes);
-        hash = 71 * hash + Arrays.hashCode(this.viaEdges);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        final PartialSolution other = (PartialSolution) obj;
-        return Arrays.equals(this.nodeIds, other.nodeIds)
-                && Arrays.equals(this.contractionOrders, other.contractionOrders)
-                && Arrays.equals(this.totalDriveTimes, other.totalDriveTimes)
-                && Arrays.equals(this.viaEdges, other.viaEdges);
+    public int getSize() {
+        return recordCount;
     }
     
+    public ByteBuffer getUnderlyingBuffer() {
+        return bb.asReadOnlyBuffer();
+    }
+    
+    public long getContractionOrder(int idx) {
+        int offset = 4 + 8*idx;
+        return bb.getLong(offset);
+    }
+    
+    public int getTotalDriveTime(int idx) {
+        int offset = 4 + 16*recordCount + 4*idx;
+        return bb.getInt(offset);
+    }
+    
+    private long getViaEdge(int idx) {
+        int offset = 4 + 20*recordCount + 8*idx;
+        return bb.getLong(offset);
+    }
+    
+    private long getNodeId(int idx) {
+        int offset = 4 + 8*recordCount + 8*idx;
+        return bb.getLong(offset);
+    }
+    
+    private class ContractionOrderList extends AbstractList<Long> {
+        @Override
+        public Long get(int index) {
+            return getContractionOrder(index);
+        }
+
+        @Override
+        public int size() {
+            return recordCount;
+        }
+    }
     
     
     public static class UpwardSolution extends PartialSolution {
         public UpwardSolution(List<DijkstraSolution> ds) {
             super(ds);
         }
-        public UpwardSolution(long[] nodeIds, long[] contractionOrders, int[] totalDriveTimes, long[] viaEdges) {
-            super(nodeIds, contractionOrders, totalDriveTimes, viaEdges);
+        public UpwardSolution(ByteBuffer bb) {
+            super(bb);
         }
     }
     
@@ -185,8 +192,8 @@ public abstract class PartialSolution {
         public DownwardSolution(List<DijkstraSolution> ds) {
             super(ds);
         }
-        public DownwardSolution(long[] nodeIds, long[] contractionOrders, int[] totalDriveTimes, long[] viaEdges) {
-            super(nodeIds, contractionOrders, totalDriveTimes, viaEdges);
+        public DownwardSolution(ByteBuffer bb) {
+            super(bb);
         }
     }
 

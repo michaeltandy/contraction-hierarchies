@@ -2,7 +2,6 @@
 package uk.me.mjt.ch;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -53,11 +52,9 @@ public class ContractedDijkstra {
         return mergeUpwardAndDownwardSolutions(allNodes, upwardSolution, downwardSolution);
     }
     
-    public static DijkstraSolution mergeUpwardAndDownwardSolutions(MapData allNodes, UpwardSolution upwardSolution, DownwardSolution downwardSolution) {
-        long[] upCO = upwardSolution.getContractionOrders();
-        long[] downCO = downwardSolution.getContractionOrders();
-        int[] upDriveTimes = upwardSolution.getTotalDriveTimes();
-        int[] downDriveTimes = downwardSolution.getTotalDriveTimes();
+    public static DijkstraSolution mergeUpwardAndDownwardSolutions(MapData allNodes, UpwardSolution up, DownwardSolution down) {
+        int upLength = up.getSize();
+        int downLength = down.getSize();
         
         int upIdx = 0;
         int downIdx = 0;
@@ -66,13 +63,13 @@ public class ContractedDijkstra {
         int shortestUpIdx = -1;
         int shortestDownIdx = -1;
         
-        while (upIdx<upCO.length && downIdx<downCO.length) {
-            long upContractionOrder = upCO[upIdx];
-            long downContractionOrder = downCO[downIdx];
+        while (upIdx<upLength && downIdx<downLength) {
+            long upContractionOrder = up.getContractionOrder(upIdx);
+            long downContractionOrder = down.getContractionOrder(downIdx);
             
             if (upContractionOrder==downContractionOrder) {
-                int upTotalDriveTime = upDriveTimes[upIdx];
-                int downTotalDriveTime = downDriveTimes[downIdx];
+                int upTotalDriveTime = up.getTotalDriveTime(upIdx);
+                int downTotalDriveTime = down.getTotalDriveTime(downIdx);
                 if (upTotalDriveTime + downTotalDriveTime < shortestSolutionDriveTime) {
                     shortestSolutionDriveTime = upTotalDriveTime + downTotalDriveTime;
                     shortestUpIdx = upIdx;
@@ -91,8 +88,8 @@ public class ContractedDijkstra {
             return null;
         }
         
-        DijkstraSolution shortestSolutionUp = upwardSolution.getDijkstraSolution(allNodes, shortestUpIdx);
-        DijkstraSolution shortestSolutionDown = downwardSolution.getDijkstraSolution(allNodes, shortestDownIdx);
+        DijkstraSolution shortestSolutionUp = up.getDijkstraSolution(allNodes, shortestUpIdx);
+        DijkstraSolution shortestSolutionDown = down.getDijkstraSolution(allNodes, shortestDownIdx);
         return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
     }
 
