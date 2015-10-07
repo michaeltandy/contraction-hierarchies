@@ -192,7 +192,7 @@ public enum AccessOnly {
                 if (toClone.contains(de.to)) {
                     Node fromReplacement = clonesByOldId.get(de.from.nodeId);
                     Node toReplacement = clonesByOldId.get(de.to.nodeId);
-                    makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), fromReplacement, toReplacement, de.driveTimeMs);
+                    de.cloneWithEdgeIdAndFromToNodeAddingToLists(edgeIdCounter.incrementAndGet(), fromReplacement, toReplacement, AccessOnly.FALSE);
                 }
             }
         }
@@ -206,22 +206,22 @@ public enum AccessOnly {
             Node startStrataNode = startStrata.get(n.nodeId);
             Node endStrataNode = endStrata.get(n.nodeId);
             if (n.allEdgesAccessOnly()) { // Internal to the cluster
-                makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), startStrataNode, endStrataNode, 0);
+                DirectedEdge.makeZeroLengthEdgeAddingToLists(edgeIdCounter.incrementAndGet(), startStrataNode, endStrataNode, AccessOnly.FALSE);
             } else { // Border to the cluster
-                makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), startStrataNode, n, 0);
-                makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), n, endStrataNode, 0);
+                DirectedEdge.makeZeroLengthEdgeAddingToLists(edgeIdCounter.incrementAndGet(), startStrataNode, n, AccessOnly.FALSE);
+                DirectedEdge.makeZeroLengthEdgeAddingToLists(edgeIdCounter.incrementAndGet(), n, endStrataNode, AccessOnly.FALSE);
             }
             
         }
     }
     
-    private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs) {
+    /*private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs) {
         Preconditions.checkNoneNull(from,to);
         DirectedEdge de = new DirectedEdge(edgeId, from, to, driveTimeMs, AccessOnly.FALSE);
         from.edgesFrom.add(de);
         to.edgesTo.add(de);
         return de;
-    }
+    }*/
     
     private static void removeAccessOnlyEdgesThatHaveBeenReplaced(AccessOnlyCluster cluster) {
         for (Node n : cluster.nodes) {

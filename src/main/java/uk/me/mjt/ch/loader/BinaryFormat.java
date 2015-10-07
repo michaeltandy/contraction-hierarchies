@@ -117,7 +117,7 @@ public class BinaryFormat {
             
             while(true) {
                 long edgeId = source.readLong();
-                long temp = source.readLong(); // REVISIT start using this
+                long sourceDataEdgeId = source.readLong();
                 long fromNodeId = source.readLong();
                 long toNodeId = source.readLong();
                 int driveTimeMs = source.readInt();
@@ -142,9 +142,9 @@ public class BinaryFormat {
                     DirectedEdge firstEdge = edgesById.get(firstEdgeId);
                     DirectedEdge secondEdge = edgesById.get(secondEdgeId);
                     Preconditions.checkNoneNull(firstEdge,secondEdge);
-                    de = new DirectedEdge(edgeId, fromNode, toNode, driveTimeMs, firstEdge, secondEdge);
+                    de = new DirectedEdge(edgeId, sourceDataEdgeId, firstEdge, secondEdge);
                 } else {
-                    de = new DirectedEdge(edgeId, fromNode, toNode, driveTimeMs, (isAccessOnly?AccessOnly.TRUE:AccessOnly.FALSE));
+                    de = new DirectedEdge(edgeId, sourceDataEdgeId, fromNode, toNode, driveTimeMs, (isAccessOnly?AccessOnly.TRUE:AccessOnly.FALSE));
                 }
                 
                 fromNode.edgesFrom.add(de);
@@ -201,7 +201,7 @@ public class BinaryFormat {
         writeEdgeRecursively(de.second,alreadyWritten,dos);
         
         dos.writeLong(de.edgeId);
-        dos.writeLong(de.edgeId); // REVISIT start using this
+        dos.writeLong(de.sourceDataEdgeId);
         dos.writeLong(de.from.nodeId);
         dos.writeLong(de.to.nodeId);
         dos.writeInt(de.driveTimeMs);

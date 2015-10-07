@@ -269,34 +269,12 @@ public class TurnRestriction {
     }
     
     private static DirectedEdge cloneEdgeChangingNodes(DirectedEdge de, AtomicLong newEdgeId, Node from, Node to) {
-        DirectedEdge newDe = new DirectedEdge(newEdgeId.incrementAndGet(), from, to, de.driveTimeMs, de.accessOnly);
+        DirectedEdge newDe = new DirectedEdge(newEdgeId.incrementAndGet(), de.sourceDataEdgeId, from, to, de.driveTimeMs, de.accessOnly);
         from.edgesFrom.add(newDe);
         to.edgesTo.add(newDe);
         return newDe;
     }
     
-    /*public static String edgesToGeojson(MapData mapData) {
-        Collection<Node> allNodes = mapData.getAllNodes();
-        Multimap<Long,TurnRestriction> turnRestrictionsByEdge = indexRestrictionsByEdge(mapData.allTurnRestrictions());
-        StringBuilder sb = new StringBuilder();
-        sb.append("{ \"type\": \"FeatureCollection\", \"features\": [\n");
-        
-        for (Node n : allNodes) {
-            for (DirectedEdge de : n.edgesFrom) {
-                if (turnRestrictionsByEdge.containsKey(de.edgeId)) {
-                    sb.append(GeoJson.singleDirectedEdge(de)).append(",\n");
-                }
-            }
-        }
-        
-        if (sb.toString().endsWith(",\n"))
-            sb.deleteCharAt(sb.length()-2);
-        sb.append("]}");
-        
-        return sb.toString();
-    }*/
-    
-        
     private static List<List<ShortestPathElement>> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, int driveTimeLimitMs) {
         HashMap<NodeAndState,NodeInfo> nodeInfo = new HashMap<>();
         ArrayList<List<ShortestPathElement>> solutions = new ArrayList<>();

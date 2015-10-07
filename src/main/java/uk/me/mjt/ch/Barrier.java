@@ -54,14 +54,14 @@ public enum Barrier {
             for (DirectedEdge de : new ArrayList<>(n.edgesFrom)) {
                 if (de.to == firstNeighbor) {
                     removeEdge(de);
-                    makeEdgeAndAddToNodes(de.edgeId, newNode, de.to, de.driveTimeMs, de.accessOnly);
+                    de.cloneWithEdgeIdAndFromToNodeAddingToLists(de.edgeId, newNode, de.to);
                 }
             }
             
             for (DirectedEdge de : new ArrayList<>(n.edgesTo)) {
                 if (de.from == firstNeighbor) {
                     removeEdge(de);
-                    makeEdgeAndAddToNodes(de.edgeId, de.from, newNode, de.driveTimeMs, de.accessOnly);
+                    de.cloneWithEdgeIdAndFromToNodeAddingToLists(de.edgeId, de.from, newNode);
                 }
             }
             
@@ -76,19 +76,18 @@ public enum Barrier {
     private static Node makeNewNodeLinkedByAccessOnlyEdges(Node n, AtomicLong edgeIdCounter, AtomicLong nodeIdCounter) {
         long newId = nodeIdCounter.incrementAndGet();
         Node clone = new Node(newId, n);
-        int driveTimeMs = 0;
-        makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), n, clone, driveTimeMs, AccessOnly.TRUE);
-        makeEdgeAndAddToNodes(edgeIdCounter.incrementAndGet(), clone, n, driveTimeMs, AccessOnly.TRUE);
+        DirectedEdge.makeZeroLengthEdgeAddingToLists(edgeIdCounter.incrementAndGet(), clone, n, AccessOnly.TRUE);
+        DirectedEdge.makeZeroLengthEdgeAddingToLists(edgeIdCounter.incrementAndGet(), n, clone, AccessOnly.TRUE);
         return clone;
     }
     
-    private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
+   /*private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
         Preconditions.checkNoneNull(from,to, accessOnly);
         DirectedEdge de = new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly);
         from.edgesFrom.add(de);
         to.edgesTo.add(de);
         return de;
-    }
+    }*/
     
     private static void removeEdge(DirectedEdge de) {
         Preconditions.checkNoneNull(de);

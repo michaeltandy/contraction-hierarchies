@@ -5,7 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import static org.junit.Assert.*;
-import uk.me.mjt.ch.Barrier;
+import uk.me.mjt.ch.AccessOnly;
+import uk.me.mjt.ch.DirectedEdge;
 import uk.me.mjt.ch.MakeTestData;
 import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
@@ -45,6 +46,14 @@ public class BinaryFormatTest {
     public void testSynthetic() throws Exception {
         MapData testData = MakeTestData.makeSimpleThreeEntry();
         testData.add(new Node(5, testData.getNodeById(1)));
+        writeAndReadBack(testData);
+    }
+    
+    @org.junit.Test
+    public void testSourceDataEdgeId() throws Exception {
+        MapData testData = MakeTestData.makeSimpleThreeEntry();
+        DirectedEdge de = new DirectedEdge(100L, 200L, testData.getNodeById(1L), testData.getNodeById(2L), 123, AccessOnly.FALSE);
+        de.addToToAndFromNodes();
         writeAndReadBack(testData);
     }
     

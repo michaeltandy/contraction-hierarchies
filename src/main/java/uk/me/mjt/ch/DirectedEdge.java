@@ -9,6 +9,7 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     private static final long PLACEHOLDER_ID = Long.MIN_VALUE;
     
     public final long edgeId;
+    public final long sourceDataEdgeId;
     public final Node from;
     public final Node to;
     public final int driveTimeMs;
@@ -20,19 +21,19 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     public final int contractionDepth;
     private final UnionList<DirectedEdge> uncontractedEdges;
     
-    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly isAccessOnly) {
-        this(checkId(edgeId),from,to,driveTimeMs,isAccessOnly,null,null);
+    public DirectedEdge(long edgeId, long sourceDataEdgeId, Node from, Node to, int driveTimeMs, AccessOnly isAccessOnly) {
+        this(checkId(edgeId), sourceDataEdgeId, from,to,driveTimeMs,isAccessOnly,null,null);
     }
     
-    public DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
-        this(checkId(edgeId), from, to, driveTimeMs, null, first, second);
+    public DirectedEdge(long edgeId, long sourceDataEdgeId, DirectedEdge first, DirectedEdge second) {
+        this(checkId(edgeId), sourceDataEdgeId, first.from, second.to, first.driveTimeMs+second.driveTimeMs, null, first, second);
     }
     
     public DirectedEdge(Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
-        this(PLACEHOLDER_ID, from, to, driveTimeMs, null, first, second);
+        this(PLACEHOLDER_ID, PLACEHOLDER_ID, from, to, driveTimeMs, null, first, second);
     }
 
-    private DirectedEdge(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly, DirectedEdge first, DirectedEdge second) {
+    private DirectedEdge(long edgeId, long sourceDateEdgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly, DirectedEdge first, DirectedEdge second) {
         Preconditions.checkNoneNull(from, to);
         Preconditions.require(driveTimeMs >= 0);
         if (edgeId>0 && first!=null && second!=null) {
@@ -40,6 +41,7 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
             Preconditions.require(edgeId>first.edgeId, edgeId>second.edgeId);
         }
         this.edgeId = edgeId;
+        this.sourceDataEdgeId = sourceDateEdgeId;
         this.from = from;
         this.to = to;
         this.driveTimeMs = driveTimeMs;
@@ -80,7 +82,36 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     }
     
     public DirectedEdge cloneWithEdgeId(long edgeId) {
-        return new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly, first, second);
+        Preconditions.require(this.edgeId==PLACEHOLDER_ID, contractionDepth>0);
+        return new DirectedEdge(edgeId,edgeId, from, to, driveTimeMs, accessOnly, first, second);
+    }
+    
+    public DirectedEdge cloneWithEdgeIdAndFromToNodeAddingToLists(long newEdgeId, Node from, Node to) {
+        return cloneWithEdgeIdAndFromToNodeAddingToLists(newEdgeId, from, to, accessOnly);
+    }
+    
+    public DirectedEdge cloneWithEdgeIdAndFromToNodeAddingToLists(long newEdgeId, Node from, Node to, AccessOnly accessOnly) {
+        Preconditions.require(edgeId!=PLACEHOLDER_ID, contractionDepth==0);
+        DirectedEdge de = new DirectedEdge(newEdgeId, sourceDataEdgeId, from, to, driveTimeMs, accessOnly, first, second);
+        de.addToToAndFromNodes();
+        return de;
+    }
+    
+    public static DirectedEdge makeZeroLengthEdgeAddingToLists(long newEdgeId, Node from, Node to, AccessOnly accessOnly) {
+        DirectedEdge de = new DirectedEdge(newEdgeId, -1, from, to, 0, accessOnly);
+        de.addToToAndFromNodes();
+        return de;
+    }
+    
+    public void addToToAndFromNodes() {
+        if (!from.edgesFrom.contains(this)) {
+            from.edgesFrom.add(this);
+            from.sortNeighborLists();
+        }
+        if (!to.edgesTo.contains(this)) {
+            to.edgesTo.add(this);
+            to.sortNeighborLists();
+        }
     }
     
     public void removeFromToAndFromNodes() {

@@ -88,6 +88,7 @@ date >> /mnt/runtimes.txt
 
 aws --region=us-west-1 s3 cp /mnt/runtimes.txt s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
 aws --region=us-west-1 s3 cp /var/log/cloud-init-output.log s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
+aws --region=us-west-1 s3 cp /mnt/ch/hs_err_pid* s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
 
 sudo shutdown -h now
 

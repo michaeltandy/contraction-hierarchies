@@ -91,6 +91,7 @@ public class Util {
     
     private static boolean edgesEqual(DirectedEdge a, DirectedEdge b) {
         return (a.edgeId == b.edgeId
+                && a.sourceDataEdgeId == b.sourceDataEdgeId
                 && a.contractionDepth == b.contractionDepth
                 && a.driveTimeMs == b.driveTimeMs
                 && a.accessOnly == b.accessOnly

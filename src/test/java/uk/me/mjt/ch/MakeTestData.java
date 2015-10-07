@@ -10,18 +10,12 @@ public class MakeTestData {
         Node n2 = new Node(2, 52f, 0.2f, Barrier.FALSE);
         Node n3 = new Node(3, 52f, 0.3f, Barrier.FALSE);
         
-        DirectedEdge de1 = new DirectedEdge(1001, n1, n2, 1, AccessOnly.FALSE);
-        DirectedEdge de2 = new DirectedEdge(1002, n2, n3, 2, AccessOnly.FALSE);
-        DirectedEdge de3 = new DirectedEdge(1003, n1, n3, 3, de1, de2);
-        
-        n1.edgesFrom.add(de1);
-        n2.edgesTo.add(de1);
-        
-        n2.edgesFrom.add(de2);
-        n3.edgesTo.add(de2);
-        
-        n1.edgesFrom.add(de3);
-        n3.edgesTo.add(de3);
+        DirectedEdge de1 = new DirectedEdge(1001,1001, n1, n2, 1, AccessOnly.FALSE);
+        de1.addToToAndFromNodes();
+        DirectedEdge de2 = new DirectedEdge(1002,1002, n2, n3, 2, AccessOnly.FALSE);
+        de2.addToToAndFromNodes();
+        DirectedEdge de3 = new DirectedEdge(1003,1003, de1, de2);
+        de3.addToToAndFromNodes();
         
         HashMap<Long,Node> result = new HashMap(3);
         result.put(1L, n1);
@@ -254,9 +248,8 @@ public class MakeTestData {
     
     private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
         Preconditions.checkNoneNull(from,to);
-        DirectedEdge de = new DirectedEdge(edgeId, from, to, driveTimeMs, accessOnly);
-        from.edgesFrom.add(de);
-        to.edgesTo.add(de);
+        DirectedEdge de = new DirectedEdge(edgeId, edgeId, from, to, driveTimeMs, accessOnly);
+        de.addToToAndFromNodes();
         return de;
     }
     
