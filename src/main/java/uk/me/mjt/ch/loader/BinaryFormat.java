@@ -11,7 +11,7 @@ import uk.me.mjt.ch.Preconditions;
 import uk.me.mjt.ch.TurnRestriction;
 
 public class BinaryFormat {
-    private static final long MAX_FILE_VERSION_SUPPORTED = 5;
+    private static final long MAX_FILE_VERSION_SUPPORTED = 6;
     private static final long MIN_FILE_VERSION_SUPPORTED = 5;
     private static final long FILE_VERSION_WRITTEN = MAX_FILE_VERSION_SUPPORTED;
     
@@ -80,9 +80,11 @@ public class BinaryFormat {
     }
     
     private HashMap<Long,Node> readNodes(DataInputStream source) throws IOException {
-        HashMap<Long,Node> nodesById = new HashMap(1000);
         long fileFormatVersion = source.readLong();
-        Preconditions.require(fileFormatVersion>=MIN_FILE_VERSION_SUPPORTED, fileFormatVersion<=MAX_FILE_VERSION_SUPPORTED);
+        checkFileFormatVersion(fileFormatVersion);
+        
+        long totalNodeCount = (fileFormatVersion >= 6 ? source.readLong() : -1);
+        HashMap<Long,Node> nodesById = new HashMap(Math.max(1000, (int)totalNodeCount));
         
         try {
             
@@ -109,9 +111,11 @@ public class BinaryFormat {
     }
     
     private void loadEdgesGivenNodes(HashMap<Long,Node> nodesById, DataInputStream source) throws IOException {
-        HashMap<Long,DirectedEdge> edgesById = new HashMap(1000);
         long fileFormatVersion = source.readLong();
-        Preconditions.require(fileFormatVersion>=MIN_FILE_VERSION_SUPPORTED, fileFormatVersion<=MAX_FILE_VERSION_SUPPORTED);
+        checkFileFormatVersion(fileFormatVersion);
+        
+        long totalEdgeCount = (fileFormatVersion >= 6 ? source.readLong() : -1);
+        HashMap<Long,DirectedEdge> edgesById = new HashMap(Math.max(1000, (int)totalEdgeCount));
         
         try {
             
@@ -160,6 +164,7 @@ public class BinaryFormat {
     
     public void writeNodesWithoutEdges(Collection<Node> toWrite, DataOutputStream dest) throws IOException {
         dest.writeLong(FILE_VERSION_WRITTEN);
+        dest.writeLong(toWrite.size());
         
         for (Node n : toWrite) {
             dest.writeLong(n.nodeId);
@@ -174,7 +179,7 @@ public class BinaryFormat {
     
     public void writeEdges(Collection<Node> toWrite, DataOutputStream dos) throws IOException {
         dos.writeLong(FILE_VERSION_WRITTEN);
-        //dos.writeLong(calculateTotalEdgeCount(toWrite));
+        dos.writeLong(calculateTotalEdgeCount(toWrite));
         
         HashSet<Long> writtenEdges = new HashSet();
         for (Node n : toWrite) {
@@ -184,13 +189,13 @@ public class BinaryFormat {
         }
     }
     
-    /*private long calculateTotalEdgeCount(Collection<Node> toWrite) {
+    private long calculateTotalEdgeCount(Collection<Node> toWrite) {
         long totalEdgeCount = 0;
         for (Node n : toWrite) {
             totalEdgeCount += n.edgesFrom.size();
         }
         return totalEdgeCount;
-    }*/
+    }
         
     private void writeEdgeRecursively(DirectedEdge de, HashSet<Long> alreadyWritten, DataOutputStream dos) throws IOException {
         if (de==null || alreadyWritten.contains(de.edgeId)) {
@@ -234,10 +239,11 @@ public class BinaryFormat {
     }*/
     
     private HashMap<Long,TurnRestriction> readTurnRestrictions(DataInputStream source) throws IOException {
-        HashMap<Long,TurnRestriction> result = new HashMap();
-        
         long fileFormatVersion = source.readLong();
-        Preconditions.require(fileFormatVersion>=MIN_FILE_VERSION_SUPPORTED, fileFormatVersion<=MAX_FILE_VERSION_SUPPORTED);
+        checkFileFormatVersion(fileFormatVersion);
+        
+        long totalRestrictionCount = (fileFormatVersion >= 6 ? source.readLong() : -1);
+        HashMap<Long,TurnRestriction> result = new HashMap(Math.max(1000, (int)totalRestrictionCount));
         
         try {
             
@@ -262,6 +268,7 @@ public class BinaryFormat {
     
     public void writeTurnRestrictions(Collection<TurnRestriction> toWrite, DataOutputStream dos) throws IOException {
         dos.writeLong(FILE_VERSION_WRITTEN);
+        dos.writeLong(toWrite.size());
         
         for (TurnRestriction tr : toWrite) {
             
@@ -272,6 +279,14 @@ public class BinaryFormat {
                 dos.writeLong(edgeId);
             }
             
+        }
+    }
+    
+    private void checkFileFormatVersion(long fileFormatVersion) throws IOException{
+        if (fileFormatVersion < MIN_FILE_VERSION_SUPPORTED) {
+            throw new IOException("File format version, " + fileFormatVersion + ", is below lowest version supported, " + MIN_FILE_VERSION_SUPPORTED);
+        } else if (fileFormatVersion > MAX_FILE_VERSION_SUPPORTED) {
+            throw new IOException("File format version, " + fileFormatVersion + ", is above greatest version supported, " + MAX_FILE_VERSION_SUPPORTED);
         }
     }
 

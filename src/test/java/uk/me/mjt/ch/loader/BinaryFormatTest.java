@@ -76,6 +76,19 @@ public class BinaryFormatTest {
         
         assertTrue(Util.deepEquals(testData, loopback, true));
     }
+    
+    @org.junit.Test(expected=IOException.class)
+    public void testExceptionForOldVersion() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        dos.writeLong(-1);
+        dos.writeChars("some other data");
+        dos.close();
+        
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        BinaryFormat instance = new BinaryFormat();
+        instance.read(bais, bais, bais);
+    }
 
     
     
