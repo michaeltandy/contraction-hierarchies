@@ -108,7 +108,7 @@ public abstract class PartialSolution {
     private static ByteBuffer makeCompactFormat(List<DijkstraSolution> individualNodeSolutions) {
         int recordCount = individualNodeSolutions.size();
         
-        int requiredCapacity = 28*recordCount + 4;
+        int requiredCapacity = 24*recordCount + 4;
         ByteBuffer bb = ByteBuffer.allocateDirect(requiredCapacity);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         

@@ -35,16 +35,16 @@ public class BinaryCache implements PartialSolutionCache {
         }
     }
     
-    private ByteBuffer serialize(UpAndDownPair upDown) {
+    ByteBuffer serialize(UpAndDownPair upDown) {
         ByteBuffer a = upDown.up.getUnderlyingBuffer();
         ByteBuffer b = upDown.down.getUnderlyingBuffer();
-        ByteBuffer joined = ByteBuffer.allocateDirect(a.capacity()+b.capacity());
+        ByteBuffer joined = ByteBuffer.allocateDirect(a.limit()+b.limit());
         joined.order(ByteOrder.LITTLE_ENDIAN);
         joined.put(a).put(b);
         return joined;
     }
     
-    private UpAndDownPair deserialize(ByteBuffer bb) {
+    UpAndDownPair deserialize(ByteBuffer bb) {
         if (bb==null)
             return null;
         
@@ -52,7 +52,8 @@ public class BinaryCache implements PartialSolutionCache {
         ByteBuffer a = bb.slice();
         a.order(ByteOrder.LITTLE_ENDIAN);
         int firstRecordCount = bb.getInt(0);
-        int firstLength = 28*firstRecordCount + 4;
+        int firstLength = 24*firstRecordCount + 4;
+        a.limit(firstLength);
         
         bb.position(firstLength);
         ByteBuffer b = bb.slice();

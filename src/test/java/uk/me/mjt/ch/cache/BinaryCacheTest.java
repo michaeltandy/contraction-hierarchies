@@ -57,6 +57,17 @@ public class BinaryCacheTest {
         }
     }
     
-    
+    @Test
+    public void testRepeatedSerialize() {
+        Node n = graph.getNodeById(1L);
+        UpAndDownPair uadp = CachedContractedDijkstra.calculateUpDownPair(graph, n);
+        
+        ByteBuffer bb1 = cache.serialize(uadp);
+        ByteBuffer bb2 = cache.serialize(cache.deserialize(bb1));
+        ByteBuffer bb3 = cache.serialize(cache.deserialize(bb2));
+        
+        assertEquals(bb1.capacity(),bb3.capacity());
+        assertEquals(bb1.limit(),bb3.limit());
+    }
 
 }
