@@ -38,7 +38,7 @@ public class BinaryCache implements PartialSolutionCache {
     ByteBuffer serialize(UpAndDownPair upDown) {
         ByteBuffer a = upDown.up.getUnderlyingBuffer();
         ByteBuffer b = upDown.down.getUnderlyingBuffer();
-        ByteBuffer joined = ByteBuffer.allocateDirect(a.limit()+b.limit());
+        ByteBuffer joined = ByteBuffer.allocateDirect(a.capacity()+b.capacity());
         joined.order(ByteOrder.LITTLE_ENDIAN);
         joined.put(a).put(b);
         return joined;
@@ -48,13 +48,15 @@ public class BinaryCache implements PartialSolutionCache {
         if (bb==null)
             return null;
         
-        bb.position(0);
-        ByteBuffer a = bb.slice();
-        a.order(ByteOrder.LITTLE_ENDIAN);
         int firstRecordCount = bb.getInt(0);
         int firstLength = 24*firstRecordCount + 4;
-        a.limit(firstLength);
         
+        bb.position(0); // REVISIT not thread safe?
+        bb.limit(firstLength);
+        ByteBuffer a = bb.slice();
+        a.order(ByteOrder.LITTLE_ENDIAN);
+        
+        bb.limit(bb.capacity());
         bb.position(firstLength);
         ByteBuffer b = bb.slice();
         b.order(ByteOrder.LITTLE_ENDIAN);

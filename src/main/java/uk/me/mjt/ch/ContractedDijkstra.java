@@ -1,6 +1,7 @@
 
 package uk.me.mjt.ch;
 
+import java.nio.IntBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,6 +56,8 @@ public class ContractedDijkstra {
     public static DijkstraSolution mergeUpwardAndDownwardSolutions(MapData allNodes, UpwardSolution up, DownwardSolution down) {
         int upLength = up.getSize();
         int downLength = down.getSize();
+        IntBuffer upCO = up.getContractionOrderBuffer();
+        IntBuffer downCO = down.getContractionOrderBuffer();
         
         int upIdx = 0;
         int downIdx = 0;
@@ -64,8 +67,8 @@ public class ContractedDijkstra {
         int shortestDownIdx = -1;
         
         while (upIdx<upLength && downIdx<downLength) {
-            long upContractionOrder = up.getContractionOrder(upIdx);
-            long downContractionOrder = down.getContractionOrder(downIdx);
+            int upContractionOrder = upCO.get(upIdx);
+            int downContractionOrder = downCO.get(downIdx);
             
             if (upContractionOrder==downContractionOrder) {
                 int upTotalDriveTime = up.getTotalDriveTime(upIdx);

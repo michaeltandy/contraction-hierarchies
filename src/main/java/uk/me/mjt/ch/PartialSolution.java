@@ -3,6 +3,7 @@ package uk.me.mjt.ch;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.*;
 
 public abstract class PartialSolution {
@@ -166,6 +167,15 @@ public abstract class PartialSolution {
     private long getViaEdge(int idx) {
         int offset = 4 + 16*recordCount + 8*idx;
         return bb.getLong(offset);
+    }
+    
+    public IntBuffer getContractionOrderBuffer() {
+        bb.position(4); // REVISIT is this thread safe?
+        bb.limit(4 + 4*recordCount);
+        ByteBuffer view = bb.slice();
+        bb.limit(bb.capacity());
+        view.order(ByteOrder.LITTLE_ENDIAN);
+        return view.asIntBuffer();
     }
     
     private class ContractionOrderList extends AbstractList<Integer> {
