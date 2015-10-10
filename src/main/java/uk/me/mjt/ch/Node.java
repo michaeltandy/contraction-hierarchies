@@ -3,7 +3,7 @@ package uk.me.mjt.ch;
 import java.util.*;
 
 public class Node implements Comparable<Node> {
-    public static final long UNCONTRACTED = Long.MAX_VALUE;
+    public static final int UNCONTRACTED = Integer.MAX_VALUE;
     
     public final long nodeId;
     public final long sourceDataNodeId;
@@ -14,7 +14,7 @@ public class Node implements Comparable<Node> {
     public boolean contractionAllowed = true;
     public Barrier barrier;
 
-    public long contractionOrder = UNCONTRACTED;
+    public int contractionOrder = UNCONTRACTED;
     
     public Node(long nodeId, float lat, float lon, Barrier barrier) {
         this(nodeId, nodeId, lat, lon, barrier);
@@ -106,9 +106,9 @@ public class Node implements Comparable<Node> {
             @Override
             public int compare(DirectedEdge t, DirectedEdge t1) {
                 if (t1.to.contractionOrder != t.to.contractionOrder) {
-                    return Long.compare(t1.to.contractionOrder, t.to.contractionOrder);
+                    return Integer.compare(t1.to.contractionOrder, t.to.contractionOrder);
                 } else if (t1.driveTimeMs != t.driveTimeMs) {
-                    return Long.compare(t.driveTimeMs, t1.driveTimeMs);
+                    return Integer.compare(t.driveTimeMs, t1.driveTimeMs);
                 } else if (t.to.nodeId != t1.to.nodeId) {
                     return Long.compare(t.to.nodeId, t1.to.nodeId);
                 } else {
@@ -121,9 +121,9 @@ public class Node implements Comparable<Node> {
             @Override
             public int compare(DirectedEdge t, DirectedEdge t1) {
                 if (t1.from.contractionOrder != t.from.contractionOrder) {
-                    return Long.compare(t1.from.contractionOrder, t.from.contractionOrder);
+                    return Integer.compare(t1.from.contractionOrder, t.from.contractionOrder);
                 } else if (t1.driveTimeMs != t.driveTimeMs) {
-                    return Long.compare(t.driveTimeMs, t1.driveTimeMs);
+                    return Integer.compare(t.driveTimeMs, t1.driveTimeMs);
                 } else if (t.from.nodeId != t1.from.nodeId) {
                     return Long.compare(t.from.nodeId, t1.from.nodeId);
                 } else {

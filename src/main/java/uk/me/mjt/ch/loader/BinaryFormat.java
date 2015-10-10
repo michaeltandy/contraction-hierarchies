@@ -91,7 +91,7 @@ public class BinaryFormat {
             while(true) {
                 long nodeId = source.readLong();
                 long sourceDataNodeId = source.readLong();
-                long contrctionOrder = source.readLong();
+                long contractionOrder = source.readLong();
                 int properties = source.readByte();
                 boolean isBorderNode = (properties&0x01)!=0;
                 boolean isBarrier = (properties&0x02)!=0;
@@ -100,7 +100,9 @@ public class BinaryFormat {
                 
                 Node n = new Node(nodeId,sourceDataNodeId,(float)lat,(float)lon,(isBarrier?Barrier.TRUE:Barrier.FALSE));
                 n.contractionAllowed = !isBorderNode;
-                n.contractionOrder=contrctionOrder;
+                if (contractionOrder==Long.MAX_VALUE)
+                    contractionOrder=Node.UNCONTRACTED;
+                n.contractionOrder=(int)contractionOrder;
                 
                 nodesById.put(nodeId, n);
             }
@@ -169,7 +171,11 @@ public class BinaryFormat {
         for (Node n : toWrite) {
             dest.writeLong(n.nodeId);
             dest.writeLong(n.sourceDataNodeId);
-            dest.writeLong(n.contractionOrder);
+            if (n.isContracted()) { // REVISIT next time we bump the file version, maybe write it as an int?
+                dest.writeLong(n.contractionOrder);
+            } else {
+                dest.writeLong(Long.MAX_VALUE);
+            }
             int properties = (!n.contractionAllowed?0x01:0x00) | (n.barrier==Barrier.TRUE?0x02:0x00);
             dest.writeByte(properties);
             dest.writeDouble(n.lat);

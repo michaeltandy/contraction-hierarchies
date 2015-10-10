@@ -86,10 +86,10 @@ public abstract class PartialSolution {
         Collections.sort(individualNodeSolutions, new Comparator<DijkstraSolution>() {
             @Override
             public int compare(DijkstraSolution a, DijkstraSolution b) {
-                long aco = a.getLastNode().contractionOrder;
-                long bco = b.getLastNode().contractionOrder;
+                int aco = a.getLastNode().contractionOrder;
+                int bco = b.getLastNode().contractionOrder;
                 if (aco != bco) {
-                    return Long.compare(aco,bco);
+                    return Integer.compare(aco,bco);
                 } else {
                     throw new RuntimeException("Two solutions with the same contraction order?!");
                 }
@@ -113,7 +113,7 @@ public abstract class PartialSolution {
         bb.putInt(0,recordCount);
         
         int contractionOrderOffset = 4;
-        int nodeIdOffset = contractionOrderOffset + 8*recordCount;
+        int nodeIdOffset = contractionOrderOffset + 4*recordCount;
         int totalDriveTimeOffset = nodeIdOffset + 8*recordCount;
         int viaEdgesOffset = totalDriveTimeOffset + 4*recordCount;
         
@@ -121,7 +121,7 @@ public abstract class PartialSolution {
             DijkstraSolution ds = individualNodeSolutions.get(i);
             Node n = ds.getLastNode();
             bb.putLong(nodeIdOffset+8*i, n.nodeId);
-            bb.putLong(contractionOrderOffset+8*i, n.contractionOrder);
+            bb.putInt(contractionOrderOffset+4*i, n.contractionOrder);
             bb.putInt(totalDriveTimeOffset+4*i, ds.totalDriveTimeMs);
             
             List<DirectedEdge> directedEdges = ds.getDeltaEdges();
@@ -146,29 +146,29 @@ public abstract class PartialSolution {
         return bb.asReadOnlyBuffer();
     }
     
-    public long getContractionOrder(int idx) {
-        int offset = 4 + 8*idx;
+    public int getContractionOrder(int idx) {
+        int offset = 4 + 4*idx;
+        return bb.getInt(offset);
+    }
+    
+    private long getNodeId(int idx) {
+        int offset = 4 + 4*recordCount + 8*idx;
         return bb.getLong(offset);
     }
     
     public int getTotalDriveTime(int idx) {
-        int offset = 4 + 16*recordCount + 4*idx;
+        int offset = 4 + 12*recordCount + 4*idx;
         return bb.getInt(offset);
     }
     
     private long getViaEdge(int idx) {
-        int offset = 4 + 20*recordCount + 8*idx;
+        int offset = 4 + 16*recordCount + 8*idx;
         return bb.getLong(offset);
     }
     
-    private long getNodeId(int idx) {
-        int offset = 4 + 8*recordCount + 8*idx;
-        return bb.getLong(offset);
-    }
-    
-    private class ContractionOrderList extends AbstractList<Long> {
+    private class ContractionOrderList extends AbstractList<Integer> {
         @Override
-        public Long get(int index) {
+        public Integer get(int index) {
             return getContractionOrder(index);
         }
 
