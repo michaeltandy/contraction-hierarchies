@@ -1,6 +1,7 @@
 package uk.me.mjt.ch.cache;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.PartialSolution.DownwardSolution;
@@ -38,6 +39,7 @@ public class BinaryCache implements PartialSolutionCache {
         ByteBuffer a = upDown.up.getUnderlyingBuffer();
         ByteBuffer b = upDown.down.getUnderlyingBuffer();
         ByteBuffer joined = ByteBuffer.allocateDirect(a.capacity()+b.capacity());
+        joined.order(ByteOrder.LITTLE_ENDIAN);
         joined.put(a).put(b);
         return joined;
     }
@@ -48,11 +50,13 @@ public class BinaryCache implements PartialSolutionCache {
         
         bb.position(0);
         ByteBuffer a = bb.slice();
+        a.order(ByteOrder.LITTLE_ENDIAN);
         int firstRecordCount = bb.getInt(0);
         int firstLength = 28*firstRecordCount + 4;
         
         bb.position(firstLength);
         ByteBuffer b = bb.slice();
+        b.order(ByteOrder.LITTLE_ENDIAN);
         
         return new UpAndDownPair(new UpwardSolution(a), new DownwardSolution(b));
     }

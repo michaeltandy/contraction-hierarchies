@@ -20,7 +20,7 @@ public class CachedContractedDijkstra {
         return udp;
     }
 
-    private static UpAndDownPair calculateUpDownPair(MapData allNodes, Node startEndNode) {
+    static UpAndDownPair calculateUpDownPair(MapData allNodes, Node startEndNode) {
         PartialSolution.UpwardSolution upwardSolution = ContractedDijkstra.calculateUpwardSolution(allNodes, startEndNode);
         PartialSolution.DownwardSolution downwardSolution = ContractedDijkstra.calculateDownwardSolution(allNodes, startEndNode);
         return new UpAndDownPair(upwardSolution, downwardSolution);

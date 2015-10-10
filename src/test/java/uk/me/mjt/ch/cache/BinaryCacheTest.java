@@ -1,6 +1,7 @@
 
 package uk.me.mjt.ch.cache;
 
+import java.nio.ByteBuffer;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import uk.me.mjt.ch.DijkstraSolution;
@@ -10,21 +11,23 @@ import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
 
 public class BinaryCacheTest {
+    
+    MapData graph;
+    GraphContractor instance;
+    BinaryCache cache;
 
     public BinaryCacheTest() {
+        graph = MakeTestData.makeLadder(2,10);
+        instance = new GraphContractor(graph);
+        instance.initialiseContractionOrder();
+        instance.contractAll();
+        cache = new BinaryCache();
     }
 
     @Test
     public void testContractedGraphDijkstra() {
-        MapData graph = MakeTestData.makeLadder(2,10);
-        GraphContractor instance = new GraphContractor(graph);
-        instance.initialiseContractionOrder();
-        instance.contractAll();
-        
         Node startNode = graph.getNodeById(1L);
         Node endNode = graph.getNodeById(18L);
-        
-        BinaryCache cache = new BinaryCache();
         
         // This should populate the cache:
         DijkstraSolution result1 = CachedContractedDijkstra.contractedGraphDijkstra(graph, startNode, endNode, cache);
@@ -41,12 +44,6 @@ public class BinaryCacheTest {
     
     @Test
     public void testAllToAll() {
-        MapData graph = MakeTestData.makeLadder(2,10);
-        GraphContractor instance = new GraphContractor(graph);
-        instance.initialiseContractionOrder();
-        instance.contractAll();
-        
-        BinaryCache cache = new BinaryCache();
         
         for (Node startNode : graph.getAllNodes()) {
             for (Node endNode : graph.getAllNodes()) {
@@ -59,5 +56,7 @@ public class BinaryCacheTest {
             }
         }
     }
+    
+    
 
 }

@@ -2,6 +2,7 @@
 package uk.me.mjt.ch;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 
 public abstract class PartialSolution {
@@ -109,6 +110,7 @@ public abstract class PartialSolution {
         
         int requiredCapacity = 28*recordCount + 4;
         ByteBuffer bb = ByteBuffer.allocateDirect(requiredCapacity);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
         
         bb.putInt(0,recordCount);
         
