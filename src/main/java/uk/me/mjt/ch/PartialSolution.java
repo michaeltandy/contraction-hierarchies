@@ -159,7 +159,7 @@ public abstract class PartialSolution {
         return bb.getLong(offset);
     }
     
-    public int getTotalDriveTime(int idx) {
+    private int getTotalDriveTime(int idx) {
         int offset = 4 + 12*recordCount + 4*idx;
         return bb.getInt(offset);
     }
@@ -167,6 +167,15 @@ public abstract class PartialSolution {
     private long getViaEdge(int idx) {
         int offset = 4 + 16*recordCount + 8*idx;
         return bb.getLong(offset);
+    }
+    
+    public IntBuffer getTotalDriveTimeBuffer() {
+        bb.position(4 + 12*recordCount); // REVISIT is this thread safe?
+        bb.limit(4 + 16*recordCount);
+        ByteBuffer view = bb.slice();
+        bb.limit(bb.capacity());
+        view.order(ByteOrder.LITTLE_ENDIAN);
+        return view.asIntBuffer();
     }
     
     public IntBuffer getContractionOrderBuffer() {

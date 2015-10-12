@@ -125,8 +125,8 @@ public class BenchmarkUk {
             instance.loadAndCheckMapData();
             System.gc(); // Hopefully start the map data on its journey to oldgen :)
             
-            instance.benchmarkPathing(2);
-            instance.benchmarkParallelPathing(2);
+            //instance.benchmarkPathing(2);
+            //instance.benchmarkParallelPathing(2);
             instance.benchmarkCachedPathing(100);
             
         } catch (Exception e) {

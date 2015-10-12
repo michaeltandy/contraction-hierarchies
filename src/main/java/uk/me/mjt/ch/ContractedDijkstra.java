@@ -54,47 +54,52 @@ public class ContractedDijkstra {
     }
     
     public static DijkstraSolution mergeUpwardAndDownwardSolutions(MapData allNodes, UpwardSolution up, DownwardSolution down) {
-        int upLength = up.getSize();
-        int downLength = down.getSize();
-        IntBuffer upCO = up.getContractionOrderBuffer();
-        IntBuffer downCO = down.getContractionOrderBuffer();
         
-        int upIdx = 0;
-        int downIdx = 0;
-        
-        int shortestSolutionDriveTime = Integer.MAX_VALUE;
-        int shortestUpIdx = -1;
-        int shortestDownIdx = -1;
-        
-        while (upIdx<upLength && downIdx<downLength) {
-            int upContractionOrder = upCO.get(upIdx);
-            int downContractionOrder = downCO.get(downIdx);
-            
-            if (upContractionOrder==downContractionOrder) {
-                int upTotalDriveTime = up.getTotalDriveTime(upIdx);
-                int downTotalDriveTime = down.getTotalDriveTime(downIdx);
-                if (upTotalDriveTime + downTotalDriveTime < shortestSolutionDriveTime) {
-                    shortestSolutionDriveTime = upTotalDriveTime + downTotalDriveTime;
-                    shortestUpIdx = upIdx;
-                    shortestDownIdx = downIdx;
-                }
-                downIdx++;
-                upIdx++;
-            } else if (upContractionOrder > downContractionOrder) {
-                downIdx++;
-            } else {
-                upIdx++;
-            }
-        }
-        
-        if (shortestSolutionDriveTime == Integer.MAX_VALUE) {
+        IntBuffer commonIndices = getCommonEntryIndices(up.getContractionOrderBuffer(),down.getContractionOrderBuffer(),up.getTotalDriveTimeBuffer(),down.getTotalDriveTimeBuffer());
+        if (commonIndices.get(0) == -1)
             return null;
-        }
+        
+        int shortestUpIdx = commonIndices.get(0);
+        int shortestDownIdx = commonIndices.get(1);
         
         DijkstraSolution shortestSolutionUp = up.getDijkstraSolution(allNodes, shortestUpIdx);
         DijkstraSolution shortestSolutionDown = down.getDijkstraSolution(allNodes, shortestDownIdx);
         return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
     }
+    
+    private static IntBuffer getCommonEntryIndices(IntBuffer a, IntBuffer b, IntBuffer aTimes, IntBuffer bTimes) {
+        IntBuffer result = IntBuffer.allocate(2);
+        result.put(0,-1).put(1,-1);
+        
+        int shortestTime = Integer.MAX_VALUE;
+        int aIdx = 0;
+        int bIdx = 0;
+        
+        while (aIdx<a.limit() && bIdx<b.limit()) {
+            int aValue = a.get(aIdx);
+            int bValue = b.get(bIdx);
+            
+            if (aValue==bValue) {
+                int aTime = aTimes.get(aIdx);
+                int bTime = bTimes.get(bIdx);
+                if (aTime+bTime < shortestTime) {
+                    shortestTime = aTime+bTime;
+                    result.put(0, aIdx);
+                    result.put(1, bIdx);
+                }
+                
+                bIdx++;
+                aIdx++;
+            } else if (aValue > bValue) {
+                bIdx++;
+            } else {
+                aIdx++;
+            }
+        }
+        
+        return result;
+    }
+    
 
     private static DijkstraSolution upThenDown(DijkstraSolution up, DijkstraSolution down) {
         int totalDriveTime = up.totalDriveTimeMs + down.totalDriveTimeMs;
