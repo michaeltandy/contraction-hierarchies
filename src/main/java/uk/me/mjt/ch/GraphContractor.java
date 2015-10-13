@@ -20,7 +20,7 @@ public class GraphContractor {
     private long nodePreContractChecksPassed = 0;
     private long millisSpentOnContractionOrdering = 0;
     
-    private ExecutorService es = Executors.newFixedThreadPool(8);
+    private ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     
     public GraphContractor(MapData allNodes) {
         this.allNodes = allNodes;

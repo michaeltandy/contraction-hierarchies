@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import uk.me.mjt.ch.cache.BinaryCache;
 import uk.me.mjt.ch.cache.CachedContractedDijkstra;
 import uk.me.mjt.ch.cache.SimpleCache;
@@ -118,6 +119,33 @@ public class BenchmarkUk {
         return cache;
     }
     
+    public void benchmarkParallelCachedPathing(int repetitions) throws Exception {
+        System.out.println("Benchmarking parallel cached pathing. Warming up & populating cache...");
+        List<Node> testLocations = allNodes.chooseRandomNodes(4000);
+        BinaryCache cache = populateTestCache(testLocations);
+        
+        int processors = Runtime.getRuntime().availableProcessors();
+        System.out.println("Reported processors: " + processors + " (hyperthreaded cores count as 2)");
+        ExecutorService es = Executors.newFixedThreadPool(processors);
+        
+        System.out.println("Warming up complete, benchmarking...");
+        long startTime = System.currentTimeMillis();
+        for (int i=0 ; i<repetitions ; i++) {
+            System.out.println("Iteration " + i);
+            
+            List<Future<DijkstraSolution>> solutions = new ArrayList(testLocations.size()*2);
+            for (Node node : testLocations) {
+                solutions.add(es.submit(CachedContractedDijkstra.callableContractedGraphDijkstra(allNodes, hatfield, node, cache)));
+                solutions.add(es.submit(CachedContractedDijkstra.callableContractedGraphDijkstra(allNodes, node, hatfield, cache)));
+            }
+            for (Future<DijkstraSolution> solution : solutions) {
+                DijkstraSolution thisDs = solution.get();
+            }
+        }
+        
+        System.out.println(repetitions+" repetitions parallel cached pathing from hatfield to " +testLocations.size()+ " locations in "+ (System.currentTimeMillis() - startTime) + " ms.");
+        es.shutdown();
+    }
     
     public static void main(String[] args) {
         try {
@@ -125,9 +153,18 @@ public class BenchmarkUk {
             instance.loadAndCheckMapData();
             System.gc(); // Hopefully start the map data on its journey to oldgen :)
             
-            //instance.benchmarkPathing(2);
-            //instance.benchmarkParallelPathing(2);
-            instance.benchmarkCachedPathing(100);
+            if (args.length >= 3 && "cachedonly".equals(args[1])) {
+                int iterations = Integer.parseInt(args[2]);
+                
+                instance.benchmarkCachedPathing(iterations);
+                instance.benchmarkParallelCachedPathing(iterations);
+                
+            } else {
+                instance.benchmarkPathing(2);
+                instance.benchmarkParallelPathing(2);
+                instance.benchmarkCachedPathing(100);
+                instance.benchmarkParallelCachedPathing(100);
+            }
             
         } catch (Exception e) {
             e.printStackTrace();

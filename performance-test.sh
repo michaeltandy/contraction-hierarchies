@@ -12,7 +12,7 @@ echo 'started' > /mnt/runtimes.txt
 date >> /mnt/runtimes.txt
 
 sudo apt-get update
-sudo apt-get install -y openjdk-7-jdk awscli maven git
+sudo apt-get install -y openjdk-7-jdk awscli maven git cpuid
 echo 'apt-get complete' >> /mnt/runtimes.txt
 date >> /mnt/runtimes.txt
 
@@ -53,7 +53,7 @@ cd /mnt/ch
 instance_type=`curl http://169.254.169.254/latest/meta-data/instance-type`
 instance_id=`curl http://169.254.169.254/latest/meta-data/instance-id`
 
-if [[ $instance_type = "r3.large" ]]
+if [ $instance_type = "r3.large" ] || [ $instance_type = "m3.xlarge" ]
 then
   java_memory="-Xmx14g -Xms14g";
 else
@@ -68,7 +68,8 @@ do
     cached_pathing_time=`cat LoadAndPathUk-$i.txt | grep 'repetitions cached pathing' | sed 's/.*in //' | sed 's/ ms.//'`
     parallel_pathing_time=`cat LoadAndPathUk-$i.txt | grep 'repetitions parallel uncached pathing' | sed 's/.*in //' | sed 's/ ms.//'`
     data_load_time=`cat LoadAndPathUk-$i.txt | grep 'Data load complete in ' | sed 's/.*in //' | sed 's/ms.//'`
-    curl "https://docs.google.com/forms/d/1xFOZk3D1wnIjB0N3bhNIirppMSug1qJChYbyA4JGAf0/formResponse?ifq&entry.1150050082=$instance_id&entry.1477423851=$instance_type&entry.592766186=$ch_git_rev&entry.915449080=$uncached_pathing_time&entry.884534640=$cached_pathing_time&entry_1158999837=$parallel_pathing_time&entry_1024384356=$data_load_time&submit=Submit" > curl-output.txt
+    parallel_cached_time=`cat LoadAndPathUk-$i.txt | grep 'repetitions parallel cached pathing' | sed 's/.*in //' | sed 's/ ms.//'`
+    curl "https://docs.google.com/forms/d/1xFOZk3D1wnIjB0N3bhNIirppMSug1qJChYbyA4JGAf0/formResponse?ifq&entry.1150050082=$instance_id&entry.1477423851=$instance_type&entry.592766186=$ch_git_rev&entry.915449080=$uncached_pathing_time&entry.884534640=$cached_pathing_time&entry_1158999837=$parallel_pathing_time&entry_1024384356=$data_load_time&entry_1412979057=$parallel_cached_time&submit=Submit" > curl-output.txt
 done
 
 echo 'test complete, shutting down' >> /mnt/runtimes.txt
@@ -85,6 +86,9 @@ date >> /mnt/runtimes.txt
 #aws --region=us-west-1 s3 cp bandwidth64-output.txt s3://ch-test-mjt/$instance_type/$instance_id/
 #aws --region=us-west-1 s3 cp bandwidth.bmp s3://ch-test-mjt/$instance_type/$instance_id/
 #date >> /mnt/runtimes.txt
+
+cpuid -1 > /mnt/cpuid.txt
+aws --region=us-west-1 s3 cp /mnt/cpuid.txt s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
 
 aws --region=us-west-1 s3 cp /mnt/runtimes.txt s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
 aws --region=us-west-1 s3 cp /var/log/cloud-init-output.log s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/

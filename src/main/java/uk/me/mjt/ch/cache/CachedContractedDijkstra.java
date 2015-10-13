@@ -2,6 +2,7 @@
 package uk.me.mjt.ch.cache;
 
 import java.util.HashMap;
+import java.util.concurrent.Callable;
 import uk.me.mjt.ch.ContractedDijkstra;
 import uk.me.mjt.ch.DijkstraSolution;
 import uk.me.mjt.ch.MapData;
@@ -30,6 +31,14 @@ public class CachedContractedDijkstra {
         UpAndDownPair startNodePair = getOrCalculateUpDownPair(allNodes, startNode, cache);
         UpAndDownPair endNodePair = getOrCalculateUpDownPair(allNodes, endNode, cache);
         return ContractedDijkstra.mergeUpwardAndDownwardSolutions(allNodes, startNodePair.up, endNodePair.down);
+    }
+    
+    public static Callable<DijkstraSolution> callableContractedGraphDijkstra(final MapData allNodes, final Node startNode, final Node endNode, final PartialSolutionCache cache) {
+        return new Callable<DijkstraSolution>() {
+            public DijkstraSolution call() {
+                return contractedGraphDijkstra(allNodes, startNode, endNode, cache);
+            }
+        };
     }
 
 }
