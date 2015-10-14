@@ -1,6 +1,21 @@
 #!/bin/bash
 
+# Basic/regular test:-
+
 # aws ec2 request-spot-instances --spot-price 0.07 --instance-count 2 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"r3.xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+
+# Multiple instances with ~30GB RAM
+#aws ec2 request-spot-instances --spot-price 0.05 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"r3.xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+#aws ec2 request-spot-instances --spot-price 0.05 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-6a3f7e1d\",\"InstanceType\":\"m2.2xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+#aws ec2 request-spot-instances --spot-price 0.17 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"m3.2xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+#aws ec2 request-spot-instances --spot-price 0.20 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"c3.4xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+
+# Multiple instances with ~15GB RAM
+#aws ec2 request-spot-instances --spot-price 0.05 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"r3.large\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+#aws ec2 request-spot-instances --spot-price 0.05 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-6a3f7e1d\",\"InstanceType\":\"m2.xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+#aws ec2 request-spot-instances --spot-price 0.10 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"m3.xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+#aws ec2 request-spot-instances --spot-price 0.10 --instance-count 1 --launch-specification "{\"ImageId\":\"ami-7842030f\",\"InstanceType\":\"c3.2xlarge\",\"KeyName\":\"mtandy home i7 pc\",\"IamInstanceProfile\":{\"Name\":\"s3access\"},\"SecurityGroupIds\":[\"sg-2e039e59\"],\"BlockDeviceMappings\":[{\"VirtualName\":\"ephemeral0\",\"DeviceName\":\"/dev/sdb\"}],\"UserData\":\"`base64 performance-test.sh | tr -d '\n'`\"}"
+
 
 #14.04 LTS & instance store & PV: ami-6a3f7e1d
 #14.04 LTS & instance store & HVM: ami-7842030f <-- Supports r3.large (15gb, 4 cent spot), r3.xlarge (30gb, 7 cent spot)
@@ -53,7 +68,7 @@ cd /mnt/ch
 instance_type=`curl http://169.254.169.254/latest/meta-data/instance-type`
 instance_id=`curl http://169.254.169.254/latest/meta-data/instance-id`
 
-if [ $instance_type = "r3.large" ] || [ $instance_type = "m3.xlarge" ]
+if [ $instance_type = "r3.large" ] || [ $instance_type = "m2.xlarge" ] || [ $instance_type = "m3.xlarge" ] || [ $instance_type = "c3.2xlarge" ]
 then
   java_memory="-Xmx14g -Xms14g";
 else
