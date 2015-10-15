@@ -67,6 +67,20 @@ public class ContractedDijkstra {
         return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
     }
     
+    /*
+        10 repetitions cached pathing from hatfield to 4000 locations in 1479 ms.
+        getCommonEntryIndicesCalls:   88013
+        whileLoopIterations:      324083997
+        matchedContractionOrders: 152378966
+        replacedShortest:           1848114
+
+        3682 loops per subroutine call
+        Shared entries: 47.01%
+        21 shortest replacements per subroutine call
+
+        16.8 us per subroutine call
+        4.5 ns per loop iteration -> average 18 clock cycles at 4GHz
+     */
     private static IntBuffer getCommonEntryIndices(IntBuffer a, IntBuffer b, IntBuffer aTimes, IntBuffer bTimes) {
         IntBuffer result = IntBuffer.allocate(2);
         result.put(0,-1).put(1,-1);
