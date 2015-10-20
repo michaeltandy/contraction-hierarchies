@@ -160,10 +160,10 @@ public class BenchmarkUk {
                 instance.benchmarkParallelCachedPathing(iterations);
                 
             } else {
-                //instance.benchmarkPathing(2);
-                //instance.benchmarkParallelPathing(2);
-                instance.benchmarkCachedPathing(1000);
-                //instance.benchmarkParallelCachedPathing(100);
+                instance.benchmarkPathing(2);
+                instance.benchmarkParallelPathing(2);
+                instance.benchmarkCachedPathing(100);
+                instance.benchmarkParallelCachedPathing(100);
             }
             
         } catch (Exception e) {
