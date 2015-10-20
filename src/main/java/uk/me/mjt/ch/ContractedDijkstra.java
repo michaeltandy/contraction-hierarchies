@@ -6,11 +6,20 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
+import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.annotation.Cast;
+import org.bytedeco.javacpp.annotation.Platform;
+import org.bytedeco.javacpp.annotation.Properties;
 import uk.me.mjt.ch.PartialSolution.DownwardSolution;
 import uk.me.mjt.ch.PartialSolution.UpwardSolution;
 
-
+@Platform(include="uk/me/mjt/ch/ContractedDijkstra.h")
 public class ContractedDijkstra {
+    
+    static {
+        Loader.load();
+    }
     
     public static DijkstraSolution contractedGraphDijkstra(MapData allNodes, Node startNode, Node endNode, ExecutorService es) {
         Preconditions.checkNoneNull(allNodes, startNode, endNode);
@@ -55,7 +64,8 @@ public class ContractedDijkstra {
     
     public static DijkstraSolution mergeUpwardAndDownwardSolutions(MapData allNodes, UpwardSolution up, DownwardSolution down) {
         
-        IntBuffer commonIndices = getCommonEntryIndices(up.getContractionOrderBuffer(),down.getContractionOrderBuffer(),up.getTotalDriveTimeBuffer(),down.getTotalDriveTimeBuffer());
+        //IntBuffer commonIndices = getCommonEntryIndices(up.getContractionOrderBuffer(),down.getContractionOrderBuffer(),up.getTotalDriveTimeBuffer(),down.getTotalDriveTimeBuffer());
+        IntPointer commonIndices = getCommonEntryIndicesJni(up.getContractionOrderBuffer(),down.getContractionOrderBuffer(),up.getTotalDriveTimeBuffer(),down.getTotalDriveTimeBuffer(),up.getSize(),down.getSize());
         if (commonIndices.get(0) == -1)
             return null;
         
@@ -66,6 +76,8 @@ public class ContractedDijkstra {
         DijkstraSolution shortestSolutionDown = down.getDijkstraSolution(allNodes, shortestDownIdx);
         return unContract(upThenDown(shortestSolutionUp,shortestSolutionDown));
     }
+    
+    static native @Cast("int*") IntPointer getCommonEntryIndicesJni(@Cast("int*") IntBuffer a, @Cast("int*") IntBuffer b, @Cast("int*") IntBuffer aTimes, @Cast("int*") IntBuffer bTimes, int aLength, int bLength);
     
     /*
         10 repetitions cached pathing from hatfield to 4000 locations in 1479 ms.
@@ -81,7 +93,7 @@ public class ContractedDijkstra {
         16.8 us per subroutine call
         4.5 ns per loop iteration -> average 18 clock cycles at 4GHz
      */
-    private static IntBuffer getCommonEntryIndices(IntBuffer a, IntBuffer b, IntBuffer aTimes, IntBuffer bTimes) {
+    /*private static IntBuffer getCommonEntryIndices(IntBuffer a, IntBuffer b, IntBuffer aTimes, IntBuffer bTimes) {
         IntBuffer result = IntBuffer.allocate(2);
         result.put(0,-1).put(1,-1);
         
@@ -112,7 +124,7 @@ public class ContractedDijkstra {
         }
         
         return result;
-    }
+    }*/
     
 
     private static DijkstraSolution upThenDown(DijkstraSolution up, DijkstraSolution down) {
