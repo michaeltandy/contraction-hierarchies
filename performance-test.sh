@@ -78,7 +78,7 @@ fi
 
 for i in `seq 1 3`;
 do
-    java -cp "/mnt/ch/contraction-hierarchies/target/classes/:/mnt/ch/contraction-hierarchies/target/ch-1.0-SNAPSHOT.jar:/home/ubuntu/.m2/repository/org/bytedeco/javacpp/1.0/javacpp-1.0.jar" $java_memory -XX:GCTimeLimit=60 uk.me.mjt.ch.BenchmarkUk | tee LoadAndPathUk-$i.txt
+    java -cp "/mnt/ch/contraction-hierarchies/target/classes/:/mnt/ch/contraction-hierarchies/target/ch-1.0-SNAPSHOT.jar:/home/ubuntu/.m2/repository/org/bytedeco/javacpp/1.0/javacpp-1.0.jar:/root/.m2/repository/org/bytedeco/javacpp/1.0/javacpp-1.0.jar" $java_memory -XX:GCTimeLimit=60 uk.me.mjt.ch.BenchmarkUk | tee LoadAndPathUk-$i.txt
     aws --region=us-west-1 s3 cp LoadAndPathUk-$i.txt s3://ch-test-mjt/$ch_git_rev/$instance_type/$instance_id/
     uncached_pathing_time=`cat LoadAndPathUk-$i.txt | grep 'repetitions uncached pathing' | sed 's/.*in //' | sed 's/ ms.//'`
     cached_pathing_time=`cat LoadAndPathUk-$i.txt | grep 'repetitions cached pathing' | sed 's/.*in //' | sed 's/ ms.//'`
