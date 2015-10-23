@@ -132,22 +132,19 @@ public class MapData {
     }
     
     public void validate() {
-        HashMap<Long,DirectedEdge> uniqueEdges = new HashMap();
+        validateEdgeIdsUnique();
         
         for (Long nodeId : nodesById.keySet()) {
-            Node node = nodesById.get(nodeId);
-            
-            if (node.nodeId != nodeId)
-                throw new InvalidMapDataException("Node IDs don't match - " + nodeId + " vs " + node.nodeId);
-            
-            if (nodeId > maxNodeId.get()) {
-                throw new InvalidMapDataException("Node ID exceeds maxNodeId - " + maxNodeId.get() + " vs " + node);
-            }
-            
-            validateNeighborLists(node);
-            
+            validateSingleNode(nodeId);
+        }
+    }
+    
+    private void validateEdgeIdsUnique() {
+        int roughEstimateNodeCount = 3*nodesById.size();
+        HashMap<Long,DirectedEdge> uniqueEdges = new HashMap(roughEstimateNodeCount);
+        
+        for (Node node : nodesById.values()) {
             for (DirectedEdge de : node.edgesFrom) {
-                validateSingleEdge(de);
                 if (uniqueEdges.containsKey(de.edgeId)) {
                     DirectedEdge prevWithThisId = uniqueEdges.get(de.edgeId);
                     if (de != prevWithThisId) {
@@ -158,6 +155,22 @@ public class MapData {
                     uniqueEdges.put(de.edgeId, de);
                 }
             }
+        }
+    }
+    
+    private void validateSingleNode(long nodeId) {
+        Node node = nodesById.get(nodeId);
+        
+        if (node.nodeId != nodeId)
+            throw new InvalidMapDataException("Node IDs don't match - " + nodeId + " vs " + node.nodeId);
+        
+        if (nodeId > maxNodeId.get())
+            throw new InvalidMapDataException("Node ID exceeds maxNodeId - " + maxNodeId.get() + " vs " + node);
+        
+        validateNeighborLists(node);
+        
+        for (DirectedEdge de : node.edgesFrom) {
+            validateSingleEdge(de);
         }
     }
     
