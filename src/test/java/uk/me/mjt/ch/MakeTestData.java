@@ -73,6 +73,15 @@ public class MakeTestData {
      * 1 and node 7. Hence the shortest route from node 2 to node 6 would be 
      * 6->7->1->2 ignoring access-only restrictions but 2->3->4->5->6 if access 
      * only restrictions are respected.
+     * 
+     * <pre>
+     *    1-AO-7
+     *   /      \
+     *  2        6
+     *  |        |
+     *  3        5
+     *   \---4--/
+     * </pre>
      */
     public static MapData makePartlyAccessOnlyRing() {
         HashMap<Long,Node> result = makeRow(7);
@@ -91,6 +100,17 @@ public class MakeTestData {
      * A graph shaped like Þ so the shortest way to reach node 4 is via an
      * access-only edge, but you can also access it via a non-access-only edge
      * which is required to route 1->5.
+     * <pre>
+     *  1
+     *  |
+     *  2--
+     *  |  \
+     * AO   3
+     *  |  /
+     *  4--
+     *  |
+     *  5
+     * </pre>
      */
     public static MapData makePartlyAccessOnlyThorn() {
         HashMap<Long,Node> result = makeRow(5);
@@ -101,6 +121,17 @@ public class MakeTestData {
     
     /**
      * A graph shaped like Þ with a gate on the short path between nodes 2 and 4.
+     * <pre>
+     *  1
+     *  |
+     *  2--
+     *  |  \
+     * GATE 3
+     *  |  /
+     *  4--
+     *  |
+     *  5
+     * </pre>
      */
     public static MapData makeGatedThorn() {
         HashMap<Long,Node> result = makeRow(5);
@@ -186,6 +217,12 @@ public class MakeTestData {
     }
     
     /**
+     * Test case for a bug where, when editing the graph to reflect turn 
+     * restrictions, we didn't connect up all the external nodes right.
+     * Found near 51.6275,-0.2530 where we wouldn't go straight down the Barnet
+     * bypass and instead we'd get off, go through the golf club, then rejoin
+     * the main road.
+     * 
      * No turn 2->3->6
      * <pre>
      * 1
