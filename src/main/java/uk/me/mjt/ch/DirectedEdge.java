@@ -103,6 +103,15 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
         return de;
     }
     
+    public static DirectedEdge makeDelayEdge(Node delayAt, int delayLengthMs, AccessOnly accessOnly) {
+        Preconditions.require(delayLengthMs > 0, accessOnly!=null);
+        return new DirectedEdge(PLACEHOLDER_ID, PLACEHOLDER_ID, delayAt, delayAt, delayLengthMs, accessOnly, null, null);
+    }
+    
+    public boolean isDelayEdge() {
+        return (from==to && edgeId==PLACEHOLDER_ID);
+    }
+    
     public void addToToAndFromNodes() {
         if (!from.edgesFrom.contains(this)) {
             from.edgesFrom.add(this);

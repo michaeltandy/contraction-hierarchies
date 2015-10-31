@@ -8,9 +8,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TurnRestriction {
     public static enum TurnRestrictionType { NOT_ALLOWED, ONLY_ALLOWED }
     
-    private final long turnRestrictionId;
-    private final TurnRestrictionType type;
-    private final List<Long> directedEdgeIds;
+    public final long turnRestrictionId;
+    public final TurnRestrictionType type;
+    public final List<Long> directedEdgeIds;
     
     public TurnRestriction(long turnRestrictionId, TurnRestrictionType type, List<Long> directedEdgeIds) {
         Preconditions.checkNoneNull(type, directedEdgeIds);
