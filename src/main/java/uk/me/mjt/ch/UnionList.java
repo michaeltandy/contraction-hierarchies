@@ -2,6 +2,7 @@
 package uk.me.mjt.ch;
 
 import java.util.AbstractList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -10,6 +11,10 @@ public class UnionList<N> extends AbstractList<N> implements List<N> {
     private final List<N> second;
     private final int size;
 
+    public UnionList(List<N> first, N second) {
+        this(first,Collections.singletonList(second));
+    }
+    
     public UnionList(List<N> first, List<N> second) {
         Preconditions.checkNoneNull(first,second);
         this.first = first;
