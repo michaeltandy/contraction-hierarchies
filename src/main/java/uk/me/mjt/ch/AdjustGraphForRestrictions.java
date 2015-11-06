@@ -17,6 +17,7 @@ public class AdjustGraphForRestrictions {
     private final Node startNode;
     private Set<Long> implicitAccessOnlyNodeIds = null;
     private Set<Long> implicitGatedNodeIds = null;
+    private Set<NodeAndState> interestingUturnOrigins = null;
     
     public AdjustGraphForRestrictions() {
         this(null,null);
@@ -40,7 +41,7 @@ public class AdjustGraphForRestrictions {
             if (values.size() > longestList.size()) {
                 longestList=values;
             }
-        }*/
+        }
         
         System.out.println("Long not-implicit-only:");
         for (NodeAndState nas : arrivalOptionsByNode.get(60023467L)) {
@@ -50,11 +51,19 @@ public class AdjustGraphForRestrictions {
         System.out.println("Long implicit-only:");
         for (NodeAndState nas : arrivalOptionsByNode.get(1654539753L)) {
             System.out.println(nas);
-        }
+        }*/
         
         System.out.println("Repathing, only applying implicitly-restricted to nodes that can't be reached without it.");
         fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);
+        arrivalOptionsByNode=null;
+        
+        idenfityInterestingUturnOrigins(fullyPathed);
+        System.out.println("Repathing, with only " + interestingUturnOrigins.size() + " u-turns of interest.");
+        
+        fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);
         arrivalOptionsByNode = groupArrivalOptionsByNode(fullyPathed);
+        
+        
         
         System.out.println("Long not-implicit-only:");
         for (NodeAndState nas : arrivalOptionsByNode.get(60023467L)) {
@@ -78,8 +87,7 @@ public class AdjustGraphForRestrictions {
             System.out.println(nas);
         }
         
-        
-        Multimap<Long,NodeAndState> penultimateUturns = identifyPenultimateUturns(fullyPathed);
+        /*Multimap<Long,NodeAndState> penultimateUturns = identifyPenultimateUturns(fullyPathed);
         longestList = new ArrayList();
         for (Long nodeId : penultimateUturns.keySet()) {
             List<NodeAndState> values = penultimateUturns.get(nodeId);
@@ -90,8 +98,10 @@ public class AdjustGraphForRestrictions {
         System.out.println("Penultimate u-turns:");
         for (NodeAndState nas : longestList) {
             System.out.println(nas);
-        }
+        }*/
         
+        System.out.println("Before, " + md.getNodeCount() + " nodes");
+        System.out.println("Found, " + fullyPathed.size() + " node-states");
     }
     
     private Multimap<Long,NodeAndState> groupArrivalOptionsByNode(List<Solution> solutions) {
@@ -137,7 +147,7 @@ public class AdjustGraphForRestrictions {
         }
     }
     
-    private Multimap<Long,NodeAndState> identifyPenultimateUturns(List<Solution> solutions) {
+    private static HashSet<NodeAndState> identifyPenultimateUturns(List<Solution> solutions) {
         HashSet<NodeAndState> interestingUturns = new HashSet();
         
         for (Solution solution : solutions) {
@@ -145,18 +155,27 @@ public class AdjustGraphForRestrictions {
                 ShortestPathElement lastElement = solution.route.get(solution.route.size()-1);
                 NodeAndState penultimateNode = lastElement.from;
                 if (penultimateNode.uTurnState==UTurnState.UNRESTRICTED) {
-                    System.out.println("Interesting u-turn at " + penultimateNode + " to reach " + lastElement.to);
                     interestingUturns.add(penultimateNode);
                 }
             }
         }
         
-        Multimap<Long,NodeAndState> result = new Multimap<>();
-        for (NodeAndState nas : interestingUturns) {
-            result.add(nas.node.nodeId, nas);
-        }
+        return interestingUturns;
+    }
+    
+    private void idenfityInterestingUturnOrigins(List<Solution> solutions) {
+        HashSet<NodeAndState> interestingUturnDestinations = identifyPenultimateUturns(solutions);
+        this.interestingUturnOrigins = new HashSet();
         
-        return result;
+        for (Solution solution : solutions) {
+            if (solution.route.size() >= 1) {
+                ShortestPathElement lastElement = solution.route.get(solution.route.size()-1);
+                if (lastElement.to.uTurnState==UTurnState.UNRESTRICTED 
+                        && interestingUturnDestinations.contains(lastElement.to)) {
+                    interestingUturnOrigins.add(lastElement.from);
+                }
+            }
+        }
     }
     
     public String testRestrictedDijkstra(MapData md, Node startNode, Node endNode) {
@@ -242,15 +261,12 @@ public class AdjustGraphForRestrictions {
                 return solutions;
             }
             
-            if (shortestTimeNode.node.nodeId == 25612121L) {
-                System.out.println("Visiting " + shortestTimeNode);
-            }
-            
             thisNodeInfo.visited = true;
             thisNodeInfo.distanceOrder = null;
             
             List<DirectedEdge> outgoingEdges = shortestTimeNode.node.edgesFrom;
-            if (shortestTimeNode.uTurnState==UTurnState.PENALTY_UNPAID) {
+            if (shortestTimeNode.uTurnState==UTurnState.PENALTY_UNPAID
+                    && (interestingUturnOrigins==null || interestingUturnOrigins.contains(shortestTimeNode))) {
                 outgoingEdges = new UnionList<>(outgoingEdges,makeUTurnDelayEdge(shortestTimeNode));
             }
             
@@ -328,7 +344,7 @@ public class AdjustGraphForRestrictions {
     
     private NodeAndState nodeAndStateForStartNode(Node n) {
         AccessOnlyState aos = (anyEdgesAccessOnly(n) ? AccessOnlyState.SOURCE : AccessOnlyState.NO);
-        return new NodeAndState(n, new HashSet(), aos, BarrierState.NO, UTurnState.UNRESTRICTED);
+        return new NodeAndState(n, new HashSet(), aos, BarrierState.NO, UTurnState.UNRESTRICTED, Long.MIN_VALUE);
     }
     
     private class NodeAndState {
@@ -337,14 +353,16 @@ public class AdjustGraphForRestrictions {
         public final AccessOnlyState accessOnlyState;
         public final BarrierState gateState;
         public final UTurnState uTurnState;
+        public final long arrivingViaEdge;
 
-        public NodeAndState(Node node, HashSet<TurnRestriction> activeTurnRestrictions, AccessOnlyState accessOnlyState, BarrierState gateState, UTurnState uTurnState) {
+        public NodeAndState(Node node, HashSet<TurnRestriction> activeTurnRestrictions, AccessOnlyState accessOnlyState, BarrierState gateState, UTurnState uTurnState, long arrivingViaEdge) {
             Preconditions.checkNoneNull(node, activeTurnRestrictions, accessOnlyState, gateState, uTurnState);
             this.node = node;
             this.activeTurnRestrictions = activeTurnRestrictions;
             this.accessOnlyState = accessOnlyState;
             this.gateState = gateState;
             this.uTurnState = uTurnState;
+            this.arrivingViaEdge = arrivingViaEdge;
         }
         
         @Override
@@ -355,6 +373,7 @@ public class AdjustGraphForRestrictions {
             hash = 53 * hash + Objects.hashCode(this.accessOnlyState);
             hash = 53 * hash + Objects.hashCode(this.gateState);
             hash = 53 * hash + Objects.hashCode(this.uTurnState);
+            hash = 53 * hash + Long.hashCode(arrivingViaEdge);
             return hash;
         }
 
@@ -368,12 +387,13 @@ public class AdjustGraphForRestrictions {
                     && Objects.equals(this.activeTurnRestrictions, other.activeTurnRestrictions)
                     && this.accessOnlyState == other.accessOnlyState 
                     && this.gateState == other.gateState
-                    && this.uTurnState == other.uTurnState;
+                    && this.uTurnState == other.uTurnState
+                    && this.arrivingViaEdge == other.arrivingViaEdge;
         }
         
         
         public String toString() {
-            return node + " with " + activeTurnRestrictions + " AO." + accessOnlyState + " Barrier." + gateState + " U." + uTurnState;
+            return node + " with " + activeTurnRestrictions + " AO." + accessOnlyState + " Barrier." + gateState + " U." + uTurnState + " from " + arrivingViaEdge;
         }
     }
     
@@ -403,7 +423,7 @@ public class AdjustGraphForRestrictions {
         UTurnState us = updateUTurnStateIfLegal(fromEdge, toEdge);
         if (us==null) return null;
         
-        return new NodeAndState(toNode, turnRestrictionsAfter, aos, gs, us);
+        return new NodeAndState(toNode, turnRestrictionsAfter, aos, gs, us, toEdge.edgeId);
     }
     
     private HashSet<TurnRestriction> getUpdatedTurnRestrictionsIfLegal(DirectedEdge fromEdge, NodeAndState fromNode, DirectedEdge toEdge, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
