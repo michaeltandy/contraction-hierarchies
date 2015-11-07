@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class DirectedEdge implements Comparable<DirectedEdge>{
-    private static final long PLACEHOLDER_ID = Long.MIN_VALUE;
+    private static final long PLACEHOLDER_ID_DO_NOT_SERIALIZE = Long.MIN_VALUE;
+    private static final long PLACEHOLDER_ID_NO_SOURCE_DATA_EQUIVALENT = Long.MIN_VALUE+1;
     
     public final long edgeId;
     public final long sourceDataEdgeId;
@@ -30,7 +31,7 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     }
     
     public DirectedEdge(Node from, Node to, int driveTimeMs, DirectedEdge first, DirectedEdge second) {
-        this(PLACEHOLDER_ID, PLACEHOLDER_ID, from, to, driveTimeMs, null, first, second);
+        this(PLACEHOLDER_ID_DO_NOT_SERIALIZE, PLACEHOLDER_ID_DO_NOT_SERIALIZE, from, to, driveTimeMs, null, first, second);
     }
 
     private DirectedEdge(long edgeId, long sourceDateEdgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly, DirectedEdge first, DirectedEdge second) {
@@ -64,8 +65,8 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     }
     
     private static long checkId(long proposedId) {
-        if (proposedId == PLACEHOLDER_ID) 
-            throw new IllegalArgumentException("Attempt to create DirectedEdge with reserved ID, " + PLACEHOLDER_ID);
+        if (proposedId == PLACEHOLDER_ID_DO_NOT_SERIALIZE || proposedId == PLACEHOLDER_ID_NO_SOURCE_DATA_EQUIVALENT) 
+            throw new IllegalArgumentException("Attempt to create DirectedEdge with reserved ID, " + proposedId);
         return proposedId;
     }
     
@@ -82,8 +83,8 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     }
     
     public DirectedEdge cloneWithEdgeId(long edgeId) {
-        Preconditions.require(this.edgeId==PLACEHOLDER_ID, contractionDepth>0);
-        return new DirectedEdge(edgeId,edgeId, from, to, driveTimeMs, accessOnly, first, second);
+        Preconditions.require(this.edgeId==PLACEHOLDER_ID_DO_NOT_SERIALIZE, contractionDepth>0);
+        return new DirectedEdge(edgeId, PLACEHOLDER_ID_NO_SOURCE_DATA_EQUIVALENT, from, to, driveTimeMs, accessOnly, first, second);
     }
     
     public DirectedEdge cloneWithEdgeIdAndFromToNodeAddingToLists(long newEdgeId, Node from, Node to) {
@@ -91,24 +92,28 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     }
     
     public DirectedEdge cloneWithEdgeIdAndFromToNodeAddingToLists(long newEdgeId, Node from, Node to, AccessOnly accessOnly) {
-        Preconditions.require(edgeId!=PLACEHOLDER_ID, contractionDepth==0);
+        Preconditions.require(edgeId!=PLACEHOLDER_ID_DO_NOT_SERIALIZE, contractionDepth==0);
         DirectedEdge de = new DirectedEdge(newEdgeId, sourceDataEdgeId, from, to, driveTimeMs, accessOnly, first, second);
         de.addToToAndFromNodes();
         return de;
     }
     
+    public static DirectedEdge makeEdgeWithNoSourceDataEquivalent(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly isAccessOnly) {
+        return new DirectedEdge(edgeId, PLACEHOLDER_ID_NO_SOURCE_DATA_EQUIVALENT, from, to, driveTimeMs, isAccessOnly);
+    }
+    
     public static DirectedEdge makeZeroLengthEdgeAddingToLists(long newEdgeId, Node from, Node to, AccessOnly accessOnly) {
-        DirectedEdge de = new DirectedEdge(newEdgeId, -1, from, to, 0, accessOnly);
+        DirectedEdge de = new DirectedEdge(newEdgeId, PLACEHOLDER_ID_NO_SOURCE_DATA_EQUIVALENT, from, to, 0, accessOnly);
         de.addToToAndFromNodes();
         return de;
     }
     
     public static DirectedEdge makeDelayEdge(Node delayAt, int delayLengthMs, AccessOnly accessOnly) {
-        return new DirectedEdge(PLACEHOLDER_ID, PLACEHOLDER_ID, delayAt, delayAt, delayLengthMs, accessOnly, null, null);
+        return new DirectedEdge(PLACEHOLDER_ID_DO_NOT_SERIALIZE, PLACEHOLDER_ID_DO_NOT_SERIALIZE, delayAt, delayAt, delayLengthMs, accessOnly, null, null);
     }
     
     public boolean hasPlaceholderId() {
-        return (edgeId==PLACEHOLDER_ID);
+        return (edgeId==PLACEHOLDER_ID_DO_NOT_SERIALIZE);
     }
     
     public void addToToAndFromNodes() {
@@ -141,7 +146,7 @@ public class DirectedEdge implements Comparable<DirectedEdge>{
     @Override
     public int compareTo(DirectedEdge o) {
         if (o==null) return -1;
-        if (this.edgeId==PLACEHOLDER_ID || o.edgeId==PLACEHOLDER_ID) {
+        if (this.edgeId==PLACEHOLDER_ID_DO_NOT_SERIALIZE || o.edgeId==PLACEHOLDER_ID_DO_NOT_SERIALIZE) {
             throw new RuntimeException("Michael didn't write a very thorough comparator.");
         }
         return Long.compare(this.edgeId, o.edgeId);

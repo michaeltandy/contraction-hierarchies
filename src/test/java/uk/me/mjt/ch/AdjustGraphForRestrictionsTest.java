@@ -56,7 +56,7 @@ public class AdjustGraphForRestrictionsTest {
     @Test
     public void testTurnRestrictionsDontBreakStraightOn() {
         MapData graph = MakeTestData.makeTurnRestrictedThorn();
-        assertDijkstraResult(graph,3,6,"1--1000-->2--1000-->3--60000-->4");
+        assertDijkstraResult(graph,1,4,"1--1000-->2--1000-->3--1000-->4");
     }
     
     public void assertDijkstraResult(MapData graph, long startNodeId, long endNodeId, String expected) {

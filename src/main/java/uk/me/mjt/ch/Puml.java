@@ -31,10 +31,28 @@ public class Puml {
     }
     
     private static String edgeToPuml(DirectedEdge de) {
-        return String.format("(Node %d) --> (Node %d) : Edge %d\\ncost %d ms%s\n",
-                de.from.nodeId, de.to.nodeId,
-                de.edgeId, de.driveTimeMs,
-                (de.accessOnly==AccessOnly.TRUE?"\\naccess only":""));
+        return String.format("%s --> %s : %s\n",
+                nodeToString(de.from),
+                nodeToString(de.to),
+                edgeToString(de));
+    }
+    
+    private static String nodeToString(Node n) {
+        if (n.nodeId==n.sourceDataNodeId) {
+            return "(Node "+n.nodeId+")";
+        } else {
+            return "(Node "+n.sourceDataNodeId+"."+n.nodeId+")";
+        }
+    }
+    
+    private static String edgeToString(DirectedEdge de) {
+        String s;
+        if (de.edgeId==de.sourceDataEdgeId) {
+            s="Edge " + de.edgeId;
+        } else {
+            s="Edge " +de.sourceDataEdgeId+"."+de.edgeId;
+        }
+        return s+ "\\ncost " + de.driveTimeMs + " ms" + (de.accessOnly==AccessOnly.TRUE?"\\naccess only":"");
     }
 
 }

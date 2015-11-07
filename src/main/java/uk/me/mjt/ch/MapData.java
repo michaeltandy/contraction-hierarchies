@@ -11,6 +11,10 @@ public class MapData {
     private final AtomicLong maxNodeId = new AtomicLong();
     private final Multimap<Long,Node> syntheticNodesByIdOfEquivalent = new Multimap<>();
     
+    public MapData(Collection<Node> nodes) {
+        this(indexNodesById(nodes), new HashMap());
+    }
+    
     public MapData(HashMap<Long,Node> nodesById) {
         this(nodesById, new HashMap());
     }
@@ -42,6 +46,14 @@ public class MapData {
                 syntheticNodesByIdOfEquivalent.add(n.sourceDataNodeId, n);
             }
         }
+    }
+    
+    private static HashMap<Long,Node> indexNodesById(Collection<Node> nodes) {
+        HashMap<Long,Node> hm = new HashMap(nodes.size());
+        for (Node n : nodes) {
+            hm.put(n.nodeId, n);
+        }
+        return hm;
     }
     
     public AtomicLong getEdgeIdCounter() {
@@ -203,6 +215,16 @@ public class MapData {
         private InvalidMapDataException(String reason) {
             super(reason);
         }
+    }
+    
+    public List<Node> nodesInBbox(double lat1, double lon1, double lat2, double lon2) {
+        ArrayList<Node> result = new ArrayList();
+        for (Node n : nodesById.values()) {
+            if (lat1 <= n.lat && n.lat <= lat2 && lon1 <= n.lon && n.lon <= lon2) {
+                result.add(n);
+            }
+        }
+        return result;
     }
     
 }

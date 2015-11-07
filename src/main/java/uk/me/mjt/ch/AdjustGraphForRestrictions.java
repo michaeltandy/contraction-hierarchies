@@ -28,7 +28,69 @@ public class AdjustGraphForRestrictions {
         this.startNode = startNode;
     }
     
-    public void adjustGraph() {
+    public MapData adjustGraph() {
+        List<Solution> nodeStateLinks = findNodeStateLinks();
+        
+        Set<NodeAndState> nodeStates = findUniqueNodeAndStates(nodeStateLinks);
+        Set<ShortestPathElement> shortPathElements = findUniqueShortestPathElements(nodeStateLinks);
+        
+        Map<NodeAndState,Node> newNodes = makeNewNodes(nodeStates);
+        makeNewDirectedEdges(newNodes, shortPathElements);
+        
+        return new MapData(newNodes.values());
+    }
+    
+    private static Set<NodeAndState> findUniqueNodeAndStates(List<Solution> solutions) {
+        HashSet<NodeAndState> unique = new HashSet(solutions.size());
+        for (Solution s : solutions) {
+            unique.add(s.from);
+            unique.add(s.to);
+        }
+        return unique;
+    }
+    
+    private static Set<ShortestPathElement> findUniqueShortestPathElements(List<Solution> solutions) {
+        HashSet<ShortestPathElement> unique = new HashSet(solutions.size());
+        for (Solution s : solutions) {
+            if (s.route.size() > 0) {
+                ShortestPathElement spe = s.route.get(s.route.size()-1);
+                unique.add(spe);
+            }
+        }
+        return unique;
+    }
+    
+    private Map<NodeAndState,Node> makeNewNodes(Set<NodeAndState> sourceData) {
+        HashMap<NodeAndState,Node> newNodes = new HashMap(sourceData.size());
+        
+        long newNodeId = 0;
+        for (NodeAndState source : sourceData) {
+            if (source.node.nodeId==253199386L) {
+                System.out.println(source + " -> " + newNodeId);
+            }
+            newNodes.put(source, new Node(newNodeId++, source.node));
+        }
+        
+        return newNodes;
+    }
+    
+    private void makeNewDirectedEdges(Map<NodeAndState,Node> newNodes, Set<ShortestPathElement> sourceData) {
+        long newEdgeId = 0;
+        
+        for (ShortestPathElement sourceSPE : sourceData) {
+            Node newFromNode = newNodes.get(sourceSPE.from);
+            Node newToNode = newNodes.get(sourceSPE.to);
+            
+            DirectedEdge sourceEdge = sourceSPE.via;
+            if (sourceEdge.hasPlaceholderId() && (sourceEdge.driveTimeMs==0 || sourceSPE.to.uTurnState==UTurnState.UNRESTRICTED)) {
+                DirectedEdge.makeEdgeWithNoSourceDataEquivalent(newEdgeId++, newFromNode, newToNode, sourceEdge.driveTimeMs, AccessOnly.FALSE);
+            } else {
+                sourceEdge.cloneWithEdgeIdAndFromToNodeAddingToLists(newEdgeId++, newFromNode, newToNode, AccessOnly.FALSE);
+            }
+        }
+    }
+    
+    private List<Solution> findNodeStateLinks() {
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(md.allTurnRestrictions());
         List<Solution> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);
         
@@ -102,9 +164,11 @@ public class AdjustGraphForRestrictions {
         
         System.out.println("Before, " + md.getNodeCount() + " nodes");
         System.out.println("Found, " + fullyPathed.size() + " node-states");
+        
+        return fullyPathed;
     }
     
-    private Multimap<Long,NodeAndState> groupArrivalOptionsByNode(List<Solution> solutions) {
+    private static Multimap<Long,NodeAndState> groupArrivalOptionsByNode(List<Solution> solutions) {
         HashSet<NodeAndState> uniqueNodeAndState = new HashSet();
         
         for (Solution solution : solutions) {
@@ -609,7 +673,7 @@ public class AdjustGraphForRestrictions {
         }
         
         public String toString() {
-            return "Via:" + via + " restrictions " + from + " to " + to;
+            return "Via " + via + " from " + from + " to " + to;
         }
     }
     
