@@ -1,6 +1,8 @@
 
 package uk.me.mjt.ch;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import uk.me.mjt.ch.TurnRestriction.TurnRestrictionType;
@@ -12,6 +14,7 @@ public class AdjustGraphForRestrictions {
     private static enum AccessOnlyState { SOURCE, NO, DESTINATION, IMPLICIT }
     private static enum BarrierState { NO, IMPLICIT }
     private static enum UTurnState { PENALTY_UNPAID, UNRESTRICTED }
+    private static enum GenerateOriginsForDestinations { YES, NO }
     
     private final MapData md;
     private final Node startNode;
@@ -19,20 +22,24 @@ public class AdjustGraphForRestrictions {
     private Set<Long> implicitGatedNodeIds = null;
     private Set<NodeAndState> interestingUturnOrigins = null;
     
-    public AdjustGraphForRestrictions() {
-        this(null,null);
+    public static MapData makeNewGraph(MapData md, Node startNode) {
+        return new AdjustGraphForRestrictions(md, startNode).adjustGraph();
     }
     
-    public AdjustGraphForRestrictions(MapData md, Node startNode) {
+    public static String testRestrictedDijkstra(MapData md, Node startNode, Node endNode) {
+        return new AdjustGraphForRestrictions(md, null).testRestrictedDijkstraInternal(startNode, endNode);
+    }
+    
+    private AdjustGraphForRestrictions(MapData md, Node startNode) {
         this.md = md;
         this.startNode = startNode;
     }
     
     public MapData adjustGraph() {
-        List<Solution> nodeStateLinks = findNodeStateLinks();
+        Set<ShortPathElement> shortPathElements = findNodeStateLinks();
         
-        Set<NodeAndState> nodeStates = findUniqueNodeAndStates(nodeStateLinks);
-        Set<ShortestPathElement> shortPathElements = findUniqueShortestPathElements(nodeStateLinks);
+        Set<NodeAndState> nodeStates = findUniqueNodeAndStates(shortPathElements);
+        //Set<ShortPathElement> shortPathElements = findUniqueShortestPathElements(nodeStateLinks);
         
         Map<NodeAndState,Node> newNodes = makeNewNodes(nodeStates);
         makeNewDirectedEdges(newNodes, shortPathElements);
@@ -40,25 +47,25 @@ public class AdjustGraphForRestrictions {
         return new MapData(newNodes.values());
     }
     
-    private static Set<NodeAndState> findUniqueNodeAndStates(List<Solution> solutions) {
+    private static Set<NodeAndState> findUniqueNodeAndStates(Set<ShortPathElement> solutions) {
         HashSet<NodeAndState> unique = new HashSet(solutions.size());
-        for (Solution s : solutions) {
+        for (ShortPathElement s : solutions) {
             unique.add(s.from);
             unique.add(s.to);
         }
         return unique;
     }
     
-    private static Set<ShortestPathElement> findUniqueShortestPathElements(List<Solution> solutions) {
-        HashSet<ShortestPathElement> unique = new HashSet(solutions.size());
+    /*private static Set<ShortPathElement> findUniqueShortestPathElements(List<Solution> solutions) {
+        HashSet<ShortPathElement> unique = new HashSet(solutions.size());
         for (Solution s : solutions) {
             if (s.route.size() > 0) {
-                ShortestPathElement spe = s.route.get(s.route.size()-1);
+                ShortPathElement spe = s.route.get(s.route.size()-1);
                 unique.add(spe);
             }
         }
         return unique;
-    }
+    }*/
     
     private Map<NodeAndState,Node> makeNewNodes(Set<NodeAndState> sourceData) {
         HashMap<NodeAndState,Node> newNodes = new HashMap(sourceData.size());
@@ -74,28 +81,37 @@ public class AdjustGraphForRestrictions {
         return newNodes;
     }
     
-    private void makeNewDirectedEdges(Map<NodeAndState,Node> newNodes, Set<ShortestPathElement> sourceData) {
+    private void makeNewDirectedEdges(Map<NodeAndState,Node> newNodes, Set<ShortPathElement> sourceData) {
         long newEdgeId = 0;
         
-        for (ShortestPathElement sourceSPE : sourceData) {
+        for (ShortPathElement sourceSPE : sourceData) {
             Node newFromNode = newNodes.get(sourceSPE.from);
             Node newToNode = newNodes.get(sourceSPE.to);
             
             DirectedEdge sourceEdge = sourceSPE.via;
             if (sourceEdge.hasPlaceholderId() && (sourceEdge.driveTimeMs==0 || sourceSPE.to.uTurnState==UTurnState.UNRESTRICTED)) {
-                DirectedEdge.makeEdgeWithNoSourceDataEquivalent(newEdgeId++, newFromNode, newToNode, sourceEdge.driveTimeMs, AccessOnly.FALSE);
+                DirectedEdge.makeEdgeWithNoSourceDataEquivalent(newEdgeId++, newFromNode, newToNode, sourceEdge.driveTimeMs, AccessOnly.FALSE)
+                        .addToToAndFromNodes();
             } else {
                 sourceEdge.cloneWithEdgeIdAndFromToNodeAddingToLists(newEdgeId++, newFromNode, newToNode, AccessOnly.FALSE);
             }
         }
+        
     }
     
-    private List<Solution> findNodeStateLinks() {
+    private Set<ShortPathElement> findNodeStateLinks() {
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(md.allTurnRestrictions());
-        List<Solution> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);
+        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.YES);
         
         Multimap<Long,NodeAndState> arrivalOptionsByNode = groupArrivalOptionsByNode(fullyPathed);
         identifyImplicitOnlyNodes(arrivalOptionsByNode);
+        
+        //System.out.println("First round nodes and states:\n"+debugInfoPuml(fullyPathed));
+        /*for (Long nodeId : arrivalOptionsByNode.keySet()) {
+            for (NodeAndState nas : arrivalOptionsByNode.get(nodeId)) {
+                System.out.println(nas);
+            }
+        }*/
         
         /*List<NodeAndState> longestList = new ArrayList();
         for (Long nodeId : arrivalOptionsByNode.keySet()) {
@@ -116,14 +132,17 @@ public class AdjustGraphForRestrictions {
         }*/
         
         System.out.println("Repathing, only applying implicitly-restricted to nodes that can't be reached without it.");
-        fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);
+        fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.YES);
         arrivalOptionsByNode=null;
         
-        idenfityInterestingUturnOrigins(fullyPathed);
+        System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
+        
+        /*idenfityInterestingUturnOrigins(fullyPathed);
         System.out.println("Repathing, with only " + interestingUturnOrigins.size() + " u-turns of interest.");
         
-        fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);
-        arrivalOptionsByNode = groupArrivalOptionsByNode(fullyPathed);
+        fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);*/
+        
+        /*arrivalOptionsByNode = groupArrivalOptionsByNode(fullyPathed);
         
         
         
@@ -147,7 +166,7 @@ public class AdjustGraphForRestrictions {
         System.out.println("Long now:");
         for (NodeAndState nas : longestList) {
             System.out.println(nas);
-        }
+        }*/
         
         /*Multimap<Long,NodeAndState> penultimateUturns = identifyPenultimateUturns(fullyPathed);
         longestList = new ArrayList();
@@ -168,10 +187,11 @@ public class AdjustGraphForRestrictions {
         return fullyPathed;
     }
     
-    private static Multimap<Long,NodeAndState> groupArrivalOptionsByNode(List<Solution> solutions) {
+    private static Multimap<Long,NodeAndState> groupArrivalOptionsByNode(Set<ShortPathElement> solutions) {
         HashSet<NodeAndState> uniqueNodeAndState = new HashSet();
         
-        for (Solution solution : solutions) {
+        for (ShortPathElement solution : solutions) {
+            uniqueNodeAndState.add(solution.from);
             uniqueNodeAndState.add(solution.to);
         }
         
@@ -211,66 +231,60 @@ public class AdjustGraphForRestrictions {
         }
     }
     
-    private static HashSet<NodeAndState> identifyPenultimateUturns(List<Solution> solutions) {
-        HashSet<NodeAndState> interestingUturns = new HashSet();
+    private static Set<ShortPathElement> identifyPenultimateUturns(Set<ShortPathElement> solutions) {
+        HashSet<ShortPathElement> interestingUturns = new HashSet();
         
-        for (Solution solution : solutions) {
-            if (solution.route.size() >= 1) {
-                ShortestPathElement lastElement = solution.route.get(solution.route.size()-1);
-                NodeAndState penultimateNode = lastElement.from;
-                if (penultimateNode.uTurnState==UTurnState.UNRESTRICTED) {
-                    interestingUturns.add(penultimateNode);
-                }
+        for (ShortPathElement spe : solutions) {
+            if (spe.from.uTurnState==UTurnState.UNRESTRICTED && spe.previous!=null) {
+                interestingUturns.add(spe.previous);
             }
         }
         
         return interestingUturns;
     }
     
-    private void idenfityInterestingUturnOrigins(List<Solution> solutions) {
-        HashSet<NodeAndState> interestingUturnDestinations = identifyPenultimateUturns(solutions);
+    private void idenfityInterestingUturnOrigins(Set<ShortPathElement> solutions) {
+        Set<ShortPathElement> penultimateUturns = identifyPenultimateUturns(solutions);
         this.interestingUturnOrigins = new HashSet();
         
-        for (Solution solution : solutions) {
-            if (solution.route.size() >= 1) {
-                ShortestPathElement lastElement = solution.route.get(solution.route.size()-1);
-                if (lastElement.to.uTurnState==UTurnState.UNRESTRICTED 
-                        && interestingUturnDestinations.contains(lastElement.to)) {
-                    interestingUturnOrigins.add(lastElement.from);
-                }
-            }
+        for (ShortPathElement spe : penultimateUturns) {
+            interestingUturnOrigins.add(spe.from);
         }
     }
     
-    public String testRestrictedDijkstra(MapData md, Node startNode, Node endNode) {
+    private String testRestrictedDijkstraInternal(Node startNode, Node endNode) {
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(md.allTurnRestrictions());
         
-        List<Solution> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE);
+        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.NO);
         
-        List<Solution> rightDestination = new ArrayList();
-        for (Solution solution : fullyPathed) {
+        List<ShortPathElement> rightDestination = new ArrayList();
+        for (ShortPathElement solution : fullyPathed) {
             if (solution.to.node == endNode) {
                 rightDestination.add(solution);
             }
         }
         
-        Solution bestSolution = chooseBestSolution(rightDestination);
+        ShortPathElement bestSolution = chooseBestSolution(rightDestination);
         
-        StringBuilder solutionAsString = new StringBuilder();
-        for (int i=0 ; i<bestSolution.route.size() ; i++) {
-            ShortestPathElement spe = bestSolution.route.get(i);
-            if (i==0) solutionAsString.append(spe.from.node.nodeId);
-            solutionAsString.append("--").append(spe.via.driveTimeMs).append("-->").append(spe.to.node.nodeId);
-        }
-        return solutionAsString.toString();
+        return solutionAsString(bestSolution);
     }
     
-    private Solution chooseBestSolution(List<Solution> solutions) {
+    private static String solutionAsString(ShortPathElement spe) {
+        if (spe.previous==null) {
+            return spe.from.node.sourceDataNodeId + "--" + spe.via.driveTimeMs + "-->" + spe.to.node.sourceDataNodeId;
+        } else if (isPublicToPrivateEdge(spe.via) ) {
+            return solutionAsString(spe.previous);
+        } else {
+            return solutionAsString(spe.previous) + "--" + spe.via.driveTimeMs + "-->" + spe.to.node.sourceDataNodeId;
+        }
+    }
+    
+    private ShortPathElement chooseBestSolution(List<ShortPathElement> solutions) {
         if (solutions.isEmpty())
             throw new RuntimeException("No solutions found?");
         
-        Solution bestSolutionSeen = solutions.get(0);
-        for (Solution solution : solutions) {
+        ShortPathElement bestSolutionSeen = solutions.get(0);
+        for (ShortPathElement solution : solutions) {
             boolean accessOnlyImproved = (bestSolutionSeen.to.accessOnlyState==AccessOnlyState.IMPLICIT && solution.to.accessOnlyState!=AccessOnlyState.IMPLICIT);
             boolean accessOnlyWorsened = (bestSolutionSeen.to.accessOnlyState!=AccessOnlyState.IMPLICIT && solution.to.accessOnlyState==AccessOnlyState.IMPLICIT);
             
@@ -296,20 +310,22 @@ public class AdjustGraphForRestrictions {
         return reverseIndex;
     }
     
-    private List<Solution> dijkstrasAlgorithm(Node startNode, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, int driveTimeLimitMs) {
+    private Set<ShortPathElement> dijkstrasAlgorithm(Node startNode, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, int driveTimeLimitMs, GenerateOriginsForDestinations generateOrigins) {
         HashMap<NodeAndState,NodeInfo> nodeInfo = new HashMap<>();
-        ArrayList<Solution> solutions = new ArrayList<>();
+        HashSet<ShortPathElement> solutions = new HashSet<>();
         NodeAndState startState = nodeAndStateForStartNode(startNode);
         
         PriorityQueue<DistanceOrder> unvisitedNodes = new PriorityQueue<>();
-        DistanceOrder startDo = new DistanceOrder(0,startState);
-        unvisitedNodes.add(startDo);
-        
-        NodeInfo startNodeInfo = new NodeInfo();
-        startNodeInfo.minDriveTime = 0;
-        startNodeInfo.distanceOrder = startDo;
-        
-        nodeInfo.put(startState, startNodeInfo);
+        if (true) {
+            DistanceOrder startDo = new DistanceOrder(0,startState);
+            unvisitedNodes.add(startDo);
+
+            NodeInfo startNodeInfo = new NodeInfo();
+            startNodeInfo.minDriveTime = 0;
+            startNodeInfo.distanceOrder = startDo;
+
+            nodeInfo.put(startState, startNodeInfo);
+        }
         
         while (!unvisitedNodes.isEmpty()) {
             DistanceOrder minHeapEntry = unvisitedNodes.poll();
@@ -317,12 +333,25 @@ public class AdjustGraphForRestrictions {
             NodeInfo thisNodeInfo = nodeInfo.get(shortestTimeNode);
             
             //System.out.println("Visiting " + shortestTimeNode);
-            solutions.add(extractShortest(shortestTimeNode, nodeInfo));
             
             if (thisNodeInfo.minDriveTime > driveTimeLimitMs) {
                 System.out.println("Hit drive time limit without visiting all nodes for turn restrictions around " + startNode + 
                         " which probably just means this is an exit-only node.");
                 return solutions;
+            }
+            
+            if (shortestTimeNode.accessOnlyState==AccessOnlyState.DESTINATION && generateOrigins==GenerateOriginsForDestinations.YES) {
+                NodeAndState sourceEquivalentToThisDestination = nodeAndStateForStartNode(shortestTimeNode.node);
+                if (nodeInfo.containsKey(sourceEquivalentToThisDestination)) {
+                    // Already generated - visited this node with a different state.
+                } else {
+                    DistanceOrder sourceDo = new DistanceOrder(0,sourceEquivalentToThisDestination);
+                    NodeInfo sourceNodeInfo = new NodeInfo();
+                    sourceNodeInfo.minDriveTime = 0;
+                    sourceNodeInfo.distanceOrder = sourceDo;
+                    unvisitedNodes.add(sourceDo);
+                    nodeInfo.put(sourceEquivalentToThisDestination, sourceNodeInfo);
+                }
             }
             
             thisNodeInfo.visited = true;
@@ -339,16 +368,19 @@ public class AdjustGraphForRestrictions {
             }
             
             for (DirectedEdge edge : outgoingEdges) {
-                NodeAndState n = updateStateIfLegal(thisNodeInfo.minTimeVia, shortestTimeNode, edge, turnRestrictionsByStartEdge);
+                NodeAndState neighbor = updateStateIfLegal(thisNodeInfo.minTimeVia, shortestTimeNode, edge, turnRestrictionsByStartEdge);
                 
-                if (n==null)
+                if (neighbor==null)
                     continue;
                 
-                NodeInfo neighborNodeInfo = nodeInfo.get(n);
+                NodeInfo neighborNodeInfo = nodeInfo.get(neighbor);
                 if (neighborNodeInfo == null) {
                     neighborNodeInfo = new NodeInfo();
-                    nodeInfo.put(n, neighborNodeInfo);
+                    nodeInfo.put(neighbor, neighborNodeInfo);
                 }
+                
+                ShortPathElement spe = new ShortPathElement(shortestTimeNode, neighbor, edge, thisNodeInfo.minTimeFromElement);
+                solutions.add(spe);
                 
                 if (neighborNodeInfo.visited)
                     continue;
@@ -360,11 +392,12 @@ public class AdjustGraphForRestrictions {
                     neighborNodeInfo.minDriveTime = newTime;
                     neighborNodeInfo.minTimeFrom = shortestTimeNode;
                     neighborNodeInfo.minTimeVia = edge;
+                    neighborNodeInfo.minTimeFromElement = spe;
                     
                     if (neighborNodeInfo.distanceOrder != null) {
                         unvisitedNodes.remove(neighborNodeInfo.distanceOrder);
                     }
-                    DistanceOrder newDistOrder = new DistanceOrder(newTime, n);
+                    DistanceOrder newDistOrder = new DistanceOrder(newTime, neighbor);
                     neighborNodeInfo.distanceOrder = newDistOrder;
                     unvisitedNodes.add(newDistOrder);
                 }
@@ -403,12 +436,12 @@ public class AdjustGraphForRestrictions {
         NodeAndState minTimeFrom = null;
         DirectedEdge minTimeVia = null;
         DistanceOrder distanceOrder = null;
-        Solution solution = null;
+        ShortPathElement minTimeFromElement = null;
     }
     
     private NodeAndState nodeAndStateForStartNode(Node n) {
         AccessOnlyState aos = (anyEdgesAccessOnly(n) ? AccessOnlyState.SOURCE : AccessOnlyState.NO);
-        return new NodeAndState(n, new HashSet(), aos, BarrierState.NO, UTurnState.UNRESTRICTED, Long.MIN_VALUE);
+        return new NodeAndState(n, new HashSet(), aos, BarrierState.NO, UTurnState.UNRESTRICTED, null);
     }
     
     private class NodeAndState {
@@ -417,9 +450,9 @@ public class AdjustGraphForRestrictions {
         public final AccessOnlyState accessOnlyState;
         public final BarrierState gateState;
         public final UTurnState uTurnState;
-        public final long arrivingViaEdge;
+        public final DirectedEdge arrivingViaEdge;
 
-        public NodeAndState(Node node, HashSet<TurnRestriction> activeTurnRestrictions, AccessOnlyState accessOnlyState, BarrierState gateState, UTurnState uTurnState, long arrivingViaEdge) {
+        public NodeAndState(Node node, HashSet<TurnRestriction> activeTurnRestrictions, AccessOnlyState accessOnlyState, BarrierState gateState, UTurnState uTurnState, DirectedEdge arrivingViaEdge) {
             Preconditions.checkNoneNull(node, activeTurnRestrictions, accessOnlyState, gateState, uTurnState);
             this.node = node;
             this.activeTurnRestrictions = activeTurnRestrictions;
@@ -437,7 +470,7 @@ public class AdjustGraphForRestrictions {
             hash = 53 * hash + Objects.hashCode(this.accessOnlyState);
             hash = 53 * hash + Objects.hashCode(this.gateState);
             hash = 53 * hash + Objects.hashCode(this.uTurnState);
-            hash = 53 * hash + Long.hashCode(arrivingViaEdge);
+            hash = 53 * hash + Objects.hashCode(this.arrivingViaEdge);
             return hash;
         }
 
@@ -452,12 +485,12 @@ public class AdjustGraphForRestrictions {
                     && this.accessOnlyState == other.accessOnlyState 
                     && this.gateState == other.gateState
                     && this.uTurnState == other.uTurnState
-                    && this.arrivingViaEdge == other.arrivingViaEdge;
+                    && Objects.equals(this.arrivingViaEdge, other.arrivingViaEdge);
         }
         
         
         public String toString() {
-            return node + " with " + activeTurnRestrictions + " AO." + accessOnlyState + " Barrier." + gateState + " U." + uTurnState + " from " + arrivingViaEdge;
+            return node + " with " + activeTurnRestrictions + " AO." + accessOnlyState + " Barrier." + gateState + " U." + uTurnState + " from " + (arrivingViaEdge==null?"null":arrivingViaEdge.edgeId);
         }
     }
     
@@ -487,7 +520,7 @@ public class AdjustGraphForRestrictions {
         UTurnState us = updateUTurnStateIfLegal(fromEdge, toEdge);
         if (us==null) return null;
         
-        return new NodeAndState(toNode, turnRestrictionsAfter, aos, gs, us, toEdge.edgeId);
+        return new NodeAndState(toNode, turnRestrictionsAfter, aos, gs, us, toEdge);
     }
     
     private HashSet<TurnRestriction> getUpdatedTurnRestrictionsIfLegal(DirectedEdge fromEdge, NodeAndState fromNode, DirectedEdge toEdge, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
@@ -592,11 +625,11 @@ public class AdjustGraphForRestrictions {
         return (de.from==de.to && de.hasPlaceholderId() && de.driveTimeMs==U_TURN_DELAY_MILLIS);
     }
     
-    private boolean isPublicToPrivateEdge(DirectedEdge de) {
+    private static boolean isPublicToPrivateEdge(DirectedEdge de) {
         return (de.from==de.to && de.hasPlaceholderId() && de.driveTimeMs==0 && de.accessOnly==AccessOnly.TRUE);
     }
     
-    private class Solution {
+    /*private class Solution {
         final NodeAndState from;
         final NodeAndState to;
         final int driveTimeMs;
@@ -608,7 +641,7 @@ public class AdjustGraphForRestrictions {
             this.driveTimeMs = driveTimeMs;
             this.route = route;
         }
-    }
+    }*/
     
     private DirectedEdge makeUTurnDelayEdge(NodeAndState nas) {
         AccessOnly ao;
@@ -624,7 +657,7 @@ public class AdjustGraphForRestrictions {
         return DirectedEdge.makeDelayEdge(nas.node, 0, AccessOnly.TRUE);
     }
     
-    private Solution extractShortest(final NodeAndState endNode, HashMap<NodeAndState,NodeInfo> nodeInfo) {
+    /*private Solution extractShortest(final NodeAndState endNode, HashMap<NodeAndState,NodeInfo> nodeInfo) {
         NodeInfo thisNodeInfo = nodeInfo.get(endNode);
         NodeAndState prevNode = thisNodeInfo.minTimeFrom;
         NodeInfo prevNodeInfo = nodeInfo.get(prevNode);
@@ -638,18 +671,23 @@ public class AdjustGraphForRestrictions {
         }
         
         return thisNodeInfo.solution;
-    }
+    }*/
     
-    private class ShortestPathElement {
+    private class ShortPathElement {
         final NodeAndState from;
         final NodeAndState to;
         final DirectedEdge via;
+        final ShortPathElement previous;
+        final int driveTimeMs;
 
-        public ShortestPathElement(NodeAndState from, NodeAndState to, DirectedEdge via) {
+        public ShortPathElement(NodeAndState from, NodeAndState to, DirectedEdge via, ShortPathElement previous) {
             Preconditions.checkNoneNull(from,to,via);
+            Preconditions.require(previous==null || from.equals(previous.to));
             this.from = from;
             this.to = to;
             this.via = via;
+            this.previous = previous;
+            this.driveTimeMs=via.driveTimeMs+(previous==null?0:previous.driveTimeMs);
         }
 
         @Override
@@ -658,6 +696,7 @@ public class AdjustGraphForRestrictions {
             hash = 37 * hash + Objects.hashCode(this.from);
             hash = 37 * hash + Objects.hashCode(this.to);
             hash = 37 * hash + Objects.hashCode(this.via);
+            hash = 37 * hash + Objects.hashCode(this.previous);
             return hash;
         }
 
@@ -666,15 +705,93 @@ public class AdjustGraphForRestrictions {
             if (obj == null || getClass() != obj.getClass()) {
                 return false;
             }
-            final ShortestPathElement other = (ShortestPathElement) obj;
+            final ShortPathElement other = (ShortPathElement) obj;
             return  Objects.equals(this.from, other.from)
                     && Objects.equals(this.to, other.to)
-                    && Objects.equals(this.via, other.via);
+                    && Objects.equals(this.via, other.via)
+                    && Objects.equals(this.previous, other.previous);
         }
         
         public String toString() {
             return "Via " + via + " from " + from + " to " + to;
         }
+    }
+    
+    private String debugInfoPuml(Set<ShortPathElement> shortPathElements) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("@startuml\n");
+        
+        for (ShortPathElement element : shortPathElements) {
+            sb.append("(")
+                    .append(nodeToString(element.from))
+                    .append(") --> (")
+                    .append(nodeToString(element.to))
+                    .append(") : ")
+                    .append(edgeToString(element))
+                    .append("\n");
+        }
+        
+        sb.append("@enduml");
+        return sb.toString();
+    }
+    
+    private static String nodeToString(NodeAndState n) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Node ").append(n.node.nodeId)
+                .append("\\nR ").append(n.activeTurnRestrictions)
+                .append("\\nAO ").append(n.accessOnlyState)
+                .append("\\nB ").append(n.gateState).append(" U ").append(n.uTurnState);
+        if (n.arrivingViaEdge==null) {
+            sb.append("\\nOrigin node");
+        } else {
+            sb.append("\\nfrom ").append(n.arrivingViaEdge.from.nodeId);
+        }
+        
+        return sb.toString();
+    }
+    
+    private static String edgeToString(ShortPathElement de) {
+        return "Edge " + de.via.edgeId + "\\nCost " + de.via.driveTimeMs + " ms";
+    }
+    
+    private String debugInfoDot(Set<ShortPathElement> shortPathElements) {
+        Set<NodeAndState> uniqueNodes = findUniqueNodeAndStates(shortPathElements);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("digraph G {\n")
+                .append("    overlap = false;\n");
+        
+        HashMap<NodeAndState,String> nodeTags = new HashMap<>();
+        int nextNodeId=1;
+        for (NodeAndState nas : uniqueNodes) {
+            String nodeTag = "N"+nextNodeId;
+            nodeTags.put(nas, nodeTag);
+            sb.append("    ").append(nodeTag).append(" [label=\"").append(nodeToString(nas))
+                    .append("\",style=\"filled\",color=\"").append(randomColorFor(nas.node.toString())).append("\"];\n");
+            nextNodeId++;
+        }
+        
+        for (ShortPathElement element : shortPathElements) {
+            String fromTag = nodeTags.get(element.from);
+            String toTag = nodeTags.get(element.to);
+            sb.append("    ").append(fromTag).append(" -> ").append(toTag).append(";\n");
+        }
+        sb.append("    label=\"").append(uniqueNodes.size()).append(" node-states; ")
+                .append(shortPathElements.size()).append(" short path elements.\";\n");
+        
+        sb.append("}");
+        return sb.toString();
+    }
+    
+    private String randomColorFor(String toHash) {
+        byte[] hashed;
+        try {
+            hashed = MessageDigest.getInstance("SHA-256").digest(toHash.getBytes());
+        } catch (NoSuchAlgorithmException e) { throw new RuntimeException("Impossible"); }
+        int red = hashed[0]&0xFF;
+        int green = hashed[1]&0xFF;
+        int blue = hashed[2]&0xFF;
+        return String.format("#%02x%02x%02x", red,green,blue);
     }
     
 }

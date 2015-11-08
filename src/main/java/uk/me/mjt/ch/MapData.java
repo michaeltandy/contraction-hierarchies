@@ -9,7 +9,7 @@ public class MapData {
     private final HashMap<Long,TurnRestriction> turnRestrictionsById;
     private final AtomicLong maxEdgeId = new AtomicLong();
     private final AtomicLong maxNodeId = new AtomicLong();
-    private final Multimap<Long,Node> syntheticNodesByIdOfEquivalent = new Multimap<>();
+    private final Multimap<Long,Node> nodesBySourceDataNodeId = new Multimap<>();
     
     public MapData(Collection<Node> nodes) {
         this(indexNodesById(nodes), new HashMap());
@@ -24,7 +24,7 @@ public class MapData {
         this.nodesById = nodesById;
         this.turnRestrictionsById = turnRestrictionsById;
         setMaxNodeAndEdgeId();
-        indexSyntheticEquivalents();
+        indexBySourceDataNodeId();
     }
     
     private void setMaxNodeAndEdgeId() {
@@ -40,11 +40,9 @@ public class MapData {
         }
     }
     
-    private void indexSyntheticEquivalents() {
+    private void indexBySourceDataNodeId() {
         for (Node n : nodesById.values()) {
-            if (n.isSynthetic()) {
-                syntheticNodesByIdOfEquivalent.add(n.sourceDataNodeId, n);
-            }
+            nodesBySourceDataNodeId.add(n.sourceDataNodeId, n);
         }
     }
     
@@ -68,13 +66,11 @@ public class MapData {
         return nodesById.get(nodeId);
     }
     
-    public List<Node> getNodeByIdAndSyntheticEquivalents(long nodeId) {
-        ArrayList<Node> result = new ArrayList<>();
-        if (nodesById.containsKey(nodeId)) {
-            result.add(nodesById.get(nodeId));
-        }
-        result.addAll(syntheticNodesByIdOfEquivalent.get(nodeId));
-        return result;
+    public ColocatedNodeSet getNodeBySourceDataId(long nodeId) {
+        if (nodesBySourceDataNodeId.containsKey(nodeId))
+            return new ColocatedNodeSet(nodesBySourceDataNodeId.get(nodeId));
+        else
+            return null;
     }
     
     public int getNodeCount() {
@@ -96,9 +92,7 @@ public class MapData {
         }
         
         nodesById.put(toAdd.nodeId, toAdd);
-        if (toAdd.isSynthetic()) {
-            syntheticNodesByIdOfEquivalent.add(toAdd.sourceDataNodeId, toAdd);
-        }
+        nodesBySourceDataNodeId.add(toAdd.sourceDataNodeId, toAdd);
     }
     
     public void addAll(Collection<Node> toAdd) {
@@ -126,7 +120,7 @@ public class MapData {
 
         nodesById.remove(remove.nodeId);
         if (remove.isSynthetic())
-            syntheticNodesByIdOfEquivalent.removeValueForKey(remove.sourceDataNodeId, remove);
+            nodesBySourceDataNodeId.removeValueForKey(remove.sourceDataNodeId, remove);
     }
     
     public void removeAll(Collection<Node> nodes) {

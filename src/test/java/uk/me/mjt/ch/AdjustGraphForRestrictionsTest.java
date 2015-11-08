@@ -36,7 +36,7 @@ public class AdjustGraphForRestrictionsTest {
     }
     
     @Test
-    public void testGoThroughGateWhenItsTheOnlyOption() {
+    public void testGoThroughGateWhenItsTheOnlyOption() { // <--- FIXING THIS NOW
         MapData graph = MakeTestData.makeGatedRow();
         assertDijkstraResult(graph,1,3,"1--1000-->2--1000-->3");
     }
@@ -59,15 +59,46 @@ public class AdjustGraphForRestrictionsTest {
         assertDijkstraResult(graph,1,4,"1--1000-->2--1000-->3--1000-->4");
     }
     
-    public void assertDijkstraResult(MapData graph, long startNodeId, long endNodeId, String expected) {
+    private void assertDijkstraResult(MapData graph, long startNodeId, long endNodeId, String expected) {
         Node startNode = graph.getNodeById(startNodeId);
         Node endNode = graph.getNodeById(endNodeId);
         
-        AdjustGraphForRestrictions instance = new AdjustGraphForRestrictions();
-        String result = instance.testRestrictedDijkstra(graph, startNode, endNode);
+        String result = AdjustGraphForRestrictions.testRestrictedDijkstra(graph, startNode, endNode);
         
         assertNotNull(result);
         assertEquals(expected, result);
+        
+        assertModifiedGraph(AdjustGraphForRestrictions.makeNewGraph(graph, startNode),startNodeId,endNodeId,expected);
+        assertModifiedGraph(AdjustGraphForRestrictions.makeNewGraph(graph, endNode),startNodeId,endNodeId,expected);
+        
+    }
+    
+    private void assertModifiedGraph(MapData modifiedGraph, long startNodeId, long endNodeId, String expected) {
+        ColocatedNodeSet startNodes = modifiedGraph.getNodeBySourceDataId(startNodeId);
+        ColocatedNodeSet endNodes = modifiedGraph.getNodeBySourceDataId(endNodeId);
+        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNodes, endNodes, Dijkstra.Direction.FORWARDS);
+        
+        if (ds==null) {
+            System.out.println("Unable to route between " + startNodes + " and " +
+                    endNodes + " in graph with PUML:" + Puml.forNodes(modifiedGraph.getAllNodes()));
+        } else {
+            System.out.println("Successfully routed between " + startNodes + " and " +
+                    endNodes + " in graph with PUML:" + Puml.forNodes(modifiedGraph.getAllNodes()));
+        }
+        
+        assertNotNull(ds);
+        assertEquals(expected,solutionToSimpleString(ds));
+    }
+    
+    private String solutionToSimpleString(DijkstraSolution ds) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ds.edges.get(0).from.sourceDataNodeId);
+        for (DirectedEdge de : ds.edges) {
+            sb.append("--").append(de.driveTimeMs)
+                    .append("-->")
+                    .append(de.to.sourceDataNodeId);
+        }
+        return sb.toString();
     }
 
 }

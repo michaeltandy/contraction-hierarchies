@@ -35,8 +35,8 @@ public class CheckOsmRouting {
         for (RoutingTestCase tc : testCases) {
             boolean foundNonNull = false;
             
-            for (Node from : allNodes.getNodeByIdAndSyntheticEquivalents(tc.fromNode)) {
-                for (Node to : allNodes.getNodeByIdAndSyntheticEquivalents(tc.toNode)) {
+            for (Node from : allNodes.getNodeBySourceDataId(tc.fromNode)) {
+                for (Node to : allNodes.getNodeBySourceDataId(tc.toNode)) {
                     DijkstraSolution computed;
                     if (contracted)
                         computed = ContractedDijkstra.contractedGraphDijkstra(allNodes, from, to);

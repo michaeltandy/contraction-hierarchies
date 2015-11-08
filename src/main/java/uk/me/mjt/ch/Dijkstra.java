@@ -7,10 +7,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 public class Dijkstra {
     
     public enum Direction{FORWARDS,BACKWARDS};
+    private enum EndAfterFinding{ALL,ONE};
+    
     private static final int DEFAULT_SET_SIZE = 4096;
     
     /**
@@ -26,25 +29,42 @@ public class Dijkstra {
             return null;
     }
     
+    public static DijkstraSolution dijkstrasAlgorithm(ColocatedNodeSet startNode, ColocatedNodeSet endNode, Direction direction) {
+        Preconditions.checkNoneNull(startNode,endNode,direction);
+        List<DijkstraSolution> solutions = dijkstrasAlgorithm(startNode, endNode, Integer.MAX_VALUE, direction, EndAfterFinding.ONE);
+        if (solutions.size() == 1)
+            return solutions.get(0);
+        else
+            return null;
+    }
+    
+    public static List<DijkstraSolution> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, int maxSearchTime, Direction direction ) {
+        return dijkstrasAlgorithm(ColocatedNodeSet.singleton(startNode), endNodes, maxSearchTime, direction, EndAfterFinding.ALL);
+    }
+    
     /**
      * dijkstrasAlgorithm performs a best-first graph search starting at startNode
      * and continuing until all endNodes have been reached, or until the best
      * solution has a drive time greater than maxSearchTime, whichever happens
      * first.
      */
-    public static List<DijkstraSolution> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, int maxSearchTime, Direction direction ) {
-        Preconditions.checkNoneNull(startNode,direction);
+    private static List<DijkstraSolution> dijkstrasAlgorithm(ColocatedNodeSet startNodes, Set<Node> endNodes, int maxSearchTime, Direction direction, EndAfterFinding endCondition) {
+        Preconditions.checkNoneNull(startNodes,direction);
+        Preconditions.require(!startNodes.isEmpty());
         HashMap<Node,NodeInfo> nodeInfo = new HashMap<>(DEFAULT_SET_SIZE);
         ArrayList<DijkstraSolution> solutions = new ArrayList<>(DEFAULT_SET_SIZE);
 
         PriorityQueue<DistanceOrder> unvisitedNodes = new PriorityQueue<>();
-        DistanceOrder startDo = new DistanceOrder(0,startNode);
-        unvisitedNodes.add(startDo);
         
-        NodeInfo startNodeInfo = new NodeInfo();
-        startNodeInfo.minDriveTime = 0;
-        startNodeInfo.distanceOrder = startDo;
-        nodeInfo.put(startNode, startNodeInfo);
+        for (Node startNode : startNodes) {
+            DistanceOrder startDo = new DistanceOrder(0,startNode);
+            unvisitedNodes.add(startDo);
+
+            NodeInfo startNodeInfo = new NodeInfo();
+            startNodeInfo.minDriveTime = 0;
+            startNodeInfo.distanceOrder = startDo;
+            nodeInfo.put(startNode, startNodeInfo);
+        }
         
         while (!unvisitedNodes.isEmpty()) {
             // Find the node with the shortest drive time so far:
@@ -59,7 +79,7 @@ public class Dijkstra {
                 solutions.add(extractShortest(shortestTimeNode, nodeInfo));
             } else if (endNodes.contains(shortestTimeNode)) {
                 solutions.add(extractShortest(shortestTimeNode, nodeInfo));
-                if (solutions.size() == endNodes.size())
+                if (solutions.size() == endNodes.size() || endCondition==EndAfterFinding.ONE)
                     return solutions;
             }
             

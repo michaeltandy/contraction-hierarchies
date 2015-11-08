@@ -41,7 +41,7 @@ public class Puml {
         if (n.nodeId==n.sourceDataNodeId) {
             return "(Node "+n.nodeId+")";
         } else {
-            return "(Node "+n.sourceDataNodeId+"."+n.nodeId+")";
+            return "(Node "+n.nodeId+ "\\nOriginally "+n.sourceDataNodeId+")";
         }
     }
     
@@ -50,7 +50,7 @@ public class Puml {
         if (de.edgeId==de.sourceDataEdgeId) {
             s="Edge " + de.edgeId;
         } else {
-            s="Edge " +de.sourceDataEdgeId+"."+de.edgeId;
+            s="Edge " + de.edgeId + "\\nOriginally " + de.sourceDataEdgeId;
         }
         return s+ "\\ncost " + de.driveTimeMs + " ms" + (de.accessOnly==AccessOnly.TRUE?"\\naccess only":"");
     }

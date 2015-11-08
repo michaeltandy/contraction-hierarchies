@@ -226,11 +226,11 @@ public class MakeTestData {
      * No turn 2->3->6
      * <pre>
      * 1
-     * ↓
+     * ↕
      * 2←→5
-     * ↓  ↕
+     * ↕  ↕
      * 3←→6
-     * ↓
+     * ↕
      * 4
      * </pre>
      */
@@ -240,9 +240,9 @@ public class MakeTestData {
             nodes.put(i, new Node(i, 52f, 0f, Barrier.FALSE));
         }
         
-        makeUnidirectionalEdgesAndAddToNodes(nodes.get(1L), nodes.get(2L));
-        makeUnidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(3L));
-        makeUnidirectionalEdgesAndAddToNodes(nodes.get(3L), nodes.get(4L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(1L), nodes.get(2L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(3L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(3L), nodes.get(4L));
         
         makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(5L));
         makeBidirectionalEdgesAndAddToNodes(nodes.get(5L), nodes.get(6L));
