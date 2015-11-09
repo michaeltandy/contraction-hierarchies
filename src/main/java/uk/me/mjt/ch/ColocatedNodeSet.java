@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Spliterator;
 
 
 public class ColocatedNodeSet implements Set<Node> {
@@ -93,10 +92,6 @@ public class ColocatedNodeSet implements Set<Node> {
 
     public int hashCode() {
         return underlying.hashCode();
-    }
-
-    public Spliterator<Node> spliterator() {
-        return underlying.spliterator();
     }
     
     public String toString() {
