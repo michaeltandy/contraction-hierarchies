@@ -12,7 +12,7 @@ public class AdjustGraphForRestrictions {
     private static final int U_TURN_DELAY_MILLIS = 60*1000;
     
     private static enum AccessOnlyState { SOURCE, NO, DESTINATION, IMPLICIT }
-    private static enum BarrierState { NO, IMPLICIT }
+    private static enum BarrierState { SOURCE, NO, IMPLICIT }
     private static enum UTurnState { PENALTY_UNPAID, UNRESTRICTED }
     private static enum GenerateOriginsForDestinations { YES, NO }
     
@@ -101,7 +101,7 @@ public class AdjustGraphForRestrictions {
     
     private Set<ShortPathElement> findNodeStateLinks() {
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(md.allTurnRestrictions());
-        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.YES);
+        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.NO);
         
         Multimap<Long,NodeAndState> arrivalOptionsByNode = groupArrivalOptionsByNode(fullyPathed);
         identifyImplicitOnlyNodes(arrivalOptionsByNode);
@@ -131,9 +131,10 @@ public class AdjustGraphForRestrictions {
             System.out.println(nas);
         }*/
         
+        arrivalOptionsByNode=null;
         System.out.println("Repathing, only applying implicitly-restricted to nodes that can't be reached without it.");
         fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.YES);
-        arrivalOptionsByNode=null;
+        
         
         System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
         
@@ -311,6 +312,9 @@ public class AdjustGraphForRestrictions {
     }
     
     private Set<ShortPathElement> dijkstrasAlgorithm(Node startNode, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, int driveTimeLimitMs, GenerateOriginsForDestinations generateOrigins) {
+        Preconditions.checkNoneNull(startNode, turnRestrictionsByStartEdge, generateOrigins);
+        if (generateOrigins==GenerateOriginsForDestinations.YES)
+            Preconditions.require(implicitGatedNodeIds!=null);
         HashMap<NodeAndState,NodeInfo> nodeInfo = new HashMap<>();
         HashSet<ShortPathElement> solutions = new HashSet<>();
         NodeAndState startState = nodeAndStateForStartNode(startNode);
@@ -340,17 +344,34 @@ public class AdjustGraphForRestrictions {
                 return solutions;
             }
             
-            if (shortestTimeNode.accessOnlyState==AccessOnlyState.DESTINATION && generateOrigins==GenerateOriginsForDestinations.YES) {
-                NodeAndState sourceEquivalentToThisDestination = nodeAndStateForStartNode(shortestTimeNode.node);
-                if (nodeInfo.containsKey(sourceEquivalentToThisDestination)) {
-                    // Already generated - visited this node with a different state.
-                } else {
-                    DistanceOrder sourceDo = new DistanceOrder(0,sourceEquivalentToThisDestination);
-                    NodeInfo sourceNodeInfo = new NodeInfo();
-                    sourceNodeInfo.minDriveTime = 0;
-                    sourceNodeInfo.distanceOrder = sourceDo;
-                    unvisitedNodes.add(sourceDo);
-                    nodeInfo.put(sourceEquivalentToThisDestination, sourceNodeInfo);
+            if (generateOrigins==GenerateOriginsForDestinations.YES) {
+                if (shortestTimeNode.accessOnlyState==AccessOnlyState.DESTINATION) {
+                    NodeAndState sourceEquivalentToThisDestination = nodeAndStateForStartNode(shortestTimeNode.node);
+                    if (nodeInfo.containsKey(sourceEquivalentToThisDestination)) {
+                        // Already generated - visited this node with a different state.
+                    } else {
+                        DistanceOrder sourceDo = new DistanceOrder(0,sourceEquivalentToThisDestination);
+                        NodeInfo sourceNodeInfo = new NodeInfo();
+                        sourceNodeInfo.minDriveTime = 0;
+                        sourceNodeInfo.distanceOrder = sourceDo;
+                        unvisitedNodes.add(sourceDo);
+                        nodeInfo.put(sourceEquivalentToThisDestination, sourceNodeInfo);
+                    }
+                }
+
+                if (shortestTimeNode.gateState==BarrierState.IMPLICIT && implicitGatedNodeIds!=null && implicitGatedNodeIds.contains(shortestTimeNode.node.nodeId)) {
+                    AccessOnlyState aos = (anyEdgesAccessOnly(shortestTimeNode.node) ? AccessOnlyState.SOURCE : AccessOnlyState.NO);
+                    NodeAndState source = new NodeAndState(shortestTimeNode.node, new HashSet(), aos, BarrierState.SOURCE, UTurnState.UNRESTRICTED, null);
+                    if (nodeInfo.containsKey(source)) {
+                        // Already generated - visited this node with a different state.
+                    } else {
+                        DistanceOrder sourceDo = new DistanceOrder(0,source);
+                        NodeInfo sourceNodeInfo = new NodeInfo();
+                        sourceNodeInfo.minDriveTime = 0;
+                        sourceNodeInfo.distanceOrder = sourceDo;
+                        unvisitedNodes.add(sourceDo);
+                        nodeInfo.put(source, sourceNodeInfo);
+                    }
                 }
             }
             
@@ -568,7 +589,9 @@ public class AdjustGraphForRestrictions {
     
     private BarrierState updateBarrierStateIfLegal(NodeAndState fromNode, Node toNode) {
         Preconditions.checkNoneNull(fromNode,toNode);
-        if (fromNode.gateState == BarrierState.IMPLICIT || toNode.barrier==Barrier.TRUE)
+        if (fromNode.gateState == BarrierState.SOURCE && implicitGatedNodeIds!=null && implicitGatedNodeIds.contains(toNode.nodeId))
+            return BarrierState.SOURCE;
+        else if (fromNode.gateState == BarrierState.IMPLICIT || toNode.barrier==Barrier.TRUE)
             if (implicitGatedNodeIds==null || implicitGatedNodeIds.contains(toNode.nodeId))
                 return BarrierState.IMPLICIT;
             else
