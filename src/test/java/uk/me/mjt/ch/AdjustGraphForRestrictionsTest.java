@@ -36,9 +36,31 @@ public class AdjustGraphForRestrictionsTest {
     }
     
     @Test
-    public void testGoThroughGateWhenItsTheOnlyOption() { // <--- FIXING THIS NOW
+    public void testGoThroughGateWhenItsTheOnlyOption() {
         MapData graph = MakeTestData.makeGatedRow();
         assertDijkstraResult(graph,1,3,"1--1000-->2--1000-->3");
+    }
+    
+    @Test
+    public void testImplicitWorksOnDoubleGatedRow() {
+        MapData graph = MakeTestData.makeDoubleGatedRow();
+        assertDijkstraResult(graph,1,7,"1--1000-->2--1000-->3--1000-->4--1000-->5--1000-->6--1000-->7");
+        assertDijkstraResult(graph,1,6,"1--1000-->2--1000-->3--1000-->4--1000-->5--1000-->6");
+        assertDijkstraResult(graph,1,4,"1--1000-->2--1000-->3--1000-->4");
+        assertDijkstraResult(graph,1,2,"1--1000-->2");
+    }
+    
+    @Test
+    public void testImplicitWorksOnDoubleAccessOnlyRow() {
+        MapData graph = MakeTestData.makeDoubleAccessOnlyRow();
+        assertDijkstraResult(graph,1,3,"1--1000-->2--1000-->3");
+        
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testAdjustMayNotStartAtGateNode() {
+        MapData graph = MakeTestData.makeDoubleGatedRow();
+        AdjustGraphForRestrictions.makeNewGraph(graph, graph.getNodeById(3));
     }
     
     @Test
@@ -79,15 +101,17 @@ public class AdjustGraphForRestrictionsTest {
         DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNodes, endNodes, Dijkstra.Direction.FORWARDS);
         
         if (ds==null) {
-            System.out.println("Unable to route between " + startNodes + " and " +
-                    endNodes + " in graph with PUML:" + Puml.forNodes(modifiedGraph.getAllNodes()));
+            System.out.println("Unable to route between " + startNodeId + " and " + endNodeId);
         } else {
-            System.out.println("Successfully routed between " + startNodes + " and " +
-                    endNodes + " in graph with PUML:" + Puml.forNodes(modifiedGraph.getAllNodes()));
+            System.out.println("Successfully routed between " + startNodeId + " and " + endNodeId);
         }
         
         assertNotNull(ds);
         assertEquals(expected,solutionToSimpleString(ds));
+        
+        ds = Dijkstra.dijkstrasAlgorithm(endNodes, startNodes, Dijkstra.Direction.BACKWARDS);
+        assertNotNull(ds);
+        assertEquals(expected,backwardsSolutionToSimpleString(ds));
     }
     
     private String solutionToSimpleString(DijkstraSolution ds) {
@@ -97,6 +121,15 @@ public class AdjustGraphForRestrictionsTest {
             sb.append("--").append(de.driveTimeMs)
                     .append("-->")
                     .append(de.to.sourceDataNodeId);
+        }
+        return sb.toString();
+    }
+    
+    private String backwardsSolutionToSimpleString(DijkstraSolution ds) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ds.edges.get(0).to.sourceDataNodeId);
+        for (DirectedEdge de : ds.edges) {
+            sb.insert(0, de.from.sourceDataNodeId+"--"+de.driveTimeMs+"-->");
         }
         return sb.toString();
     }

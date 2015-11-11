@@ -278,9 +278,13 @@ public class MakeTestData {
         makeUnidirectionalEdgesAndAddToNodes(to,from);
     }
     
-    private static void makeUnidirectionalEdgesAndAddToNodes(Node from, Node to ) {
+    private static DirectedEdge makeUnidirectionalEdgesAndAddToNodes(Node from, Node to) {
+        return makeUnidirectionalEdgesAndAddToNodes(from, to, AccessOnly.FALSE);
+    }
+    
+    private static DirectedEdge makeUnidirectionalEdgesAndAddToNodes(Node from, Node to, AccessOnly accessOnly) {
         int driveTimeMs = 1000;
-        makeEdgeAndAddToNodes(from.nodeId*1000000+to.nodeId, from, to, driveTimeMs, AccessOnly.FALSE);
+        return makeEdgeAndAddToNodes(from.nodeId*1000000+to.nodeId, from, to, driveTimeMs, accessOnly);
     }
     
     private static DirectedEdge makeEdgeAndAddToNodes(long edgeId, Node from, Node to, int driveTimeMs, AccessOnly accessOnly) {
@@ -297,6 +301,43 @@ public class MakeTestData {
         HashMap<Long,Node> result = makeRow(3);
         result.get(2L).barrier = Barrier.TRUE;
         return new MapData(result);
+    }
+    
+    /**
+     * Gates at 3 and 5
+     * 
+     * 1←→2←→3←→4←→5←→6←→7
+     */
+    public static MapData makeDoubleGatedRow() {
+        HashMap<Long,Node> result = makeRow(7);
+        result.get(3L).barrier = Barrier.TRUE;
+        result.get(5L).barrier = Barrier.TRUE;
+        return new MapData(result);
+    }
+    
+    /**
+     * Access Only for 2←→3 and 5←→6
+     * 
+     * 1←→2←→3←→4←→5←→6←→7
+     */
+    public static MapData makeDoubleAccessOnlyRow() {
+        HashMap<Long,Node> nodes = new HashMap();
+        for (long i=1 ; i<=7 ; i++) {
+            nodes.put(i, new Node(i, 52f, 0f, Barrier.FALSE));
+        }
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(1L),nodes.get(2L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(3L),nodes.get(4L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(4L),nodes.get(5L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(6L),nodes.get(7L));
+        
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(2L),nodes.get(3L),AccessOnly.TRUE);
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(3L),nodes.get(2L),AccessOnly.TRUE);
+        
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(5L),nodes.get(6L),AccessOnly.TRUE);
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(6L),nodes.get(5L),AccessOnly.TRUE);
+        
+        return new MapData(nodes);
     }
     
     private static HashMap<Long,Node> makeRow(int numberOfNodes) {
