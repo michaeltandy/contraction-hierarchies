@@ -6,22 +6,13 @@ import java.util.*;
 public class MakeTestData {
     
     public static MapData makeSimpleThreeEntry() {
-        Node n1 = new Node(1, 52f, 0.1f, Barrier.FALSE);
-        Node n2 = new Node(2, 52f, 0.2f, Barrier.FALSE);
-        Node n3 = new Node(3, 52f, 0.3f, Barrier.FALSE);
-        
-        DirectedEdge de1 = new DirectedEdge(1001,1001, n1, n2, 1, AccessOnly.FALSE);
-        de1.addToToAndFromNodes();
-        DirectedEdge de2 = new DirectedEdge(1002,1002, n2, n3, 2, AccessOnly.FALSE);
-        de2.addToToAndFromNodes();
-        DirectedEdge de3 = new DirectedEdge(1003,1003, de1, de2);
-        de3.addToToAndFromNodes();
-        
-        HashMap<Long,Node> result = new HashMap(3);
-        result.put(1L, n1);
-        result.put(2L, n2);
-        result.put(3L, n3);
-        
+        HashMap<Long,Node> result = makeRow(3);
+        Node.sortNeighborListsAll(result.values());
+        return new MapData(result);
+    }
+    
+    public static MapData makeSimpleFiveEntry() {
+        HashMap<Long,Node> result = makeRow(5);
         Node.sortNeighborListsAll(result.values());
         return new MapData(result);
     }
