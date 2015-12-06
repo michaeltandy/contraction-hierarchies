@@ -6,6 +6,8 @@ A simple Java implementation of the 'contraction hierarchies' algorithm.
 
 [ ![Coverity Scan Build Status image](https://scan.coverity.com/projects/6517/badge.svg) ](https://scan.coverity.com/projects/michaeltandy-contraction-hierarchies)
 
+[ ![Coverage Status](http://img.shields.io/coveralls/michaeltandy/contraction-hierarchies/master.svg?style=flat-square)](https://coveralls.io/r/michaeltandy/contraction-hierarchies?branch=master)
+
 ## What license is it under?
 
 This project is (c) Michael Tandy
