@@ -57,7 +57,7 @@ echo 'Resolved maven dependencies' >> /mnt/runtimes.txt
 date >> /mnt/runtimes.txt
 
 mvn clean install
-ch_git_rev=`git rev-parse master`
+ch_git_rev=`git rev-parse HEAD`
 
 echo 'Compiled code' >> /mnt/runtimes.txt
 date >> /mnt/runtimes.txt
