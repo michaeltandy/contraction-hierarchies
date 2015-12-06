@@ -7,6 +7,9 @@ env:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
    - secure: "nHm8w9ToA6647ezJd0/ifXRQmNOtPYldSRpjxBRtYIYvsHDK6qdDu9yHKFr3d4koBBT5l23dbWgYebVoIVC4wpI6izU+lCk90364DvSU22gTmgTavW3DHqGAoDrVRMD9vGNV3z4eG6lvQ6pehbG26UvQumkk4Q/DxuOyQGyY6c8="
+   # This declaration is the encrypted COVERALLS_REPO_TOKEN 
+   - secure: "zGQray3GavQlmzhcnpjaIXtDGZLGclBEEb5iGX+UiuFuzVxTwMchlqwHoEtavyHW/IU0oBFk9cPQ5g4j3j1mtIs0Sr0ocO5iylUgO+mTJwPqIjz799g2BrQ3HJyusuFBy3c7KXUIhj9u+8utTsiz8zpJw3R8fVl6oTlJ+wmpH8g="
+
 
 addons:
   coverity_scan:
@@ -17,4 +20,9 @@ addons:
     build_command_prepend: "mvn clean"
     build_command:   "mvn -DskipTests=true compile"
     branch_pattern: master
+
+script: mvn clean org.jacoco:jacoco-maven-plugin:0.7.5.201505241946:prepare-agent install
+
+after_success:
+  - mvn org.jacoco:jacoco-maven-plugin:0.7.5.201505241946:report org.eluder.coveralls:coveralls-maven-plugin:4.0.0:report -DrepoToken=${COVERALLS_REPO_TOKEN}
 
