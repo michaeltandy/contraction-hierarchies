@@ -53,8 +53,12 @@ public class AdjustGraphForRestrictionsTest {
     @Test
     public void testImplicitWorksOnDoubleAccessOnlyRow() {
         MapData graph = MakeTestData.makeDoubleAccessOnlyRow();
+        assertDijkstraResult(graph,1,7,"1--1000-->2--1000-->3--1000-->4--1000-->5--1000-->6--1000-->7");
+        assertDijkstraResult(graph,1,6,"1--1000-->2--1000-->3--1000-->4--1000-->5--1000-->6");
+        assertDijkstraResult(graph,1,5,"1--1000-->2--1000-->3--1000-->4--1000-->5");
+        assertDijkstraResult(graph,1,4,"1--1000-->2--1000-->3--1000-->4");
         assertDijkstraResult(graph,1,3,"1--1000-->2--1000-->3");
-        
+        assertDijkstraResult(graph,1,2,"1--1000-->2");
     }
     
     @Test(expected=IllegalArgumentException.class)
@@ -93,6 +97,13 @@ public class AdjustGraphForRestrictionsTest {
         assertModifiedGraph(AdjustGraphForRestrictions.makeNewGraph(graph, startNode),startNodeId,endNodeId,expected);
         assertModifiedGraph(AdjustGraphForRestrictions.makeNewGraph(graph, endNode),startNodeId,endNodeId,expected);
         
+    }
+    
+    @Test
+    public void testTrivialDoesntCrash() {
+        MapData graph = MakeTestData.makeSimpleFiveEntry();
+        Node startNode = graph.getNodeById(1);
+        AdjustGraphForRestrictions.makeNewGraph(graph, startNode);
     }
     
     private void assertModifiedGraph(MapData modifiedGraph, long startNodeId, long endNodeId, String expected) {
