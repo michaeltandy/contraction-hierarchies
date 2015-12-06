@@ -100,7 +100,7 @@ public class AdjustGraphForRestrictions {
         System.out.println("Repathing, only applying implicitly-restricted to nodes that can't be reached without it.");
         fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.YES);
         
-        System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
+        //System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
         
         System.out.println("Before, " + md.getNodeCount() + " nodes");
         System.out.println("Found, " + fullyPathed.size() + " node-states");
@@ -650,10 +650,6 @@ public class AdjustGraphForRestrictions {
         return sb.toString();
     }
     
-    private static String edgeToString(ShortPathElement de) {
-        return "Edge " + de.via.edgeId + "\\nCost " + de.via.driveTimeMs + " ms";
-    }
-    
     private String debugInfoDot(Set<ShortPathElement> shortPathElements) {
         Set<NodeAndState> uniqueNodes = findUniqueNodeAndStates(shortPathElements);
 
@@ -688,9 +684,10 @@ public class AdjustGraphForRestrictions {
         try {
             hashed = MessageDigest.getInstance("SHA-256").digest(toHash.getBytes());
         } catch (NoSuchAlgorithmException e) { throw new RuntimeException("Impossible"); }
-        int red = hashed[0]&0xFF;
-        int green = hashed[1]&0xFF;
-        int blue = hashed[2]&0xFF;
+        int brightenIdx = hashed[3]%3;
+        int red = (hashed[0]&0xFF) | (brightenIdx==0?0b10000000:0);
+        int green = (hashed[1]&0xFF) | (brightenIdx==1?0b10000000:0);;
+        int blue = (hashed[2]&0xFF) | (brightenIdx==2?0b10000000:0);;
         return String.format("#%02x%02x%02x", red,green,blue);
     }
     
