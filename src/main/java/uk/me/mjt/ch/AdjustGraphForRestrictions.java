@@ -41,6 +41,7 @@ public class AdjustGraphForRestrictions {
     
     public MapData adjustGraph() {
         Set<ShortPathElement> shortPathElements = findNodeStateLinks();
+        removeSpuriousNodes(shortPathElements);
         
         Set<NodeAndState> nodeStates = findUniqueNodeAndStates(shortPathElements);
         
@@ -100,7 +101,7 @@ public class AdjustGraphForRestrictions {
         System.out.println("Repathing, only applying implicitly-restricted to nodes that can't be reached without it.");
         fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.YES);
         
-        //System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
+        System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
         
         System.out.println("Before, " + md.getNodeCount() + " nodes");
         System.out.println("Found, " + fullyPathed.size() + " node-states");
@@ -167,12 +168,86 @@ public class AdjustGraphForRestrictions {
         return interestingUturns;
     }
     
-    private void idenfityInterestingUturnOrigins(Set<ShortPathElement> solutions) {
-        Set<ShortPathElement> penultimateUturns = identifyPenultimateUturns(solutions);
-        this.interestingUturnOrigins = new HashSet();
+    private void removeSpuriousNodes(Set<ShortPathElement> solutions) {
+        Set<NodeAndState> nodeStates = findUniqueNodeAndStates(solutions);
         
-        for (ShortPathElement spe : penultimateUturns) {
-            interestingUturnOrigins.add(spe.from);
+        Multimap<NodeAndState, ShortPathElement> inboundEdges = new Multimap();
+        Multimap<NodeAndState, ShortPathElement> outboundEdges = new Multimap();
+        for (ShortPathElement spe : solutions) {
+            inboundEdges.add(spe.to, spe);
+            outboundEdges.add(spe.from, spe);
+        }
+        
+        HashSet<NodeAndState> disconnectedNodesForRemoval = new HashSet();
+        for (NodeAndState nas : nodeStates) {
+            List<ShortPathElement> inbound = inboundEdges.get(nas);
+            List<ShortPathElement> outbound = outboundEdges.get(nas);
+            if (inbound.isEmpty() || outbound.isEmpty()) {
+                disconnectedNodesForRemoval.add(nas);
+            }
+        }
+        
+        for (NodeAndState nas : disconnectedNodesForRemoval) {
+            deleteNodeAndStateFromFourLists(nas, solutions, nodeStates, inboundEdges, outboundEdges);
+        }
+        
+        HashSet<NodeAndState> uTurnNodesWorthSaving = new HashSet();
+        
+        for (NodeAndState nas : nodeStates) {
+            if (nas.uTurnState == UTurnState.PENALTY_UNPAID) {
+                boolean onlyInFromUturns = true;
+                for (ShortPathElement spe : inboundEdges.get(nas)) {
+                    if (spe.from.uTurnState == UTurnState.PENALTY_UNPAID) {
+                        onlyInFromUturns = false;
+                    }
+                }
+                if (onlyInFromUturns) {
+                    for (ShortPathElement spe : inboundEdges.get(nas)) {
+                        uTurnNodesWorthSaving.add(spe.from);
+                    }
+                }
+            }
+        }
+        
+        for (NodeAndState nas : nodeStates) {
+            if (nas.uTurnState == UTurnState.PENALTY_UNPAID) {
+                boolean onlyOutToUturns = true;
+                for (ShortPathElement spe : outboundEdges.get(nas)) {
+                    if (spe.to.uTurnState == UTurnState.PENALTY_UNPAID) {
+                        onlyOutToUturns = false;
+                    }
+                }
+                if (onlyOutToUturns) {
+                    for (ShortPathElement spe : inboundEdges.get(nas)) {
+                        uTurnNodesWorthSaving.add(spe.to);
+                    }
+                }
+            }
+        }
+        
+        HashSet<NodeAndState> unlikelyUturnsForRemoval = new HashSet();
+        for (NodeAndState nas : nodeStates) {
+            if (nas.uTurnState == UTurnState.UNRESTRICTED && !uTurnNodesWorthSaving.contains(nas)) {
+                unlikelyUturnsForRemoval.add(nas);
+            }
+        }
+        
+        for (NodeAndState nas : unlikelyUturnsForRemoval) {
+            deleteNodeAndStateFromFourLists(nas, solutions, nodeStates, inboundEdges, outboundEdges);
+        }
+    }
+    
+    private void deleteNodeAndStateFromFourLists(NodeAndState toDelete, Set<ShortPathElement> solutions, Set<NodeAndState> nodeStates, Multimap<NodeAndState, ShortPathElement> inboundEdges, Multimap<NodeAndState, ShortPathElement> outboundEdges ) {
+        nodeStates.remove(toDelete);
+        for (ShortPathElement spe : new ArrayList<>(inboundEdges.get(toDelete))) {
+            inboundEdges.removeValueForKey(spe.to, spe);
+            outboundEdges.removeValueForKey(spe.from, spe);
+            solutions.remove(spe);
+        }
+        for (ShortPathElement spe : new ArrayList<>(outboundEdges.get(toDelete))) {
+            inboundEdges.removeValueForKey(spe.to, spe);
+            outboundEdges.removeValueForKey(spe.from, spe);
+            solutions.remove(spe);
         }
     }
     

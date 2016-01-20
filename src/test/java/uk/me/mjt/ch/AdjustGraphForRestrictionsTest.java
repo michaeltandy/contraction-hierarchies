@@ -8,7 +8,7 @@ public class AdjustGraphForRestrictionsTest {
 
     public AdjustGraphForRestrictionsTest() {
     }
-
+    
     @Test
     public void testAvoidAccessOnlySegmentOfRing() {
         MapData graph = MakeTestData.makePartlyAccessOnlyRing();
@@ -104,6 +104,14 @@ public class AdjustGraphForRestrictionsTest {
         MapData graph = MakeTestData.makeSimpleFiveEntry();
         Node startNode = graph.getNodeById(1);
         AdjustGraphForRestrictions.makeNewGraph(graph, startNode);
+    }
+    
+    @Test
+    public void testSpuriousUturnsRemoved() {
+        MapData graph = MakeTestData.makeSimpleFiveEntry();
+        Node startNode = graph.getNodeById(1);
+        MapData adjusted = AdjustGraphForRestrictions.makeNewGraph(graph, startNode);
+        assertEquals(10, adjusted.getNodeCount());
     }
     
     private void assertModifiedGraph(MapData modifiedGraph, long startNodeId, long endNodeId, String expected) {
