@@ -65,9 +65,6 @@ public class AdjustGraphForRestrictions {
         
         long newNodeId = 0;
         for (NodeAndState source : sourceData) {
-            if (source.node.nodeId==253199386L) {
-                System.out.println(source + " -> " + newNodeId);
-            }
             newNodes.put(source, new Node(newNodeId++, source.node));
         }
         
@@ -94,14 +91,16 @@ public class AdjustGraphForRestrictions {
     
     private Set<ShortPathElement> findNodeStateLinks() {
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(md.allTurnRestrictions());
-        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.NO);
+        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, GenerateOriginsForDestinations.NO);
         
         identifyImplicitOnlyNodes(groupArrivalOptionsByNode(fullyPathed));
         
         System.out.println("Repathing, only applying implicitly-restricted to nodes that can't be reached without it.");
-        fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.YES);
+        fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, GenerateOriginsForDestinations.YES);
         
-        System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
+        if (fullyPathed.size() < 100) {
+            System.out.println("Limited implicit-only, found nodes and states:\n"+debugInfoDot(fullyPathed));
+        }
         
         System.out.println("Before, " + md.getNodeCount() + " nodes");
         System.out.println("Found, " + fullyPathed.size() + " node-states");
@@ -152,20 +151,8 @@ public class AdjustGraphForRestrictions {
             }
         }
         
-        System.out.println("Implicitly access-only nodes: " + implicitAccessOnlyNodeIds);
-        System.out.println("Implicitly gated nodes: " + implicitGatedNodeIds);
-    }
-    
-    private static Set<ShortPathElement> identifyPenultimateUturns(Set<ShortPathElement> solutions) {
-        HashSet<ShortPathElement> interestingUturns = new HashSet();
-        
-        for (ShortPathElement spe : solutions) {
-            if (spe.from.uTurnState==UTurnState.UNRESTRICTED && spe.previous!=null) {
-                interestingUturns.add(spe.previous);
-            }
-        }
-        
-        return interestingUturns;
+        System.out.println("Implicitly access-only nodes: " + implicitAccessOnlyNodeIds.size());
+        System.out.println("Implicitly gated nodes: " + implicitGatedNodeIds.size());
     }
     
     private void removeSpuriousNodes(Set<ShortPathElement> solutions) {
@@ -254,7 +241,7 @@ public class AdjustGraphForRestrictions {
     private String testRestrictedDijkstraInternal(Node startNode, Node endNode) {
         Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge = turnRestrictionsByStartEdge(md.allTurnRestrictions());
         
-        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, Integer.MAX_VALUE, GenerateOriginsForDestinations.NO);
+        Set<ShortPathElement> fullyPathed = dijkstrasAlgorithm(startNode, turnRestrictionsByStartEdge, GenerateOriginsForDestinations.NO);
         
         List<ShortPathElement> rightDestination = new ArrayList();
         for (ShortPathElement solution : fullyPathed) {
@@ -309,7 +296,7 @@ public class AdjustGraphForRestrictions {
         return reverseIndex;
     }
     
-    private Set<ShortPathElement> dijkstrasAlgorithm(Node startNode, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, int driveTimeLimitMs, GenerateOriginsForDestinations generateOrigins) {
+    private Set<ShortPathElement> dijkstrasAlgorithm(Node startNode, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, GenerateOriginsForDestinations generateOrigins) {
         Preconditions.checkNoneNull(startNode, turnRestrictionsByStartEdge, generateOrigins);
         if (generateOrigins==GenerateOriginsForDestinations.YES)
             Preconditions.checkNoneNull(implicitGatedNodeIds,implicitAccessOnlyNodeIds);
@@ -335,12 +322,6 @@ public class AdjustGraphForRestrictions {
             NodeInfo thisNodeInfo = nodeInfo.get(shortestTimeNode);
             
             //System.out.println("Visiting " + shortestTimeNode);
-            
-            if (thisNodeInfo.minDriveTime > driveTimeLimitMs) {
-                System.out.println("Hit drive time limit without visiting all nodes for turn restrictions around " + startNode + 
-                        " which probably just means this is an exit-only node.");
-                return solutions;
-            }
             
             if (generateOrigins==GenerateOriginsForDestinations.YES) {
                 if (shortestTimeNode.accessOnlyState==AccessOnlyState.DESTINATION || shortestTimeNode.accessOnlyState==AccessOnlyState.IMPLICIT) {
