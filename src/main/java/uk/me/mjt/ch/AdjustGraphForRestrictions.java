@@ -218,7 +218,7 @@ public class AdjustGraphForRestrictions {
                     }
                 }
                 if (onlyOutToUturns) {
-                    for (ShortPathElement spe : inboundEdges.get(nas)) {
+                    for (ShortPathElement spe : outboundEdges.get(nas)) {
                         uTurnNodesWorthSaving.add(spe.to);
                     }
                 }
