@@ -12,7 +12,7 @@ import java.util.Set;
 public class Dijkstra {
     
     public enum Direction{FORWARDS,BACKWARDS};
-    private enum EndAfterFinding{ALL,ONE};
+    private enum EndAfterFinding{ALL,ONE,EXHAUSTED};
     
     private static final int DEFAULT_SET_SIZE = 4096;
     
@@ -20,6 +20,7 @@ public class Dijkstra {
      * Convenience method for a one-to-one search on an uncontracted graph.
      */
     public static DijkstraSolution dijkstrasAlgorithm(Node startNode, Node endNode, Direction direction) {
+        Preconditions.checkNoneNull(startNode,endNode,direction);
         HashSet<Node> hs = new HashSet<>(1);
         hs.add(endNode);
         List<DijkstraSolution> solutions = dijkstrasAlgorithm(startNode, hs, Integer.MAX_VALUE, direction);
@@ -36,6 +37,12 @@ public class Dijkstra {
             return solutions.get(0);
         else
             return null;
+    }
+    
+    // Called for the two halves of a contracted dijkstra.
+    public static List<DijkstraSolution> dijkstrasAlgorithm(ColocatedNodeSet startNode, Direction direction) {
+        Preconditions.checkNoneNull(startNode,direction);
+        return dijkstrasAlgorithm(startNode, null, Integer.MAX_VALUE, direction, EndAfterFinding.EXHAUSTED);
     }
     
     public static List<DijkstraSolution> dijkstrasAlgorithm(Node startNode, HashSet<Node> endNodes, int maxSearchTime, Direction direction ) {

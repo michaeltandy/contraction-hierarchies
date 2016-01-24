@@ -20,6 +20,7 @@ public class ColocatedNodeSet implements Set<Node> {
         Preconditions.require(!nodes.isEmpty());
         Node referenceLocation = null;
         for (Node n : nodes) {
+            Preconditions.checkNoneNull(n);
             if (referenceLocation==null)
                 referenceLocation=n;
             else
@@ -31,6 +32,7 @@ public class ColocatedNodeSet implements Set<Node> {
     }
     
     public static ColocatedNodeSet singleton(Node node) {
+        Preconditions.checkNoneNull(node);
         return new ColocatedNodeSet(Collections.singleton(node));
     }
 

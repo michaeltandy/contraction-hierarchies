@@ -3,6 +3,7 @@ package uk.me.mjt.ch.cache;
 
 import java.util.HashMap;
 import java.util.concurrent.Callable;
+import uk.me.mjt.ch.ColocatedNodeSet;
 import uk.me.mjt.ch.ContractedDijkstra;
 import uk.me.mjt.ch.DijkstraSolution;
 import uk.me.mjt.ch.MapData;
@@ -22,8 +23,9 @@ public class CachedContractedDijkstra {
     }
 
     static UpAndDownPair calculateUpDownPair(MapData allNodes, Node startEndNode) {
-        PartialSolution.UpwardSolution upwardSolution = ContractedDijkstra.calculateUpwardSolution(allNodes, startEndNode);
-        PartialSolution.DownwardSolution downwardSolution = ContractedDijkstra.calculateDownwardSolution(allNodes, startEndNode);
+        // TODO add proper ColocatedNodeSet support.
+        PartialSolution.UpwardSolution upwardSolution = ContractedDijkstra.calculateUpwardSolution(ColocatedNodeSet.singleton(startEndNode));
+        PartialSolution.DownwardSolution downwardSolution = ContractedDijkstra.calculateDownwardSolution(ColocatedNodeSet.singleton(startEndNode));
         return new UpAndDownPair(upwardSolution, downwardSolution);
     }
 
