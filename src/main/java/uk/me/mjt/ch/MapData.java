@@ -8,7 +8,6 @@ public class MapData {
     private final HashMap<Long,Node> nodesById;
     private final HashMap<Long,TurnRestriction> turnRestrictionsById;
     private final AtomicLong maxEdgeId = new AtomicLong();
-    private final AtomicLong maxNodeId = new AtomicLong();
     private final Multimap<Long,Node> nodesBySourceDataNodeId = new Multimap<>();
     
     public MapData(Collection<Node> nodes) {
@@ -23,15 +22,12 @@ public class MapData {
         Preconditions.checkNoneNull(nodesById, turnRestrictionsById);
         this.nodesById = nodesById;
         this.turnRestrictionsById = turnRestrictionsById;
-        setMaxNodeAndEdgeId();
+        setMaxEdgeId();
         indexBySourceDataNodeId();
     }
     
-    private void setMaxNodeAndEdgeId() {
+    private void setMaxEdgeId() {
         for (Node n : nodesById.values()) {
-            if (n.nodeId > maxNodeId.get()) {
-                maxNodeId.set(n.nodeId);
-            }
             for (DirectedEdge de : n.edgesFrom) {
                 if (de.edgeId > maxEdgeId.get()) {
                     maxEdgeId.set(de.edgeId);
@@ -58,10 +54,6 @@ public class MapData {
         return maxEdgeId;
     }
     
-    public AtomicLong getNodeIdCounter() {
-        return maxNodeId;
-    }
-    
     public Node getNodeById(long nodeId) {
         return nodesById.get(nodeId);
     }
@@ -85,22 +77,6 @@ public class MapData {
         return Collections.unmodifiableSet(nodesById.keySet());
     }
     
-    public void add(Node toAdd) {
-        Preconditions.checkNoneNull(toAdd);
-        if (nodesById.containsKey(toAdd.nodeId)) {
-            throw new RuntimeException("Map data already contains node with ID " + toAdd.nodeId);
-        }
-        
-        nodesById.put(toAdd.nodeId, toAdd);
-        nodesBySourceDataNodeId.add(toAdd.sourceDataNodeId, toAdd);
-    }
-    
-    public void addAll(Collection<Node> toAdd) {
-        for (Node n : toAdd) {
-            add(n);
-        }
-    }
-    
     public List<Node> chooseRandomNodes(int howMany) {
         Preconditions.require(howMany>0);
         ArrayList<Node> n = new ArrayList<>(nodesById.values());
@@ -108,33 +84,8 @@ public class MapData {
         return new ArrayList(n.subList(0, howMany));
     }
     
-    public void removeNodeAndConnectedEdges(Node remove) {
-        Preconditions.require(nodesById.containsKey(remove.nodeId), nodesById.get(remove.nodeId).equals(remove));
-        for (DirectedEdge de : remove.edgesTo) {
-            de.from.edgesFrom.remove(de);
-        }
-
-        for (DirectedEdge de : remove.edgesFrom) {
-            de.to.edgesTo.remove(de);
-        }
-
-        nodesById.remove(remove.nodeId);
-        if (remove.isSynthetic())
-            nodesBySourceDataNodeId.removeValueForKey(remove.sourceDataNodeId, remove);
-    }
-    
-    public void removeAll(Collection<Node> nodes) {
-        for (Node n : nodes) {
-            removeNodeAndConnectedEdges(n);
-        }
-    }
-    
     public Set<TurnRestriction> allTurnRestrictions() {
         return Collections.unmodifiableSet(new HashSet<>(turnRestrictionsById.values()));
-    }
-    
-    public void clearAllTurnRestrictions() {
-        turnRestrictionsById.clear();
     }
     
     public void validate() {
@@ -169,9 +120,6 @@ public class MapData {
         
         if (node.nodeId != nodeId)
             throw new InvalidMapDataException("Node IDs don't match - " + nodeId + " vs " + node.nodeId);
-        
-        if (nodeId > maxNodeId.get())
-            throw new InvalidMapDataException("Node ID exceeds maxNodeId - " + maxNodeId.get() + " vs " + node);
         
         validateNeighborLists(node);
         

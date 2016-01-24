@@ -22,16 +22,7 @@ public class ContractAndSerialiseUk {
             Node asdf = allNodes.getNodeById(672630347L);
             System.out.println(Dijkstra.dijkstrasAlgorithm(hatfield, asdf, Dijkstra.Direction.FORWARDS).toString());
             
-            // TODO make sure these interactions happen in the right order.
-            InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
-            System.out.println("Implementing turn restrictions...");
-            TurnRestriction.adjustGraphToImplementTurnRestrictions(allNodes);
-            InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
-            System.out.println("Implementing barriers...");
-            Barrier.replaceBarriersWithAccessOnlyEdges(allNodes);
-            InaccessibleNodes.removeNodesNotBidirectionallyAccessible(allNodes, hatfield);
-            System.out.println("Implementing access only...");
-            AccessOnly.stratifyMarkedAndImplicitAccessOnlyClusters(allNodes, hatfield);
+            // TODO restriction support goes here!
             
             CheckOsmRouting.checkUncontracted(allNodes);
             

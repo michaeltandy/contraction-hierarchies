@@ -44,9 +44,7 @@ public class BinaryFormatTest {
     
     @org.junit.Test
     public void testSynthetic() throws Exception {
-        MapData testData = MakeTestData.makeSimpleThreeEntry();
-        testData.add(new Node(5, testData.getNodeById(1)));
-        writeAndReadBack(testData);
+        writeAndReadBack(MakeTestData.makeSimpleThreeEntry());
     }
     
     @org.junit.Test
