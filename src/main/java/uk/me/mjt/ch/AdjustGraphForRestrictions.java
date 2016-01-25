@@ -653,6 +653,7 @@ public class AdjustGraphForRestrictions {
         final DirectedEdge via;
         final ShortPathElement previous;
         final int driveTimeMs;
+        final int hashCode;
 
         public ShortPathElement(NodeAndState from, NodeAndState to, DirectedEdge via, ShortPathElement previous) {
             Preconditions.checkNoneNull(from,to,via);
@@ -662,16 +663,19 @@ public class AdjustGraphForRestrictions {
             this.via = via;
             this.previous = previous;
             this.driveTimeMs=via.driveTimeMs+(previous==null?0:previous.driveTimeMs);
-        }
-
-        @Override
-        public int hashCode() {
+            
             int hash = 7;
             hash = 37 * hash + Objects.hashCode(this.from);
             hash = 37 * hash + Objects.hashCode(this.to);
             hash = 37 * hash + Objects.hashCode(this.via);
+            hash = 37 * hash + Objects.hashCode(this.driveTimeMs);
             hash = 37 * hash + Objects.hashCode(this.previous);
-            return hash;
+            this.hashCode = hash;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
         }
 
         @Override
@@ -683,7 +687,8 @@ public class AdjustGraphForRestrictions {
             return  Objects.equals(this.from, other.from)
                     && Objects.equals(this.to, other.to)
                     && Objects.equals(this.via, other.via)
-                    && Objects.equals(this.previous, other.previous);
+                    && Objects.equals(this.driveTimeMs, other.driveTimeMs)
+                    && Objects.equals(this.hashCode, other.hashCode);
         }
         
         public String toString() {
