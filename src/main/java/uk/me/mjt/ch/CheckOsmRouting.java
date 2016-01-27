@@ -2,8 +2,6 @@
 package uk.me.mjt.ch;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 
 public class CheckOsmRouting {
@@ -32,26 +30,17 @@ public class CheckOsmRouting {
         
     private static void check(MapData allNodes, boolean contracted) {
         for (RoutingTestCase tc : testCases) {
-            boolean foundNonNull = false;
+            ColocatedNodeSet from = allNodes.getNodeBySourceDataId(tc.fromNode);
+            ColocatedNodeSet to = allNodes.getNodeBySourceDataId(tc.fromNode);
             
-            for (Node from : allNodes.getNodeBySourceDataId(tc.fromNode)) {
-                for (Node to : allNodes.getNodeBySourceDataId(tc.toNode)) {
-                    DijkstraSolution computed;
-                    if (contracted)
-                        computed = ContractedDijkstra.contractedGraphDijkstra(allNodes, from, to);
-                    else
-                        computed = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
-                    
-                    if (computed != null) {
-                        foundNonNull = true;
-                        compare(tc, computed);
-                    }
-                }
+             DijkstraSolution computed;
+            if (contracted) {
+                computed = ContractedDijkstra.contractedGraphDijkstra(allNodes, from, to);
+            } else {
+                computed = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
             }
-            
-            if (!foundNonNull) {
-                compare(tc,null);
-            }
+
+            compare(tc,null);
         }
     }
     
