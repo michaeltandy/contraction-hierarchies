@@ -150,7 +150,7 @@ public class BenchmarkUk {
         try {
             BenchmarkUk instance = new BenchmarkUk();
             instance.loadAndCheckMapData();
-            System.exit(0);
+            
             System.gc(); // Hopefully start the map data on its journey to oldgen :)
             
             if (args.length >= 3 && "cachedonly".equals(args[1])) {
