@@ -61,6 +61,19 @@ public class AdjustGraphForRestrictionsTest {
         assertDijkstraResult(graph,1,2,"1--1000-->2");
     }
     
+    @Test
+    public void testImplicitWorksOnDoubleAccessOnlyRow2() {
+        MapData graph = MakeTestData.makeDoubleAccessOnlyRow();
+        graph = AdjustGraphForRestrictions.makeNewGraph(graph, graph.getNodeById(4));
+        
+        ColocatedNodeSet startNodes = graph.getNodeBySourceDataId(1);
+        ColocatedNodeSet endNodes = graph.getNodeBySourceDataId(7);
+        DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(startNodes, endNodes, Dijkstra.Direction.FORWARDS);
+        
+        String expected="1--1000-->2--1000-->3--1000-->4--1000-->5--1000-->6--1000-->7";
+        assertEquals(expected,solutionToSimpleString(ds));
+    }
+    
     @Test(expected=IllegalArgumentException.class)
     public void testAdjustMayNotStartAtGateNode() {
         MapData graph = MakeTestData.makeDoubleGatedRow();

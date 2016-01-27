@@ -2,6 +2,7 @@ package uk.me.mjt.ch;
 
 import java.util.*;
 import uk.me.mjt.ch.loader.BinaryFormat;
+import uk.me.mjt.ch.status.StdoutStatusMonitor;
 
 public class ContractAndSerialiseLondon {
     
@@ -15,8 +16,8 @@ public class ContractAndSerialiseLondon {
             BinaryFormat bf = new BinaryFormat();
             MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-ways.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-turnrestrictions.dat");
-            allNodes.validate();
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-turnrestrictions.dat",
+                    new StdoutStatusMonitor());
             
             Node herbal = allNodes.getNodeById(18670884L);
             Node angel = allNodes.getNodeById(1670708085L);
@@ -24,6 +25,8 @@ public class ContractAndSerialiseLondon {
             System.out.println(Dijkstra.dijkstrasAlgorithm(herbal, angel, Dijkstra.Direction.FORWARDS).toString());
             
             allNodes = AdjustGraphForRestrictions.makeNewGraph(allNodes, herbal);
+            
+            System.gc();
             
             ColocatedNodeSet herbal2 = allNodes.getNodeBySourceDataId(18670884L);
             ColocatedNodeSet angel2 = allNodes.getNodeBySourceDataId(1670708085L);
@@ -50,7 +53,7 @@ public class ContractAndSerialiseLondon {
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-new-contracted-ways.dat");
             
             MapData readback=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-new-contracted-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-new-contracted-ways.dat");
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/greater-london-new-contracted-ways.dat", new StdoutStatusMonitor());
             
             boolean readbackMatch = Util.deepEquals(allNodes, readback, true);
             

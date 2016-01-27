@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import static org.junit.Assert.*;
 import uk.me.mjt.ch.AccessOnly;
 import uk.me.mjt.ch.DirectedEdge;
@@ -11,6 +12,9 @@ import uk.me.mjt.ch.MakeTestData;
 import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Util;
+import uk.me.mjt.ch.status.MonitoredProcess;
+import uk.me.mjt.ch.status.StdoutStatusMonitor;
+import static uk.me.mjt.ch.status.StdoutStatusMonitor.toString;
 
 public class BinaryFormatTest {
     
@@ -62,17 +66,21 @@ public class BinaryFormatTest {
         
         BinaryFormat instance = new BinaryFormat();
         
-        instance.writeNodesWithoutEdges(testData.getAllNodes(), new DataOutputStream(nodesOut));
-        instance.writeEdges(testData.getAllNodes(), new DataOutputStream(waysOut));
-        instance.writeTurnRestrictions(testData.allTurnRestrictions(), new DataOutputStream(turnRestrictionsOut));
+        instance.write(testData, new DataOutputStream(nodesOut), new DataOutputStream(waysOut), new DataOutputStream(turnRestrictionsOut));
         
         ByteArrayInputStream nodesIn = new ByteArrayInputStream(nodesOut.toByteArray());
         ByteArrayInputStream waysIn = new ByteArrayInputStream(waysOut.toByteArray());
         ByteArrayInputStream turnRestrictionsIn = new ByteArrayInputStream(turnRestrictionsOut.toByteArray());
+        LoggingStatusMonitor monitor = new LoggingStatusMonitor();
         
-        MapData loopback = instance.read(nodesIn, waysIn, turnRestrictionsIn);
+        MapData loopback = instance.read(nodesIn, waysIn, turnRestrictionsIn, monitor);
         
         assertTrue(Util.deepEquals(testData, loopback, true));
+        
+        String monitorStatuses = monitor.statuses.toString();
+        assertEquals(6, monitor.statuses.size());
+        assertTrue(monitorStatuses.contains(" 0.00%"));
+        assertTrue(monitorStatuses.contains(" 100.00%"));
     }
     
     @org.junit.Test(expected=IOException.class)
@@ -85,9 +93,16 @@ public class BinaryFormatTest {
         
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
         BinaryFormat instance = new BinaryFormat();
-        instance.read(bais, bais, bais);
+        instance.read(bais, bais, bais, new StdoutStatusMonitor());
     }
-
     
+    private class LoggingStatusMonitor extends StdoutStatusMonitor {
+        public final ArrayList<String> statuses = new ArrayList();
+        
+        @Override
+        public void updateStatus(MonitoredProcess process, long completed, long total) {
+            statuses.add(toString(process, completed, total));
+        }
+    }
     
 }

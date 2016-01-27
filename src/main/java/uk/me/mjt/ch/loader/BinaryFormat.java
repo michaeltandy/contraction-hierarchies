@@ -9,28 +9,30 @@ import uk.me.mjt.ch.MapData;
 import uk.me.mjt.ch.Node;
 import uk.me.mjt.ch.Preconditions;
 import uk.me.mjt.ch.TurnRestriction;
+import uk.me.mjt.ch.status.MonitoredProcess;
+import uk.me.mjt.ch.status.StatusMonitor;
 
 public class BinaryFormat {
     private static final long MAX_FILE_VERSION_SUPPORTED = 6;
     private static final long MIN_FILE_VERSION_SUPPORTED = 5;
     private static final long FILE_VERSION_WRITTEN = MAX_FILE_VERSION_SUPPORTED;
     
-    public MapData read(String nodeFile, String wayFile) throws IOException {
+    public MapData read(String nodeFile, String wayFile, StatusMonitor monitor) throws IOException {
         try ( FileInputStream nodesIn = new FileInputStream(nodeFile);
               FileInputStream waysIn = new FileInputStream(wayFile)) {
-            return read(nodesIn, waysIn, null);
+            return read(nodesIn, waysIn, null, monitor);
         }
     }
     
-    public MapData read(String nodeFile, String wayFile, String turnRestrictionFile) throws IOException {
+    public MapData read(String nodeFile, String wayFile, String turnRestrictionFile, StatusMonitor monitor) throws IOException {
         try ( FileInputStream nodesIn = new FileInputStream(nodeFile);
               FileInputStream waysIn = new FileInputStream(wayFile);
-              FileInputStream restrictionsIn = new FileInputStream(turnRestrictionFile)) {
-            return read(nodesIn, waysIn, restrictionsIn);
+              FileInputStream restrictionsIn = (turnRestrictionFile==null?null:new FileInputStream(turnRestrictionFile))) {
+            return read(nodesIn, waysIn, restrictionsIn, monitor);
         }
     }
     
-    public MapData read(InputStream nodesIn, InputStream waysIn, InputStream restrictionsIn) throws IOException {
+    public MapData read(InputStream nodesIn, InputStream waysIn, InputStream restrictionsIn, StatusMonitor monitor) throws IOException {
         HashMap<Long,TurnRestriction> turnRestrictions = new HashMap<>();
         if (restrictionsIn != null)
             try (DataInputStream dis = inStream(restrictionsIn)) {
@@ -39,35 +41,39 @@ public class BinaryFormat {
         
         HashMap<Long,Node> nodesById;
         try (DataInputStream dis = inStream(nodesIn)) {
-            nodesById = readNodes(dis);
+            nodesById = readNodes(dis, monitor);
         }
         
         try (DataInputStream dis = inStream(waysIn)) {
-            loadEdgesGivenNodes(nodesById,dis);
+            loadEdgesGivenNodes(nodesById, dis, monitor);
         }
         
         MapData md = new MapData(nodesById, turnRestrictions);
-        md.validate();
+        md.validate(monitor);
         return md;
     }
     
     public void write(MapData toWrite, String nodeFile, String wayFile) throws IOException {
-        write(toWrite, nodeFile, wayFile, null);
+        try (DataOutputStream waysOut = outStream(wayFile);
+                DataOutputStream nodesOut = outStream(nodeFile);) {
+            write(toWrite, nodesOut, waysOut, null);
+        }
     }
     
+    /*Not broken or anything - just currently unused.
     public void write(MapData toWrite, String nodeFile, String wayFile, String restrictionFile) throws IOException {
-        try (DataOutputStream waysOut = outStream(wayFile)) {
-            writeEdges(toWrite.getAllNodes(),waysOut);
+        try (DataOutputStream waysOut = outStream(wayFile);
+                DataOutputStream nodesOut = outStream(nodeFile);
+                DataOutputStream restrictionsOut = (restrictionFile==null?null:outStream(restrictionFile))) {
+            write(toWrite, nodesOut, waysOut, restrictionsOut);
         }
-        
-        try (DataOutputStream nodesOut = outStream(nodeFile)) {
-            writeNodesWithoutEdges(toWrite.getAllNodes(),nodesOut);
-        }
-        
-        if (restrictionFile != null) {
-            try (DataOutputStream restrictionsOut = outStream(restrictionFile)) {
-                writeTurnRestrictions(toWrite.allTurnRestrictions(), restrictionsOut);
-            }
+    }*/
+    
+    public void write(MapData toWrite, DataOutputStream nodesOut, DataOutputStream waysOut, DataOutputStream restrictionsOut) throws IOException {
+        writeEdges(toWrite.getAllNodes(),waysOut);
+        writeNodesWithoutEdges(toWrite.getAllNodes(),nodesOut);
+        if (restrictionsOut != null) {
+            writeTurnRestrictions(toWrite.allTurnRestrictions(), restrictionsOut);
         }
     }
     
@@ -79,14 +85,17 @@ public class BinaryFormat {
         return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
     }
     
-    private HashMap<Long,Node> readNodes(DataInputStream source) throws IOException {
+    private HashMap<Long,Node> readNodes(DataInputStream source, StatusMonitor monitor) throws IOException {
+        Preconditions.checkNoneNull(monitor);
         long fileFormatVersion = source.readLong();
         checkFileFormatVersion(fileFormatVersion);
         
         long totalNodeCount = (fileFormatVersion >= 6 ? source.readLong() : -1);
+        long nodesLoadedSoFar = 0;
         HashMap<Long,Node> nodesById = new HashMap(Math.max(1000, (int)totalNodeCount));
         
         try {
+            monitor.updateStatus(MonitoredProcess.LOAD_NODES, nodesLoadedSoFar, totalNodeCount);
             
             while(true) {
                 long nodeId = source.readLong();
@@ -105,21 +114,28 @@ public class BinaryFormat {
                 n.contractionOrder=(int)contractionOrder;
                 
                 nodesById.put(nodeId, n);
+                nodesLoadedSoFar++;
+                if (nodesLoadedSoFar % 10000 == 0)
+                    monitor.updateStatus(MonitoredProcess.LOAD_NODES, nodesLoadedSoFar, totalNodeCount);
             }
             
         } catch (EOFException e) { }
         
+        monitor.updateStatus(MonitoredProcess.LOAD_NODES, nodesLoadedSoFar, totalNodeCount);
         return nodesById;
     }
     
-    private void loadEdgesGivenNodes(HashMap<Long,Node> nodesById, DataInputStream source) throws IOException {
+    private void loadEdgesGivenNodes(HashMap<Long,Node> nodesById, DataInputStream source, StatusMonitor monitor) throws IOException {
+        Preconditions.checkNoneNull(monitor);
         long fileFormatVersion = source.readLong();
         checkFileFormatVersion(fileFormatVersion);
         
         long totalEdgeCount = (fileFormatVersion >= 6 ? source.readLong() : -1);
+        long edgesLoadedSoFar = 0;
         HashMap<Long,DirectedEdge> edgesById = new HashMap(Math.max(1000, (int)totalEdgeCount));
         
         try {
+            monitor.updateStatus(MonitoredProcess.LOAD_WAYS, edgesLoadedSoFar, totalEdgeCount);
             
             while(true) {
                 long edgeId = source.readLong();
@@ -156,15 +172,20 @@ public class BinaryFormat {
                 fromNode.edgesFrom.add(de);
                 toNode.edgesTo.add(de);
                 edgesById.put(edgeId, de);
+                
+                edgesLoadedSoFar++;
+                if (edgesLoadedSoFar % 10000 == 0)
+                    monitor.updateStatus(MonitoredProcess.LOAD_WAYS, edgesLoadedSoFar, totalEdgeCount);
             }
             
         } catch (EOFException e) { }
         
+        monitor.updateStatus(MonitoredProcess.LOAD_WAYS, edgesLoadedSoFar, totalEdgeCount);
         Node.sortNeighborListsAll(nodesById.values());
     }
     
     
-    public void writeNodesWithoutEdges(Collection<Node> toWrite, DataOutputStream dest) throws IOException {
+    private void writeNodesWithoutEdges(Collection<Node> toWrite, DataOutputStream dest) throws IOException {
         dest.writeLong(FILE_VERSION_WRITTEN);
         dest.writeLong(toWrite.size());
         
@@ -183,7 +204,7 @@ public class BinaryFormat {
         }
     }
     
-    public void writeEdges(Collection<Node> toWrite, DataOutputStream dos) throws IOException {
+    private void writeEdges(Collection<Node> toWrite, DataOutputStream dos) throws IOException {
         dos.writeLong(FILE_VERSION_WRITTEN);
         dos.writeLong(calculateTotalEdgeCount(toWrite));
         
@@ -231,19 +252,6 @@ public class BinaryFormat {
         alreadyWritten.add(de.edgeId);
     }
     
-    /*private void writeTurnRestriction(long turnRestrictionId, String restrictionType, List<WrittenRoadSegment> turnRestriction) {
-        try {
-            turnRestrictionOutput.writeLong(turnRestrictionId);
-            turnRestrictionOutput.writeInt(turnRestriction.size());
-            turnRestrictionOutput.writeBoolean(restrictionType.startsWith("no_"));
-            for (WrittenRoadSegment segment : turnRestriction) {
-                turnRestrictionOutput.writeLong(segment.graphEdgeId);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }*/
-    
     private HashMap<Long,TurnRestriction> readTurnRestrictions(DataInputStream source) throws IOException {
         long fileFormatVersion = source.readLong();
         checkFileFormatVersion(fileFormatVersion);
@@ -272,7 +280,7 @@ public class BinaryFormat {
         return result;
     }
     
-    public void writeTurnRestrictions(Collection<TurnRestriction> toWrite, DataOutputStream dos) throws IOException {
+    private void writeTurnRestrictions(Collection<TurnRestriction> toWrite, DataOutputStream dos) throws IOException {
         dos.writeLong(FILE_VERSION_WRITTEN);
         dos.writeLong(toWrite.size());
         

@@ -2,6 +2,7 @@ package uk.me.mjt.ch;
 
 import java.util.*;
 import uk.me.mjt.ch.loader.BinaryFormat;
+import uk.me.mjt.ch.status.StdoutStatusMonitor;
 
 public class ContractAndSerialiseUk {
     
@@ -15,8 +16,7 @@ public class ContractAndSerialiseUk {
             BinaryFormat bf = new BinaryFormat();
             MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-nodes.dat",
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-turnrestrictions.dat");
-            allNodes.validate();
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-turnrestrictions.dat", new StdoutStatusMonitor());
             
             Node hatfield = allNodes.getNodeById(253199386L);
             Node asdf = allNodes.getNodeById(672630347L);
@@ -47,7 +47,7 @@ public class ContractAndSerialiseUk {
                     "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
             
             MapData readback=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat", new StdoutStatusMonitor());
             
             boolean readbackMatch = Util.deepEquals(allNodes, readback, true);
             

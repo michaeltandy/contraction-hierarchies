@@ -31,7 +31,6 @@ public class CheckOsmRouting {
     }
         
     private static void check(MapData allNodes, boolean contracted) {
-        allNodes.validate();
         for (RoutingTestCase tc : testCases) {
             boolean foundNonNull = false;
             

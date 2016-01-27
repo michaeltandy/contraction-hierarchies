@@ -7,8 +7,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import uk.me.mjt.ch.cache.BinaryCache;
 import uk.me.mjt.ch.cache.CachedContractedDijkstra;
-import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
+import uk.me.mjt.ch.status.StdoutStatusMonitor;
 
 public class BenchmarkUk {
     
@@ -37,7 +37,7 @@ public class BenchmarkUk {
         
         if (new File(nodeFile).exists() && new File(wayFile).exists()) {
             System.out.println("Loading data from " + nodeFile + " and " + wayFile);
-            allNodes=bf.read(nodeFile,wayFile);
+            allNodes=bf.read(nodeFile,wayFile, new StdoutStatusMonitor());
             hatfield = allNodes.getNodeById(253199386L);
             return true;
         } else {
@@ -150,6 +150,7 @@ public class BenchmarkUk {
         try {
             BenchmarkUk instance = new BenchmarkUk();
             instance.loadAndCheckMapData();
+            System.exit(0);
             System.gc(); // Hopefully start the map data on its journey to oldgen :)
             
             if (args.length >= 3 && "cachedonly".equals(args[1])) {

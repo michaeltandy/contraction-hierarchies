@@ -3,6 +3,8 @@ package uk.me.mjt.ch;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import uk.me.mjt.ch.status.MonitoredProcess;
+import uk.me.mjt.ch.status.StatusMonitor;
 
 public class MapData {
     private final HashMap<Long,Node> nodesById;
@@ -88,19 +90,18 @@ public class MapData {
         return Collections.unmodifiableSet(new HashSet<>(turnRestrictionsById.values()));
     }
     
-    public void validate() {
-        validateEdgeIdsUnique();
+    public void validate(StatusMonitor monitor) {
+        int roughEstimateEdgeCount = 3*nodesById.size();
+        HashMap<Long,DirectedEdge> uniqueEdges = new HashMap(roughEstimateEdgeCount);
         
-        for (Long nodeId : nodesById.keySet()) {
-            validateSingleNode(nodeId);
-        }
-    }
-    
-    private void validateEdgeIdsUnique() {
-        int roughEstimateNodeCount = 3*nodesById.size();
-        HashMap<Long,DirectedEdge> uniqueEdges = new HashMap(roughEstimateNodeCount);
+        long totalNodeCount = nodesById.size();
+        long nodesCheckedSoFar = 0;
+        
+        monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, totalNodeCount);
         
         for (Node node : nodesById.values()) {
+            validateSingleNode(node.nodeId);
+            
             for (DirectedEdge de : node.edgesFrom) {
                 if (uniqueEdges.containsKey(de.edgeId)) {
                     DirectedEdge prevWithThisId = uniqueEdges.get(de.edgeId);
@@ -112,7 +113,13 @@ public class MapData {
                     uniqueEdges.put(de.edgeId, de);
                 }
             }
+            
+            nodesCheckedSoFar++;
+            if (nodesCheckedSoFar%10000==0)
+                monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, totalNodeCount);
         }
+        
+        monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, totalNodeCount);
     }
     
     private void validateSingleNode(long nodeId) {

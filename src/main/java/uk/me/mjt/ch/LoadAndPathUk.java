@@ -6,6 +6,7 @@ import java.util.zip.GZIPOutputStream;
 import uk.me.mjt.ch.cache.CachedContractedDijkstra;
 import uk.me.mjt.ch.cache.SimpleCache;
 import uk.me.mjt.ch.loader.BinaryFormat;
+import uk.me.mjt.ch.status.StdoutStatusMonitor;
 
 public class LoadAndPathUk {
     
@@ -19,7 +20,7 @@ public class LoadAndPathUk {
             long startTime = System.currentTimeMillis();
             BinaryFormat bf = new BinaryFormat();
             MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
+                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat", new StdoutStatusMonitor());
             Node startNode = allNodes.getNodeById(253199386L); // https://www.openstreetmap.org/node/253199386 Hatfield
             //Node startNode = allNodes.get(60455099L); // https://www.openstreetmap.org/node/60455099 Albert Drive, Glasgow
             Node endNode = allNodes.getNodeById(18670884L); // https://www.openstreetmap.org/node/18670884 Herbal Hill
