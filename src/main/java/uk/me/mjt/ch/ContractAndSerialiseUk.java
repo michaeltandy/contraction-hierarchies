@@ -8,30 +8,31 @@ public class ContractAndSerialiseUk {
     
     
     public static void main(String[] args) {
+        String filenamePrefix;
+        long startNodeId;
+        if (args.length > 3) {
+            filenamePrefix = args[1];
+            startNodeId = Long.parseLong(args[2]);
+        } else {
+            filenamePrefix = "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain";
+            startNodeId = 253199386L; // Hatfield
+        }
         
         try {
             
             System.out.println("Loading data...");
-            long startTime = System.currentTimeMillis();
             BinaryFormat bf = new BinaryFormat();
-            MapData allNodes=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-ways.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-turnrestrictions.dat", new StdoutStatusMonitor());
+            MapData allNodes=bf.read(filenamePrefix+"-nodes.dat", filenamePrefix+"-ways.dat",
+                    filenamePrefix+"-turnrestrictions.dat", new StdoutStatusMonitor());
             
-            Node hatfield = allNodes.getNodeById(253199386L);
-            Node asdf = allNodes.getNodeById(672630347L);
-            System.out.println(Dijkstra.dijkstrasAlgorithm(hatfield, asdf, Dijkstra.Direction.FORWARDS).toString());
+            Node startNode = allNodes.getNodeById(startNodeId);
             
-            // TODO restriction support goes here!
+            System.out.println("Adjusting for restrictions...");
+            allNodes = AdjustGraphForRestrictions.makeNewGraph(allNodes, startNode);
             
             CheckOsmRouting.checkUncontracted(allNodes);
             
-            Node from = allNodes.getNodeById(672630347L);
-            Node to = allNodes.getNodeById(927070648L);
-            DijkstraSolution ds = Dijkstra.dijkstrasAlgorithm(from, to, Dijkstra.Direction.FORWARDS);
-            System.out.println(ds.toString());
-            System.out.println(GeoJson.solution(ds));
-            
+            System.out.println("Contracting...");
             GraphContractor contractor = new GraphContractor(allNodes);
 
             long startTime2 = System.currentTimeMillis();
@@ -40,16 +41,11 @@ public class ContractAndSerialiseUk {
             long duration = System.currentTimeMillis()-startTime2;
             System.out.println("Performed contraction in " + duration + "ms.");
             
-            CheckOsmRouting.checkContracted(allNodes);
-            
-            bf.write(allNodes,
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat");
-            
-            MapData readback=bf.read("/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-nodes.dat",
-                    "/home/mtandy/Documents/contraction hierarchies/binary-test/great-britain-new-contracted-ways.dat", new StdoutStatusMonitor());
-            
+            bf.write(allNodes,filenamePrefix+"-contracted-nodes.dat",filenamePrefix+"-contracted-ways.dat");
+            MapData readback=bf.read(filenamePrefix+"-contracted-nodes.dat",filenamePrefix+"-contracted-ways.dat", new StdoutStatusMonitor());
             boolean readbackMatch = Util.deepEquals(allNodes, readback, true);
+            
+            CheckOsmRouting.checkContracted(allNodes);
             
             if (!readbackMatch) {
                 System.out.println("Readback mismatch?!");
