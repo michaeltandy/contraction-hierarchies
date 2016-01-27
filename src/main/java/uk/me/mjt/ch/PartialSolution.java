@@ -22,7 +22,10 @@ public abstract class PartialSolution {
     
     private PartialSolution(ByteBuffer bb) {
         Preconditions.checkNoneNull(bb);
+        Preconditions.require(bb.position()==0, bb.limit()==bb.capacity(), bb.isDirect(), bb.order()==ByteOrder.LITTLE_ENDIAN);
         recordCount = bb.getInt(0);
+        int expectedCapacity = 24*recordCount + 4;
+        Preconditions.require(bb.capacity()==expectedCapacity);
         this.bb = bb;
     }
 
@@ -138,6 +141,8 @@ public abstract class PartialSolution {
                 throw new RuntimeException("Delta edge length isn't 1?");
             }
         }
+        bb.position(0);
+        bb.limit(bb.capacity());
         return bb;
     }
 
@@ -170,20 +175,18 @@ public abstract class PartialSolution {
     }
     
     public IntBuffer getTotalDriveTimeBuffer() {
-        bb.position(4 + 12*recordCount); // REVISIT is this thread safe?
-        bb.limit(4 + 16*recordCount);
-        ByteBuffer view = bb.slice();
-        bb.limit(bb.capacity());
-        view.order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer bbDupe = bb.duplicate();
+        bbDupe.position(4 + 12*recordCount);
+        bbDupe.limit(4 + 16*recordCount);
+        ByteBuffer view = bbDupe.slice().order(ByteOrder.LITTLE_ENDIAN);
         return view.asIntBuffer();
     }
     
     public IntBuffer getContractionOrderBuffer() {
-        bb.position(4); // REVISIT is this thread safe?
-        bb.limit(4 + 4*recordCount);
-        ByteBuffer view = bb.slice();
-        bb.limit(bb.capacity());
-        view.order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer bbDupe = bb.duplicate();
+        bbDupe.position(4);
+        bbDupe.limit(4 + 4*recordCount);
+        ByteBuffer view = bbDupe.slice().order(ByteOrder.LITTLE_ENDIAN);
         return view.asIntBuffer();
     }
     
