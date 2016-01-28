@@ -33,7 +33,7 @@ public class BinaryFormat {
     }
     
     public MapData read(InputStream nodesIn, InputStream waysIn, InputStream restrictionsIn, StatusMonitor monitor) throws IOException {
-        HashMap<Long,TurnRestriction> turnRestrictions = new HashMap<>();
+        HashSet<TurnRestriction> turnRestrictions = new HashSet<>();
         if (restrictionsIn != null)
             try (DataInputStream dis = inStream(restrictionsIn)) {
                 turnRestrictions = readTurnRestrictions(dis);
@@ -252,12 +252,12 @@ public class BinaryFormat {
         alreadyWritten.add(de.edgeId);
     }
     
-    private HashMap<Long,TurnRestriction> readTurnRestrictions(DataInputStream source) throws IOException {
+    private HashSet<TurnRestriction> readTurnRestrictions(DataInputStream source) throws IOException {
         long fileFormatVersion = source.readLong();
         checkFileFormatVersion(fileFormatVersion);
         
         long totalRestrictionCount = (fileFormatVersion >= 6 ? source.readLong() : -1);
-        HashMap<Long,TurnRestriction> result = new HashMap(Math.max(1000, (int)totalRestrictionCount));
+        HashSet<TurnRestriction> result = new HashSet(Math.max(1000, (int)totalRestrictionCount));
         
         try {
             
@@ -272,7 +272,7 @@ public class BinaryFormat {
                 }
                 
                 TurnRestriction.TurnRestrictionType trt = (typeStartsWithNo?TurnRestriction.TurnRestrictionType.NOT_ALLOWED:TurnRestriction.TurnRestrictionType.ONLY_ALLOWED);
-                result.put(turnRestrictionId, new TurnRestriction(turnRestrictionId, trt, edgeIds));
+                result.add(new TurnRestriction(turnRestrictionId, trt, edgeIds));
             }
             
         } catch (EOFException e) { }

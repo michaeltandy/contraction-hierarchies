@@ -98,6 +98,16 @@ public class AdjustGraphForRestrictionsTest {
         assertDijkstraResult(graph,1,4,"1--1000-->2--1000-->3--1000-->4");
     }
     
+    @Test
+    public void testOnlyRestriction() {
+        MapData graph = MakeTestData.makeOffsetCrossroadWithOnlyStraightOn();
+        
+        assertDijkstraResult(graph,1,4,"1--1000-->2--1000-->3--1000-->4");
+        assertDijkstraResult(graph,1,5,"1--1000-->2--2000-->5");
+        assertDijkstraResult(graph,5,6,"5--2000-->2--1000-->3--1000-->6");
+        assertDijkstraResult(graph,1,6,"1--1000-->2--1000-->3--1000-->4--60000-->4--1000-->3--1000-->6");
+    }
+    
     private void assertDijkstraResult(MapData graph, long startNodeId, long endNodeId, String expected) {
         Node startNode = graph.getNodeById(startNodeId);
         Node endNode = graph.getNodeById(endNodeId);

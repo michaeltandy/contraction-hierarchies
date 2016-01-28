@@ -367,8 +367,13 @@ public class AdjustGraphForRestrictions {
                 outgoingEdges = new UnionList<>(outgoingEdges,makePublicToAccessRestrictedEdge(shortestTimeNode));
             }
             
+            ShortPathElement lastNonSyntheticEdge = thisNodeInfo.minTimeFromElement;
+            while (lastNonSyntheticEdge!=null && (isUturnEdge(lastNonSyntheticEdge.via) || isPublicToPrivateEdge(lastNonSyntheticEdge.via))) {
+                lastNonSyntheticEdge = nodeInfo.get(lastNonSyntheticEdge.from).minTimeFromElement;
+            }
+            
             for (DirectedEdge edge : outgoingEdges) {
-                NodeAndState neighbor = updateStateIfLegal(thisNodeInfo.minTimeVia, shortestTimeNode, edge, turnRestrictionsByStartEdge);
+                NodeAndState neighbor = updateStateIfLegal(thisNodeInfo.minTimeVia, shortestTimeNode, edge, turnRestrictionsByStartEdge, (lastNonSyntheticEdge==null?null:lastNonSyntheticEdge.via));
                 
                 if (neighbor==null)
                     continue;
@@ -503,12 +508,12 @@ public class AdjustGraphForRestrictions {
         return false;
     }
     
-    private NodeAndState updateStateIfLegal(DirectedEdge fromEdge, NodeAndState fromNodeState, DirectedEdge toEdge, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
+    private NodeAndState updateStateIfLegal(DirectedEdge fromEdge, NodeAndState fromNodeState, DirectedEdge toEdge, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, DirectedEdge priorFromEdge) {
         Preconditions.checkNoneNull(fromNodeState,toEdge,turnRestrictionsByStartEdge);
         
         Node toNode = toEdge.to;
         
-        HashSet<TurnRestriction> turnRestrictionsAfter = getUpdatedTurnRestrictionsIfLegal(fromEdge, fromNodeState, toEdge, turnRestrictionsByStartEdge);
+        HashSet<TurnRestriction> turnRestrictionsAfter = getUpdatedTurnRestrictionsIfLegal(fromEdge, fromNodeState, toEdge, turnRestrictionsByStartEdge, priorFromEdge);
         if (turnRestrictionsAfter==null) return null;
         
         BarrierState gs = updateBarrierStateIfLegal(fromNodeState, toNode);
@@ -523,7 +528,7 @@ public class AdjustGraphForRestrictions {
         return new NodeAndState(toNode, turnRestrictionsAfter, aos, gs, us, toEdge);
     }
     
-    private HashSet<TurnRestriction> getUpdatedTurnRestrictionsIfLegal(DirectedEdge fromEdge, NodeAndState fromNode, DirectedEdge toEdge, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge) {
+    private HashSet<TurnRestriction> getUpdatedTurnRestrictionsIfLegal(DirectedEdge fromEdge, NodeAndState fromNode, DirectedEdge toEdge, Multimap<Long,TurnRestriction> turnRestrictionsByStartEdge, DirectedEdge priorFromEdge) {
         Preconditions.checkNoneNull(fromNode,toEdge,turnRestrictionsByStartEdge);
         if (isUturnEdge(toEdge) || isPublicToPrivateEdge(toEdge)) { // U-turns don't deactivate turn restrictions.
             return fromNode.activeTurnRestrictions;
@@ -538,19 +543,12 @@ public class AdjustGraphForRestrictions {
         
         for (TurnRestriction tr : fromNode.activeTurnRestrictions) {
             List<Long> edgeIds = tr.directedEdgeIds;
-            int fromEdgeIdx = edgeIds.indexOf(fromEdge.edgeId);
+            
+            int fromEdgeIdx = edgeIds.indexOf(priorFromEdge.edgeId);
             int toEdgeIdx = edgeIds.indexOf(toEdge.edgeId);
             
-            boolean endOfRestriction = (toEdgeIdx==edgeIds.size()-1);
-            boolean restrictionCoversMove = toEdgeIdx>=0; // REVISIT are there any real turn restrictions where graph-adjacent edges appear nonconsecutively?
-            
-            if (fromEdgeIdx>=0 && (restrictionCoversMove != (fromEdgeIdx+1==toEdgeIdx))) {
-                throw new RuntimeException("I wasn't sure whether it's possible to have turn restrictions where "
-                        + "edges that are adjacent in the graph appear nonconsecutively in the restriction. "
-                        + "Ignoring that case made dealing with U-turns during turn restrictions simpler. If "
-                        + "you're seeing this exception, then it is possible and the code should be updated "
-                        + "to account for it! Restriction " + tr.turnRestrictionId);
-            }
+            boolean endOfRestriction = (fromEdgeIdx==edgeIds.size()-2);
+            boolean restrictionCoversMove = (fromEdgeIdx+1==toEdgeIdx);
             
             if (endOfRestriction) {
                 if (tr.type == TurnRestrictionType.ONLY_ALLOWED && !restrictionCoversMove) {

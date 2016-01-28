@@ -163,11 +163,9 @@ public class MakeTestData {
         noRight.add(3000002L);
         noRight.add(2000005L);
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, noRight);
-        HashMap<Long,TurnRestriction> trMap = new HashMap();
-        trMap.put(tr.getTurnRestrictionId(), tr);
         
         Node.sortNeighborListsAll(nodes.values());
-        return new MapData(nodes,trMap);
+        return new MapData(nodes,Collections.singleton(tr));
     }
     
     /**
@@ -200,11 +198,9 @@ public class MakeTestData {
         noRight.add(2000005L);
         noRight.add(5000006L);
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, noRight);
-        HashMap<Long,TurnRestriction> trMap = new HashMap();
-        trMap.put(tr.getTurnRestrictionId(), tr);
         
         Node.sortNeighborListsAll(nodes.values());
-        return new MapData(nodes,trMap);
+        return new MapData(nodes,Collections.singleton(tr));
     }
     
     /**
@@ -244,11 +240,47 @@ public class MakeTestData {
         restriction.add(edgeBetween(nodes.get(3L), nodes.get(6L)).edgeId);
         
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, restriction);
-        HashMap<Long,TurnRestriction> trMap = new HashMap();
-        trMap.put(tr.getTurnRestrictionId(), tr);
         
         Node.sortNeighborListsAll(nodes.values());
-        return new MapData(nodes,trMap);
+        return new MapData(nodes,Collections.singleton(tr));
+    }
+    
+    /**
+     * An offset crossroads with an only-straight-on restriction,
+     * similar to http://www.openstreetmap.org/node/1675447389
+     * 
+     * <pre>
+     *    5
+     *    ↕
+     *    ↕
+     * 1←→2←→3←→4
+     *       ↕
+     *       6
+     * </pre>
+     */
+    public static MapData makeOffsetCrossroadWithOnlyStraightOn() {
+        HashMap<Long,Node> nodes = new HashMap();
+        for (long i=1 ; i<=6 ; i++) {
+            nodes.put(i, new Node(i, 52f, 0f, Barrier.FALSE));
+        }
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(1L), nodes.get(2L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(3L));
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(3L), nodes.get(4L));
+        
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(2L), nodes.get(5L),AccessOnly.FALSE, 2000);
+        makeUnidirectionalEdgesAndAddToNodes(nodes.get(5L), nodes.get(2L),AccessOnly.FALSE, 2000);
+        
+        makeBidirectionalEdgesAndAddToNodes(nodes.get(3L), nodes.get(6L));
+        
+        List<Long> restriction = new ArrayList();
+        restriction.add(edgeBetween(nodes.get(1L), nodes.get(2L)).edgeId);
+        restriction.add(edgeBetween(nodes.get(2L), nodes.get(3L)).edgeId);
+        restriction.add(edgeBetween(nodes.get(3L), nodes.get(4L)).edgeId);
+        TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.ONLY_ALLOWED, restriction);
+        
+        Node.sortNeighborListsAll(nodes.values());
+        return new MapData(nodes,Collections.singleton(tr));
     }
     
     private static DirectedEdge edgeBetween(Node from, Node to) {
@@ -275,6 +307,9 @@ public class MakeTestData {
     
     private static DirectedEdge makeUnidirectionalEdgesAndAddToNodes(Node from, Node to, AccessOnly accessOnly) {
         int driveTimeMs = 1000;
+        return makeUnidirectionalEdgesAndAddToNodes(from, to, accessOnly, driveTimeMs);
+    }
+    private static DirectedEdge makeUnidirectionalEdgesAndAddToNodes(Node from, Node to, AccessOnly accessOnly, int driveTimeMs) {
         return makeEdgeAndAddToNodes(from.nodeId*1000000+to.nodeId, from, to, driveTimeMs, accessOnly);
     }
     

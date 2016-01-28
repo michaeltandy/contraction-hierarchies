@@ -8,22 +8,22 @@ import uk.me.mjt.ch.status.StatusMonitor;
 
 public class MapData {
     private final HashMap<Long,Node> nodesById;
-    private final HashMap<Long,TurnRestriction> turnRestrictionsById;
+    private final Set<TurnRestriction> turnRestrictions;
     private final AtomicLong maxEdgeId = new AtomicLong();
     private final Multimap<Long,Node> nodesBySourceDataNodeId = new Multimap<>();
     
     public MapData(Collection<Node> nodes) {
-        this(indexNodesById(nodes), new HashMap());
+        this(indexNodesById(nodes), new HashSet());
     }
     
     public MapData(HashMap<Long,Node> nodesById) {
-        this(nodesById, new HashMap());
+        this(nodesById, new HashSet());
     }
     
-    public MapData(HashMap<Long,Node> nodesById, HashMap<Long,TurnRestriction> turnRestrictionsById) {
-        Preconditions.checkNoneNull(nodesById, turnRestrictionsById);
+    public MapData(HashMap<Long,Node> nodesById, Set<TurnRestriction> turnRestrictions) {
+        Preconditions.checkNoneNull(nodesById, turnRestrictions);
         this.nodesById = nodesById;
-        this.turnRestrictionsById = turnRestrictionsById;
+        this.turnRestrictions = turnRestrictions;
         setMaxEdgeId();
         indexBySourceDataNodeId();
     }
@@ -87,7 +87,7 @@ public class MapData {
     }
     
     public Set<TurnRestriction> allTurnRestrictions() {
-        return Collections.unmodifiableSet(new HashSet<>(turnRestrictionsById.values()));
+        return Collections.unmodifiableSet(turnRestrictions);
     }
     
     public void validate(StatusMonitor monitor) {
