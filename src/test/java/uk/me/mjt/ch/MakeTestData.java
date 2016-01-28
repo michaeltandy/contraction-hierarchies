@@ -249,6 +249,9 @@ public class MakeTestData {
      * An offset crossroads with an only-straight-on restriction,
      * similar to http://www.openstreetmap.org/node/1675447389
      * 
+     * Path between 2 and 5 is extra-long, so result for 1->6 is always to 
+     * u-turn at 4, not to u-turn at 5;
+     * 
      * <pre>
      *    5
      *    ↕
