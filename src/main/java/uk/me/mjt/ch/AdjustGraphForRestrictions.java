@@ -541,6 +541,9 @@ public class AdjustGraphForRestrictions {
             return turnRestrictionsAfter;
         }
         
+        if (priorFromEdge == null)
+            priorFromEdge = fromEdge;
+        
         for (TurnRestriction tr : fromNode.activeTurnRestrictions) {
             List<Long> edgeIds = tr.directedEdgeIds;
             
