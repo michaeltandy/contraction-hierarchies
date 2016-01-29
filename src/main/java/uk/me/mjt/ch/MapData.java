@@ -3,6 +3,7 @@ package uk.me.mjt.ch;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import uk.me.mjt.ch.status.DiscardingStatusMonitor;
 import uk.me.mjt.ch.status.MonitoredProcess;
 import uk.me.mjt.ch.status.StatusMonitor;
 
@@ -13,35 +14,46 @@ public class MapData {
     private final Multimap<Long,Node> nodesBySourceDataNodeId = new Multimap<>();
     
     public MapData(Collection<Node> nodes) {
-        this(indexNodesById(nodes), new HashSet());
+        this(indexNodesById(nodes), new HashSet(), new DiscardingStatusMonitor());
     }
     
     public MapData(HashMap<Long,Node> nodesById) {
-        this(nodesById, new HashSet());
+        this(nodesById, new HashSet(), new DiscardingStatusMonitor());
     }
     
-    public MapData(HashMap<Long,Node> nodesById, Set<TurnRestriction> turnRestrictions) {
+    public MapData(HashMap<Long,Node> nodesById, Set<TurnRestriction> turnRestrictions, StatusMonitor monitor) {
         Preconditions.checkNoneNull(nodesById, turnRestrictions);
         this.nodesById = nodesById;
         this.turnRestrictions = turnRestrictions;
-        setMaxEdgeId();
-        indexBySourceDataNodeId();
+        generateIndexAndAggregates(monitor);
     }
     
-    private void setMaxEdgeId() {
+    private void generateIndexAndAggregates(StatusMonitor monitor) {
+        long nodesCheckedSoFar = 0;
+        monitor.updateStatus(MonitoredProcess.INDEX_MAP_DATA, nodesCheckedSoFar, nodesById.size());
+        
         for (Node n : nodesById.values()) {
-            for (DirectedEdge de : n.edgesFrom) {
-                if (de.edgeId > maxEdgeId.get()) {
-                    maxEdgeId.set(de.edgeId);
-                }
+            findMaxEdgeId(n);
+            indexBySourceDataNodeId(n);
+            
+            nodesCheckedSoFar++;
+            if (nodesCheckedSoFar%10000==0)
+                monitor.updateStatus(MonitoredProcess.INDEX_MAP_DATA, nodesCheckedSoFar, nodesById.size());
+        }
+        
+        monitor.updateStatus(MonitoredProcess.INDEX_MAP_DATA, nodesCheckedSoFar, nodesById.size());
+    }
+    
+    private void findMaxEdgeId(Node n) {
+        for (DirectedEdge de : n.edgesFrom) {
+            if (de.edgeId > maxEdgeId.get()) {
+                maxEdgeId.set(de.edgeId);
             }
         }
     }
     
-    private void indexBySourceDataNodeId() {
-        for (Node n : nodesById.values()) {
-            nodesBySourceDataNodeId.add(n.sourceDataNodeId, n);
-        }
+    private void indexBySourceDataNodeId(Node n) {
+        nodesBySourceDataNodeId.add(n.sourceDataNodeId, n);
     }
     
     private static HashMap<Long,Node> indexNodesById(Collection<Node> nodes) {
@@ -94,32 +106,33 @@ public class MapData {
         int roughEstimateEdgeCount = 3*nodesById.size();
         HashMap<Long,DirectedEdge> uniqueEdges = new HashMap(roughEstimateEdgeCount);
         
-        long totalNodeCount = nodesById.size();
         long nodesCheckedSoFar = 0;
-        
-        monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, totalNodeCount);
+        monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, nodesById.size());
         
         for (Node node : nodesById.values()) {
             validateSingleNode(node.nodeId);
-            
-            for (DirectedEdge de : node.edgesFrom) {
-                if (uniqueEdges.containsKey(de.edgeId)) {
-                    DirectedEdge prevWithThisId = uniqueEdges.get(de.edgeId);
-                    if (de != prevWithThisId) {
-                        throw new InvalidMapDataException("Nonunique edge ID - " + de.edgeId +
-                                " " + de.toDetailedString() + " vs " + prevWithThisId.toDetailedString());
-                    }
-                } else {
-                    uniqueEdges.put(de.edgeId, de);
-                }
-            }
+            checkForDuplicateEdges(node, uniqueEdges);
             
             nodesCheckedSoFar++;
             if (nodesCheckedSoFar%10000==0)
-                monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, totalNodeCount);
+                monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, nodesById.size());
         }
         
-        monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, totalNodeCount);
+        monitor.updateStatus(MonitoredProcess.VALIDATE_DATA, nodesCheckedSoFar, nodesById.size());
+    }
+    
+    private void checkForDuplicateEdges(Node node, HashMap<Long,DirectedEdge> uniqueEdges) {
+        for (DirectedEdge de : node.edgesFrom) {
+            if (uniqueEdges.containsKey(de.edgeId)) {
+                DirectedEdge prevWithThisId = uniqueEdges.get(de.edgeId);
+                if (de != prevWithThisId) {
+                    throw new InvalidMapDataException("Nonunique edge ID - " + de.edgeId
+                            + " " + de.toDetailedString() + " vs " + prevWithThisId.toDetailedString());
+                }
+            } else {
+                uniqueEdges.put(de.edgeId, de);
+            }
+        }
     }
     
     private void validateSingleNode(long nodeId) {

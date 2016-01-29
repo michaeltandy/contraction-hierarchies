@@ -2,6 +2,7 @@
 package uk.me.mjt.ch;
 
 import java.util.*;
+import uk.me.mjt.ch.status.DiscardingStatusMonitor;
 
 public class MakeTestData {
     
@@ -165,7 +166,7 @@ public class MakeTestData {
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, noRight);
         
         Node.sortNeighborListsAll(nodes.values());
-        return new MapData(nodes,Collections.singleton(tr));
+        return new MapData(nodes,Collections.singleton(tr), new DiscardingStatusMonitor());
     }
     
     /**
@@ -200,7 +201,7 @@ public class MakeTestData {
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, noRight);
         
         Node.sortNeighborListsAll(nodes.values());
-        return new MapData(nodes,Collections.singleton(tr));
+        return new MapData(nodes,Collections.singleton(tr), new DiscardingStatusMonitor());
     }
     
     /**
@@ -242,7 +243,7 @@ public class MakeTestData {
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.NOT_ALLOWED, restriction);
         
         Node.sortNeighborListsAll(nodes.values());
-        return new MapData(nodes,Collections.singleton(tr));
+        return new MapData(nodes,Collections.singleton(tr), new DiscardingStatusMonitor());
     }
     
     /**
@@ -283,7 +284,7 @@ public class MakeTestData {
         TurnRestriction tr = new TurnRestriction(12345, TurnRestriction.TurnRestrictionType.ONLY_ALLOWED, restriction);
         
         Node.sortNeighborListsAll(nodes.values());
-        return new MapData(nodes,Collections.singleton(tr));
+        return new MapData(nodes,Collections.singleton(tr), new DiscardingStatusMonitor());
     }
     
     private static DirectedEdge edgeBetween(Node from, Node to) {

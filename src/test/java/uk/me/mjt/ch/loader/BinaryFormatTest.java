@@ -78,7 +78,7 @@ public class BinaryFormatTest {
         assertTrue(Util.deepEquals(testData, loopback, true));
         
         String monitorStatuses = monitor.statuses.toString();
-        assertEquals(6, monitor.statuses.size());
+        assertEquals(2*MonitoredProcess.values().length, monitor.statuses.size());
         assertTrue(monitorStatuses.contains(" 0.00%"));
         assertTrue(monitorStatuses.contains(" 100.00%"));
     }

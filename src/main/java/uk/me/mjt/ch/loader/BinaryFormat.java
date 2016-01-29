@@ -48,7 +48,7 @@ public class BinaryFormat {
             loadEdgesGivenNodes(nodesById, dis, monitor);
         }
         
-        MapData md = new MapData(nodesById, turnRestrictions);
+        MapData md = new MapData(nodesById, turnRestrictions, monitor);
         md.validate(monitor);
         return md;
     }
