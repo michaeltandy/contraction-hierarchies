@@ -151,7 +151,7 @@ public abstract class PartialSolution {
     }
     
     public ByteBuffer getUnderlyingBuffer() {
-        return bb.asReadOnlyBuffer();
+        return bb.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
     }
     
     public int getContractionOrder(int idx) {
