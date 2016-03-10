@@ -5,12 +5,12 @@ import java.util.Arrays;
 import uk.me.mjt.ch.Preconditions;
 
 
-public class ArrayTimeProfile {
+public class ArrayTimeProfile implements TimeProfile {
     private static final int SEGMENT_WIDTH_MS = 15*60*1000;
     private static final int SEGMENT_MIDPOINT_MS = SEGMENT_WIDTH_MS/2;
     public static final int ARRAY_LENGTH_SEGMENTS = 24*4;
     
-    private int[] transitDurationMs;
+    private final int[] transitDurationMs;
     
     public ArrayTimeProfile(int[] transitDurationMs) {
         validateArray(transitDurationMs);
@@ -34,18 +34,7 @@ public class ArrayTimeProfile {
         }
     }
     
-    public boolean isIdentity() {
-        return getMaxTransitDuration()==0;
-    }
-    
-    public int getMaxTransitDuration() {
-        int maxTransitDuration = Integer.MIN_VALUE;
-        for (int duration : transitDurationMs) {
-            maxTransitDuration = Math.max(duration, maxTransitDuration);
-        }
-        return maxTransitDuration;
-    }
-    
+    @Override
     public int transitTimeAt(int milliseconds) {
         if (milliseconds < SEGMENT_MIDPOINT_MS) {
             return transitDurationMs[0]; 
@@ -65,12 +54,6 @@ public class ArrayTimeProfile {
     
     public ArrayTimeProfile followedBy(ArrayTimeProfile after) {
         Preconditions.checkNoneNull(after);
-        
-        if (this.isIdentity()) {
-            return after;
-        } else if (after.isIdentity()) {
-            return this;
-        }
         
         int[] newDurationsMs = new int[ARRAY_LENGTH_SEGMENTS];
         

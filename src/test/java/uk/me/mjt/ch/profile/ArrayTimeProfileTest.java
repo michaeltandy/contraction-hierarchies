@@ -16,11 +16,11 @@ public class ArrayTimeProfileTest {
     
     @Test(expected=IllegalArgumentException.class)
     public void testInvalidTransitTime() {
-        repeat((15*MILLIS_IN_A_SECOND)+1,0);
+        repeat((15*MILLIS_IN_A_MINUTE)+1,0);
     }
     
     public void testValidTransitTime() {
-        repeat(15*MILLIS_IN_A_SECOND,0);
+        repeat(15*MILLIS_IN_A_MINUTE,0);
     }
 
     @Test
@@ -59,23 +59,31 @@ public class ArrayTimeProfileTest {
     }
     
     @Test
-    @Ignore
     public void testStepUpAtSixPm() {
         int[] data = new int[ArrayTimeProfile.ARRAY_LENGTH_SEGMENTS];
         Arrays.fill(data, 0, 18*4, 15*MILLIS_IN_A_MINUTE);
         Arrays.fill(data, 18*4, data.length, 30*MILLIS_IN_A_MINUTE);
         ArrayTimeProfile a = new ArrayTimeProfile(data);
         
-        int fiveThirtyPm = 17*MILLIS_IN_AN_HOUR+30*MILLIS_IN_A_MINUTE;
+        int sampleTime = 17*MILLIS_IN_AN_HOUR+22*MILLIS_IN_A_MINUTE+30*MILLIS_IN_A_SECOND;
         
-        ArrayTimeProfile justBeforeStep = repeat(15*MILLIS_IN_A_MINUTE).followedBy(a);
-        ArrayTimeProfile justAfterStep = repeat(16*MILLIS_IN_A_MINUTE).followedBy(a);
+        ArrayTimeProfile b = repeat(30*MILLIS_IN_A_MINUTE);
+        ArrayTimeProfile justBeforeStep = b.followedBy(a);
+        //System.out.println(SvgPlotter.plot(a,b,justBeforeStep));
+        assertEquals((15+30)*MILLIS_IN_A_MINUTE, justBeforeStep.transitTimeAt(sampleTime));
         
-        assertEquals(30*MILLIS_IN_A_MINUTE, justBeforeStep.transitTimeAt(fiveThirtyPm));
-        assertEquals(30*MILLIS_IN_A_MINUTE+90*MILLIS_IN_A_SECOND, justAfterStep.transitTimeAt(fiveThirtyPm));
+        //ArrayTimeProfile justAfterStep = repeat(31*MILLIS_IN_A_MINUTE).followedBy(a);
+        //int delta = justAfterStep.transitTimeAt(sampleTime)-justBeforeStep.transitTimeAt(sampleTime);
+        //assertEquals(90*MILLIS_IN_A_SECOND, delta);
         
-        ArrayTimeProfile nearRiseEnd = repeat(45*MILLIS_IN_A_MINUTE).followedBy(a);
-        ArrayTimeProfile afterRiseComplete = repeat(45*MILLIS_IN_A_MINUTE).followedBy(a);
+        b = repeat(45*MILLIS_IN_A_MINUTE);
+        ArrayTimeProfile afterRiseComplete = b.followedBy(a);
+        System.out.println(SvgPlotter.plot(a,b,afterRiseComplete));
+        assertEquals((45+30)*MILLIS_IN_A_MINUTE, afterRiseComplete.transitTimeAt(sampleTime));
+        
+        //ArrayTimeProfile beforeRiseComplete = repeat(44*MILLIS_IN_A_MINUTE).followedBy(a);
+        //delta = afterRiseComplete.transitTimeAt(sampleTime)-beforeRiseComplete.transitTimeAt(sampleTime);
+        //assertEquals(90*MILLIS_IN_A_SECOND, delta);
         
     }
     
